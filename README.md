@@ -57,6 +57,7 @@ platform/stm32f103/     板级引脚表、启动文件、链接脚本、HAL 配�
 tests/host/             内存 mock 后端 + 主机单测
 evidence/               上板抓包日志 + INDEX.md 登记表
 tools/check_layering.py 分层静态检查器（拷自 firmware-four-layer-architecture）
+tools/CHECKER.lock      检查器版本/来源仓/来源提交/blob 的身份记录
 .arch-roles             检查器的角色清单，如实描述本仓现有分层
 .github/workflows/      CI 门禁：layering
 third_party/            CMSIS 与 ST HAL 子集（BSD-3-Clause，原样分发）
@@ -106,23 +107,28 @@ cmake --build build-host --config Debug
 
 ## 静态分层检查（CI 门禁）
 
-`tools/check_layering.py` 是**从 `firmware-four-layer-architecture` skill 拷来的**四层检查器（v3），不是本仓原创代码，本仓也不改它：文件头记了来源路径、取用日期和 SHA-256；来源目录不是独立 git 仓库，所以没有提交哈希可引用。升级方式是整文件覆盖、更新文件头的 SHA-256 与日期、重跑下面的命令，确认 ERROR 仍为 0 且 WARN 的变化能逐条解释。
+`tools/check_layering.py` 是**从 `firmware-four-layer-architecture` skill 拷来的**四层检查器，不是本仓原创代码。当前同步到上游 **`af88491`（checker 3.2.0）**，用 `git worktree add --detach` 取干净内容，**代码逐字未改**，只按上游规定把文件头 `SOURCE_COMMIT` 一行改成上游提交哈希。身份记录在 [tools/CHECKER.lock](tools/CHECKER.lock)：`checker-version` / `source-repo` / `source-commit` 三项由检查器自己比对，`source-blob` 是上游该提交里该文件的 git blob 哈希（人工核对用，检查器不读）。
 
-本仓是两层结构（`src/app` + `src/port` + `src/components`，**没有独立的 OSAL 层**），角色清单 [.arch-roles](.arch-roles) 按真实目录写：`third_party/`、`platform/`、`src/port/` = bsp；`src/osal/` = osal（只有 Cortex-M3 时基与临界区）；`src/core/`、`src/components/` = components；`include/pm/` = common（纯类型/常量/原型，任何层可包含）；`src/app/main.c` = glue。
+升级步骤：`git worktree add --detach <临时目录> <新提交>` → 覆盖 `tools/check_layering.py` → 改 `SOURCE_COMMIT` → 同步 `tools/CHECKER.lock` 四行 → 跑下面两条命令，确认锁校验通过、ERROR 仍为 0，并逐条解释 WARN 的变化。
 
-本地复跑与 CI 是同一条命令（见 [.github/workflows/layering.yml](.github/workflows/layering.yml)）：
+本仓没有独立的 OSAL 层（`src/osal` 只有 Cortex-M3 时基与临界区），角色清单 [.arch-roles](.arch-roles) 按真实目录写：`platform/`、`src/port/` = bsp；`src/osal/` = osal；`src/core/`、`src/components/` = components；`include/pm/` = common（纯类型/常量/原型，任何层可包含）；`src/app/main.c` = glue。`third_party/` 与 `build-*/` 用 `ignore` 指令排除在扫描外——厂商包在最底层、不会反调上层，扫它只花时间。**代价**：`third_party/` 里的厂商宏不再进宏索引，若将来组件层直接用 HAL 宏拼寄存器，第 14 项可能漏报；本仓目前没有这种用法。
+
+CI 是两步（见 [.github/workflows/layering.yml](.github/workflows/layering.yml)），任一步非零即失败；本地复跑同样两条：
 
 ```powershell
-python tools/check_layering.py . --glue-max-lines 1280
+python tools/check_layering.py --version --lock tools/CHECKER.lock   # 检查器身份/版本漂移
+python tools/check_layering.py . --glue-max-lines 1280                # 扫描
 ```
 
 **ERROR 必须为 0（否则 CI 红）；WARN 只打印、不判失败。**
 
 当前 3 条 WARN 是同一种、也是设计使然：`src/port/stm32f1/pm_port_stm32f1.c` 的 UART 中断里调用 `pm_uart_hw_rx_byte` / `pm_uart_hw_tx_complete` / `pm_uart_hw_error`。中断服务留在端口层，只把字节和事件递给 `src/core/pm_uart.c` 的钩子，正落在检查器第 4 项“bsp 调组件 ISR 钩子”的 WARN 分支上；确认仅中断上下文使用即可，既不升级成 ERROR 也不隐藏。
 
-`--glue-max-lines 1280` 是棘轮：`src/app/main.c` 现在 **1277 行代码**，是“板级功能还没回灌成 `pm_*` 契约”的已知状态，取舍理由在 [PATCHES.md](PATCHES.md) §20。上限只比现状高 3 行，胶水层再长 CI 就会红。
+扫描耗时（本机 Windows，同一棵树）：检查器 3.0 无 ignore **24.1 s**；3.2.0 无 ignore **22.8 s**；3.2.0 加 `ignore` 后 **0.19 s**。三者 ERROR/WARN 逐条相同。
 
-本地跑若出现 `[NOTE] 另有 4 个未分层文件`，那是 `build-*/CMakeFiles/.../CMakeCCompilerId.c`（构建产物），CI 干净检出时不存在，且不含平台调用，不影响 ERROR/WARN 计数。
+`--glue-max-lines 1280` 是棘轮：`src/app/main.c` 现在 **1277 行代码**，是“板级功能还没回灌成 `pm_*` 契约”的已知状态，取舍理由在 [PATCHES.md](PATCHES.md) §20。上限只比现状高 3 行，胶水层再长 CI 就会红。3.2.0 没有改动 glue 的判定范围（仍只查行数），棘轮行为与升级前一致。
+
+检查器 3.2.0 新增的 `layers` 指令本仓没有启用：它改变的是“没有 components 层时 APP 可直调 BSP”这一条放行规则，而本仓有真实的 components 层，声明了也不会改变任何一条判定。
 
 ---
 

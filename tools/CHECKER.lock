@@ -1,0 +1,10 @@
+# 上游检查器锁文件：改这里等于声明"我升到了某个版本"
+# 检查器只比对 checker-version / source-repo / source-commit 三项；
+# source-blob 是上游该提交里 skill/scripts/check_layering.py 的 git blob 哈希，
+# 用于人工核对"拷来的确实是这个提交的原文"（本仓额外记录，检查器不读）。
+checker-version = 3.2.0
+source-repo     = https://github.com/BiscuiTs2026/firmware-four-layer-architecture
+source-commit   = af884914c4cdc23472a20382a32df4a9e8305ce5
+source-blob     = 0c16afe694f2b3b1b5cbd211d1d055db9cb1af9d
+synced-at       = 2026-11-18
+local-patches   = none（只按上游 integration.md §2.1 的规定改了文件头 SOURCE_COMMIT 一行为上游哈希，属规定动作，不是补丁）

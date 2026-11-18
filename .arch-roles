@@ -4,8 +4,12 @@
 # 本仓没有独立的 OSAL 层：src/osal 只有 Cortex-M3 时基与临界区实现，按 osal 角色登记；
 # src/core 是与硬件无关的模型（可在主机编译），按 components 角色登记。
 
-# 厂商 HAL / CMSIS 原样分发代码，是端口层的底座
-third_party/*        = bsp
+# 扫描范围（检查器 3.2.0 的 ignore 指令）：厂商 HAL/CMSIS 与构建目录不参与扫描。
+# 原先把 third_party 登记成 bsp，升级后改用 ignore：厂商包在最底层、不会反调上层，
+# 扫它只花时间（22.8 s → 亚秒级）。代价：厂商宏不再进宏索引，见 README「静态分层检查」。
+# 只忽略这两类，不扩大范围。
+ignore = third_party/
+ignore = build-*/
 # 板级：引脚表、时钟树、启动文件、HAL 配置
 platform/*           = bsp
 # 端口层：HAL 后端、UART ISR、pm_port_get()

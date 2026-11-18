@@ -842,6 +842,81 @@ DIST live cm=4.3 us=247
 - **未上板验证**：本轮不烧录，`pm_osal_init()` 移动后的板端行为没有复测；
   按结构等价推断为无变化，但不写成"已验证"
 
+## 21. 检查器升级到上游 af88491（3.2.0）+ 锁文件 + CI 两步校验
+
+### 21.1 取件方式与来源
+
+- 上游仓：`2026-11-18/repo-hardening/work/firmware-four-layer-architecture`（本次它已是 git 仓库）
+- 用 `git worktree add --detach %TEMP%\wt-checker-af88491 af88491` 取**干净内容**，
+  没有拷正在被编辑的工作副本；源文件 blob `0c16afe694f2b3b1b5cbd211d1d055db9cb1af9d`
+- 覆盖 `tools/check_layering.py`，**代码逐字未改**；只按上游 `docs/integration.md` §2.1 的规定
+  把文件头 `SOURCE_COMMIT` 从 `"self"` 改成 `"af884914c4cdc23472a20382a32df4a9e8305ce5"`
+- 旧版文件头里"源目录无 git、无提交哈希"的说法已随本次升级删除；身份改由 `tools/CHECKER.lock` 记录
+
+**与任务描述的一处差异（如实记录）**：本地上游仓的 `main` 实际是 `51d8b09`，不是 `af88491`。
+`git diff --stat af88491 51d8b09` 显示该提交只改了上游自己的 `CMakeLists.txt` 与 `README.md`，
+**没有改动 `check_layering.py`**，所以按任务指定的 `af88491` 同步，脚本内容与 `main` 相同。
+锁文件写 `af88491`，与拷来的内容严格对应；将来上游再动脚本时 `--lock` 会报警。
+
+### 21.2 锁文件
+
+`tools/CHECKER.lock`：
+
+```
+checker-version = 3.2.0
+source-repo     = https://github.com/BiscuiTs2026/firmware-four-layer-architecture
+source-commit   = af884914c4cdc23472a20382a32df4a9e8305ce5
+source-blob     = 0c16afe694f2b3b1b5cbd211d1d055db9cb1af9d
+synced-at       = 2026-11-18
+local-patches   = none（只按上游规定改了 SOURCE_COMMIT 一行）
+```
+
+- 前三项由检查器 `--version --lock` 自行比对；`source-blob` / `synced-at` / `local-patches`
+  检查器不读，供人工核对（脚本的 `parse_lock` 会跳过未知键）
+- 正例：`python tools/check_layering.py --version --lock tools/CHECKER.lock` → 打印三项 + `[LOCK] 一致`，退出码 0
+- 负例：拿一份写成 `3.1.0` / 全零提交 / `source-repo = x` 的锁文件，三条全部报不一致，**退出码 1**
+  → CI 第一步是真门禁，不是摆设
+
+### 21.3 CI 两步
+
+`.github/workflows/layering.yml`：
+
+1. `python3 tools/check_layering.py --version --lock tools/CHECKER.lock`（身份/版本漂移）
+2. `python3 tools/check_layering.py . --glue-max-lines 1280`（扫描，ERROR 必须 0）
+
+两步任一步非零即失败；WARN 只打印。
+
+### 21.4 角色清单：用 ignore 取代 third_party 的 bsp 登记
+
+```diff
+-third_party/*        = bsp
++ignore = third_party/
++ignore = build-*/
+```
+
+- 只忽略这两类，**没有扩大范围**（`platform/`、`src/port/`、`src/core/`、`src/components/`、
+  `include/pm/`、`src/app` 照旧全扫）
+- 代价：厂商宏不再进宏索引，第 14 项"上层使用下层硬件宏"对纯 HAL 宏会漏；
+  本仓 components 层目前没有任何 HAL 宏用法，因此本轮判定不变
+- 顺带解决本地跑时 `build-*/CMakeFiles/.../CMakeCCompilerId.c` 的未分层 NOTE
+
+### 21.5 复测：判定没变
+
+| 组合 | ERROR | WARN | 耗时（同机、同树） |
+| --- | --- | --- | --- |
+| 3.0（旧）无 ignore | 0 | 3 | 24.1 s |
+| 3.2.0 无 ignore | 0 | 3 | 22.8 s |
+| 3.2.0 + ignore | 0 | 3 | **0.19 s** |
+
+- 逐条对比旧/新的 ERROR+WARN 行：`Compare-Object` 结果 `IDENTICAL`（旧 3 条、新 3 条，内容一致）
+- 3 条 WARN 仍是 `pm_port_stm32f1.c:352/362/374` 调 `pm_uart_hw_*` 钩子，未变
+- `--glue-max-lines 1280` 棘轮行为一致：3.2.0 对 glue 仍只查行数（`check_glue_length` 未改），
+  `main.c` 仍 1277 行，上限 1280 通过；实测把上限压到 1276 →
+  `[ERROR] src/app/main.c:1 入口胶水层 1277 行代码（上限 1276）`，退出码 1，棘轮确实咬得住
+- 未启用 `layers` 指令：它只影响"没有 components 层时 APP 可直调 BSP"的放行，
+  本仓有真实 components 层，声明与否判定相同
+- 本轮**没有改任何源码**，因此没有重新构建，固件尺寸仍是 16480 B / 3424 B
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，
