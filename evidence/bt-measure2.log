@@ -1,0 +1,112 @@
+[+317ms] hb<CR><LF>
+[+1303ms] hb<CR><LF>
+[+2292ms] hb<CR><LF>
+[+3545ms] <CR><LF>board-bringup<CR><LF>core clock = 72000000 Hz<CR><LF>USART2 115200 8N1, echo active<CR><LF>BT measure 60s: idle=1, send bytes now<CR><LF>
+[+8527ms] [e=0 i=1]<CR><LF>
+[+13530ms] [e=0 i=1]<CR><LF>
+[+18542ms] [e=0 i=1]<CR><LF>
+[+23516ms] [e=0 i=1]<CR><LF>
+[+28532ms] [e=0 i=1]<CR><LF>
+[+33539ms] [e=0 i=1]<CR><LF>
+[+38537ms] [e=0 i=1]<CR><LF>
+[+43538ms] [e=0 i=1]<CR><LF>
+[+48527ms] [e=0 i=1]<CR><LF>
+[+53526ms] [e=0 i=1]<CR><LF>
+[+58540ms] [e=0 i=1]<CR><LF>
+[+63539ms] [e=0 i=1]<CR><LF><CR><LF>BT edges=0 min_low=0us min_high=0us bit=0us -> baud 9600<CR><LF>BT USART3 ready at 9600 8N1, echo on<CR><LF>
+[+64531ms] hb<CR><LF>
+[+65540ms] hb<CR><LF>
+[+66517ms] hb<CR><LF>
+[+67539ms] hb<CR><LF>
+[+68530ms] hb<CR><LF>
+[+69536ms] hb<CR><LF>
+[+70531ms] hb<CR><LF>
+[+71533ms] hb<CR><LF>
+[+72542ms] hb<CR><LF>
+[+73534ms] hb<CR><LF>
+[+74525ms] hb<CR><LF>
+[+75517ms] hb<CR><LF>
+[+76523ms] hb<CR><LF>
+[+77519ms] hb<CR><LF>
+[+78522ms] hb<CR><LF>
+[+79516ms] hb<CR><LF>
+[+80535ms] hb<CR><LF>
+[+81532ms] hb<CR><LF>
+[+82526ms] hb<CR><LF>
+[+83516ms] hb<CR><LF>
+[+84525ms] hb<CR><LF>
+[+85523ms] hb<CR><LF>
+[+86517ms] hb<CR><LF>
+[+87541ms] hb<CR><LF>
+[+88533ms] hb<CR><LF>
+[+89529ms] hb<CR><LF>
+[+90519ms] hb<CR><LF>
+[+91544ms] hb<CR><LF>
+[+92534ms] hb<CR><LF>
+[+93527ms] hb<CR><LF>
+[+94522ms] hb<CR><LF>
+[+95523ms] hb<CR><LF>
+[+96525ms] hb<CR><LF>
+[+97516ms] hb<CR><LF>
+[+98528ms] hb<CR><LF>
+[+99520ms] hb<CR><LF>
+[+100537ms] hb<CR><LF>
+[+101540ms] hb<CR><LF>
+[+102530ms] hb<CR><LF>
+[+103522ms] hb<CR><LF>
+[+104519ms] hb<CR><LF>
+[+105519ms] hb<CR><LF>
+[+106522ms] hb<CR><LF>
+[+107520ms] hb<CR><LF>
+[+108539ms] hb<CR><LF>
+[+109532ms] hb<CR><LF>
+[+110538ms] hb<CR><LF>
+[+111512ms] hb<CR><LF>
+[+112535ms] hb<CR><LF>
+[+113529ms] hb<CR><LF>
+[+114535ms] hb<CR><LF>
+[+115515ms] hb<CR><LF>
+[+116541ms] hb<CR><LF>
+[+117536ms] hb<CR><LF>
+[+118532ms] hb<CR><LF>
+[+119539ms] hb<CR><LF>
+[+120532ms] hb<CR><LF>
+[+121541ms] hb<CR><LF>
+[+122531ms] hb<CR><LF>
+[+123538ms] hb<CR><LF>
+[+124532ms] hb<CR><LF>
+[+125512ms] hb<CR><LF>
+[+126540ms] hb<CR><LF>
+[+127534ms] hb<CR><LF>
+[+128512ms] hb<CR><LF>
+[+129539ms] hb<CR><LF>
+[+130531ms] hb<CR><LF>
+[+131541ms] hb<CR><LF>
+[+132535ms] hb<CR><LF>
+[+133538ms] hb<CR><LF>
+[+134514ms] hb<CR><LF>
+[+135536ms] hb<CR><LF>
+[+136513ms] hb<CR><LF>
+[+137539ms] hb<CR><LF>
+[+138530ms] hb<CR><LF>
+[+139536ms] hb<CR><LF>
+[+140531ms] hb<CR><LF>
+[+141523ms] hb<CR><LF>
+[+142517ms] hb<CR><LF>
+[+143511ms] hb<CR><LF>
+[+144535ms] hb<CR><LF>
+[+145539ms] hb<CR><LF>
+[+146534ms] hb<CR><LF>
+[+147538ms] hb<CR><LF>
+[+148530ms] hb<CR><LF>
+[+149537ms] hb<CR><LF>
+[+150536ms] hb<CR><LF>
+[+151536ms] hb<CR><LF>
+[+152514ms] hb<CR><LF>
+[+153533ms] hb<CR><LF>
+[+154514ms] hb<CR><LF>
+[+155521ms] hb<CR><LF>
+[+156522ms] hb<CR><LF>
+[+157529ms] hb<CR><LF>
+[+158539ms] hb<CR><LF>
+[+159535ms] hb<CR><LF>

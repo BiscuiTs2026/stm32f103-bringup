@@ -8,9 +8,11 @@ build-*/
 *.hex
 *.map
 
-# Serial capture logs (board evidence, not source)
-bt-*.log
-key-capture*.log
+# Serial capture logs: only the working copies in the repo root are ignored.
+# The patterns are root-anchored on purpose - evidence/ holds the archived
+# copies that must stay tracked, so a bare "bt-*.log" would swallow them too.
+/bt-*.log
+/key-capture*.log
 
 # Editor / OS
 .vs/
