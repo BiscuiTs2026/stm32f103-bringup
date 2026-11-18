@@ -2,9 +2,11 @@
 
 ## 定位
 
-本目录是 **上板验证台架**，不是对外交付的库。`2026-11-18/peripheral-model/work` 是 `pm_*` 契约主线（通用模型 + 主机单测）；这里是它的复制快照，叠加了这块 KEYSKING 学习板的实测改动（时钟、按键、命令解析、I2C1/AHT20/HC-SR04/CH1116）。
-通用契约的改动回主线做，再按 `PATCHES.md` 同步；只跟本板相关的（引脚表、板级胶水、上板证据）留在这里。
-`PATCHES.md` 是两边差异的唯一清单，`evidence/INDEX.md` 是上板证据的登记表。
+本目录是 **上板验证台架**，不是对外交付的库；远程仓为 `BiscuiTs2026/stm32f103-bringup`（**私有**）。
+`pm_*` 源码是 `BiscuiTs2026/stm32-peripheral-model` 某一提交的快照：基线 **`aa342e5`**（v0.1，GPIO + UART）。
+复制发生在该提交成型前的工作树中间态——7 个 GPIO/UART 文件与 `aa342e5` 逐字节相同，
+`include/pm/pm_port.h` 少 167 行 SPI 声明；凡涉及 `pm_*` 契约的漂移，**以模型仓为准**，按 `PATCHES.md` 回同步。
+本仓只保留这块 KEYSKING 学习板的实测改动与上板证据（`evidence/INDEX.md` 为登记表），不对外交付。
 
 ---
 
