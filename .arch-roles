@@ -1,0 +1,24 @@
+# .arch-roles — 本仓真实分层（两层 + 厂商底座），供 tools/check_layering.py 使用
+#
+# 依赖方向（自下而上）：third_party → platform / src/port (bsp) → src/osal → src/core、src/components → src/app
+# 本仓没有独立的 OSAL 层：src/osal 只有 Cortex-M3 时基与临界区实现，按 osal 角色登记；
+# src/core 是与硬件无关的模型（可在主机编译），按 components 角色登记。
+
+# 厂商 HAL / CMSIS 原样分发代码，是端口层的底座
+third_party/*        = bsp
+# 板级：引脚表、时钟树、启动文件、HAL 配置
+platform/*           = bsp
+# 端口层：HAL 后端、UART ISR、pm_port_get()
+src/port/*           = bsp
+# Cortex-M3 时基与临界区
+src/osal/*           = osal
+# 硬件无关模型（GPIO/UART/环形缓冲/事件）
+src/core/*           = components
+# 器件驱动：CH1116 OLED，总线访问由回调注入
+src/components/*     = components
+# 公共契约头：类型、常量、函数原型，任何层可包含
+include/pm/*         = common
+# 入口胶水：时钟、按键、命令解析、I2C1 轮询、HC-SR04 计时、OLED 调度。
+# 这些是尚未回灌成 pm_* 契约的板级集成代码，允许碰寄存器与 HAL；
+# 取舍与理由见 PATCHES.md §20。
+src/app/main.c       = glue

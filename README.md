@@ -23,8 +23,8 @@
 | 项目 | 状态 | 证据 / 数字 |
 | --- | --- | --- |
 | 交叉编译 | 通过 | `arm-none-eabi-gcc 14.3.1`，`-Wall -Wextra -Wshadow`，项目代码无警告 |
-| 尺寸 | 通过 | Flash **16484 B / 64 KB（25.15%）**，RAM **3424 B / 20 KB（16.72%）**（§19） |
-| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（16484 B）、`.hex`、`.map` |
+| 尺寸 | 通过 | Flash **16480 B / 64 KB（25.15%）**，RAM **3424 B / 20 KB（16.72%）**（§19、§20） |
+| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（16480 B）、`.hex`、`.map` |
 | 主机单测 | 通过 | 96 项断言，0 失败（MSVC 19.51，C11） |
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
@@ -56,6 +56,9 @@ src/app/main.c          入口胶水：时钟、按键、命令解析、I2C 轮�
 platform/stm32f103/     板级引脚表、启动文件、链接脚本、HAL 配置
 tests/host/             内存 mock 后端 + 主机单测
 evidence/               上板抓包日志 + INDEX.md 登记表
+tools/check_layering.py 分层静态检查器（拷自 firmware-four-layer-architecture）
+.arch-roles             检查器的角色清单，如实描述本仓现有分层
+.github/workflows/      CI 门禁：layering
 third_party/            CMSIS 与 ST HAL 子集（BSD-3-Clause，原样分发）
 ```
 
@@ -77,7 +80,7 @@ cmake -S . -B build-arm -G Ninja `
 cmake --build build-arm
 ```
 
-换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（16484 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（当前 16484 B / 3424 B）。
+换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（16480 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（当前 16480 B / 3424 B）。
 
 烧录（ST-Link，带校验、烧完复位）：
 
@@ -98,6 +101,28 @@ cmake --build build-host --config Debug
 ```
 
 输出形如 `96 checks, 0 failure(s)`，退出码 0 表示全过。
+
+---
+
+## 静态分层检查（CI 门禁）
+
+`tools/check_layering.py` 是**从 `firmware-four-layer-architecture` skill 拷来的**四层检查器（v3），不是本仓原创代码，本仓也不改它：文件头记了来源路径、取用日期和 SHA-256；来源目录不是独立 git 仓库，所以没有提交哈希可引用。升级方式是整文件覆盖、更新文件头的 SHA-256 与日期、重跑下面的命令，确认 ERROR 仍为 0 且 WARN 的变化能逐条解释。
+
+本仓是两层结构（`src/app` + `src/port` + `src/components`，**没有独立的 OSAL 层**），角色清单 [.arch-roles](.arch-roles) 按真实目录写：`third_party/`、`platform/`、`src/port/` = bsp；`src/osal/` = osal（只有 Cortex-M3 时基与临界区）；`src/core/`、`src/components/` = components；`include/pm/` = common（纯类型/常量/原型，任何层可包含）；`src/app/main.c` = glue。
+
+本地复跑与 CI 是同一条命令（见 [.github/workflows/layering.yml](.github/workflows/layering.yml)）：
+
+```powershell
+python tools/check_layering.py . --glue-max-lines 1280
+```
+
+**ERROR 必须为 0（否则 CI 红）；WARN 只打印、不判失败。**
+
+当前 3 条 WARN 是同一种、也是设计使然：`src/port/stm32f1/pm_port_stm32f1.c` 的 UART 中断里调用 `pm_uart_hw_rx_byte` / `pm_uart_hw_tx_complete` / `pm_uart_hw_error`。中断服务留在端口层，只把字节和事件递给 `src/core/pm_uart.c` 的钩子，正落在检查器第 4 项“bsp 调组件 ISR 钩子”的 WARN 分支上；确认仅中断上下文使用即可，既不升级成 ERROR 也不隐藏。
+
+`--glue-max-lines 1280` 是棘轮：`src/app/main.c` 现在 **1277 行代码**，是“板级功能还没回灌成 `pm_*` 契约”的已知状态，取舍理由在 [PATCHES.md](PATCHES.md) §20。上限只比现状高 3 行，胶水层再长 CI 就会红。
+
+本地跑若出现 `[NOTE] 另有 4 个未分层文件`，那是 `build-*/CMakeFiles/.../CMakeCCompilerId.c`（构建产物），CI 干净检出时不存在，且不含平台调用，不影响 ERROR/WARN 计数。
 
 ---
 

@@ -775,6 +775,73 @@ DIST live cm=4.3 us=247
 - 烧录：`STM32_Programmer_CLI -c port=SWD mode=UR -w pm_f103_demo.hex -v -r` +
   verify 通过 → `MCU Reset`；实测结束屏上停在 live
 
+## 20. 静态分层检查接入 CI（检查器拷贝 + 角色清单 + 两处小步修正）
+
+### 20.1 检查器来源
+
+- 文件：`tools/check_layering.py`，拷自 `firmware-four-layer-architecture` skill（v3），
+  **代码逐字未改**，只在文件头加了来源注释；
+  文件头记录源路径、取用日期与 SHA-256（`2D3C638D…E14132A8`，为源文件原文校验值）
+- **来源提交哈希：无**。该 skill 目录不是独立 git 仓库，工程根仓 HEAD
+  `63ad2f6e10a8a946d31036e491282d160555ec4d` 也不跟踪它（根 `.gitignore` 第 12 行
+  `2026-11-18/*/work/` 把它排除），没有哈希可引用，不编造
+
+### 20.2 首次裸跑（还没有 `.arch-roles`）：76 ERROR / 459 WARN
+
+- 76 条 ERROR **全部**来自 `src/app/main.c`：目录名 `src/app` 让它被判为 app 层，
+  于是 1 条平台头泄漏（`stm32f1xx.h`）+ 75 条「越层访问寄存器」
+- 459 条 WARN 都是未分层提示：`third_party/` 的 HAL/CMSIS、`src/core/`、`src/port/`、
+  `platform/`、`include/pm/` 都还没登记角色（共 142 个未分层文件，其中 94 个含平台调用）
+
+### 20.3 判断：`main.c` 是入口胶水，不是 app 层
+
+**选择：如实承认 `src/app/main.c` 为 glue，不改代码把它拆成组件。**理由：
+
+1. 它干的正是胶水的活：时钟、按键轮询、两路串口命令分发、I2C1 裸寄存器轮询、
+   HC-SR04 的 EXTI+TIM2 计时、OLED 调度。这些**已经上板验证过**（§9–§19），不是草稿
+2. 按检查器定义，app 层禁止碰 HAL/寄存器。要让 `main.c` 真算 app 层，就得把 I2C1 位操作、
+   EXTI/TIM2 计时、OLED 调度整体下沉到 `src/port/stm32f1/`（bsp）或新组件——400+ 行搬迁，
+   属于跨层重构，违反「一轮只动一层」，且搬完必须重新上板验证，本轮没有烧录授权
+3. 反过来把 `main.c` 登记成 app 或 bsp 来消错是**错的**：前者要给每行贴 `// arch-allow`，
+   后者等于把业务逻辑塞进"可碰一切"的角色，检查器就白接了
+4. 因此 `.arch-roles` 里只有它一条 glue，其余按真实目录登记
+   （`third_party/`、`platform/`、`src/port/` = bsp；`src/osal/` = osal；
+   `src/core/`、`src/components/` = components；`include/pm/` = common）
+
+代价：glue 不受寄存器/反向依赖检查约束，只剩行数上限。为防它继续膨胀，CI 用
+`--glue-max-lines 1280` 作**棘轮**：当前 **1277 行代码**，只留 3 行余量，再长就红。
+放宽必须改 workflow 那一行，会出现在 diff 里。
+
+### 20.4 逐条处理剩下的 ERROR
+
+| 首跑 ERROR | 处理 | 理由 |
+| --- | --- | --- |
+| `include/pm/pm_uart.h:61 反向依赖：common/ 调用上层函数 pm_uart_write` | **改代码**：把跨行原型改成单行 | 误报。检查器只把单行原型识别成声明（`DECL_ONLY_LINE`），跨行写法的后半截签名被当成调用。单行化零语义变化 |
+| `platform/stm32f103/pm_platform.c:43 反向依赖 + BSP 越权调用 OSAL：pm_osal_init` | **改代码**：`pm_osal_init()` 从 `pm_platform_init()` 移到 `main()` 里紧跟其后 | 真越层。bsp 只提供硬件底座，1 ms 时基属入口层职责；移动后调用顺序不变，行为等价 |
+| `platform/stm32f103/pm_platform.c:57 反向依赖：bsp/ 调用 pm_osal_tick_inc` | **行尾 `// arch-allow`** 并写明理由 | 检查器第 17 项明确允许 bsp 调 `*_tick_inc`，第 4 项反向依赖却没有同样的例外——两条规则打架。SysTick ISR 留在平台层结构正确，不改结构，只按检查器自己的豁免机制放行，把矛盾写进注释 |
+| `src/app/main.c:1 入口胶水层 1276 行（上限 200）` | 见 20.3，走棘轮 | — |
+
+处理后：**0 ERROR / 3 WARN**。
+
+### 20.5 3 条 WARN（保留，不消除）
+
+`src/port/stm32f1/pm_port_stm32f1.c:352/362/374`：端口层 ISR 调用
+`pm_uart_hw_rx_byte` / `pm_uart_hw_tx_complete` / `pm_uart_hw_error`。
+这是本仓 UART 的实际结构——ISR 在端口层，只把字节与事件递给 `src/core/pm_uart.c` 的钩子；
+检查器第 4 项对 `*_hw_*` 钩子给 WARN 而非 ERROR，正是为这种情况留的口子。CI 只打印不判失败。
+
+### 20.6 验证
+
+- 检查器：`python tools/check_layering.py . --glue-max-lines 1280` → `合计 0 ERROR / 3 WARN`，退出码 0
+- 构建：`cmake -S . -B build-ci --fresh -G Ninja -DCMAKE_TOOLCHAIN_FILE=<绝对路径>/cmake/arm-gcc-toolchain.cmake`
+  + `cmake --build build-ci` → 成功（无新增编译警告）
+- 尺寸：FLASH 16484 → **16480 B（−4 B，25.15%）**，RAM **3424 B 不变（16.72%）**。
+  −4 B 来自 `pm_osal_init()` 调用点从 `pm_platform_init()` 挪到 `main()`（少一次调用层级的重定位），
+  行为不变
+- 主机单测：重跑，`96 checks, 0 failure(s)`（`tests/host` 只编译 `src/core`，`pm_uart.h` 的单行化被覆盖）
+- **未上板验证**：本轮不烧录，`pm_osal_init()` 移动后的板端行为没有复测；
+  按结构等价推断为无变化，但不写成"已验证"
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，

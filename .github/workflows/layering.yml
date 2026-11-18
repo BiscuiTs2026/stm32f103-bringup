@@ -1,0 +1,19 @@
+name: static-layering
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  layering:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ERROR 必须为 0；WARN 只打印，不判失败。
+      # --glue-max-lines 1280 是棘轮：src/app/main.c 当前 1277 行代码，
+      # 是"功能还没回灌成 pm_* 契约"的已知状态（见 PATCHES.md §20）。
+      # 要放宽这个数必须改这一行，让它留在 diff 里被看见。
+      - name: Four-layer static check
+        run: python3 tools/check_layering.py . --glue-max-lines 1280

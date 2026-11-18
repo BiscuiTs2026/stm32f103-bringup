@@ -1572,6 +1572,7 @@ int main(void)
     uint32_t next_hb_ms;
 
     pm_platform_init();
+    (void)pm_osal_init();   /* the 1 ms tick belongs to the entry layer, not to the board */
 
     if (pm_gpio_configure(led_blue, &s_led_cfg) != PM_OK) {
         error_loop();

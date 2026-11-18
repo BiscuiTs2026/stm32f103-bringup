@@ -40,7 +40,6 @@ void pm_platform_init(void)
 {
     HAL_Init();          /* SysTick 1 ms on the reset clock (HSI 8 MHz) */
     pm_clock_init();     /* raises the core to 72 MHz when HSE is present */
-    (void)pm_osal_init();
 }
 
 uint32_t pm_platform_core_clock(void)
@@ -50,9 +49,13 @@ uint32_t pm_platform_core_clock(void)
 
 /* One ISR feeds both time bases. HAL uses its own tick for HAL_Delay and
  * timeouts; the library uses the OSAL counter. They stay coherent because
- * both are incremented here, in the same interrupt. */
+ * both are incremented here, in the same interrupt.
+ *
+ * The arch-allow marker below is deliberate: check_layering.py rule 17 lets a
+ * port-layer ISR call *_tick_inc, but its reverse-dependency rule has no such
+ * exception, so it would flag this sanctioned call as bsp -> osal. */
 void SysTick_Handler(void)
 {
     HAL_IncTick();
-    pm_osal_tick_inc();
+    pm_osal_tick_inc();   /* arch-allow: bsp 允许 tick_inc（检查器第 17 项） */
 }

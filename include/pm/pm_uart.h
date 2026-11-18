@@ -58,8 +58,7 @@ pm_err_t pm_uart_deinit(pm_uart_t *u);
  *                            could not take everything.
  *  timeout > 0             : waits up to timeout ms for ring space.
  *  On PM_ERR_TIMEOUT/AGAIN, *written reports how much was accepted. */
-pm_err_t pm_uart_write(pm_uart_t *u, const uint8_t *data, size_t len,
-                       size_t *written, uint32_t timeout_ms);
+pm_err_t pm_uart_write(pm_uart_t *u, const uint8_t *data, size_t len, size_t *written, uint32_t timeout_ms);
 
 /* Copies up to `len` bytes from the RX ring. Never blocks.
  * Returns PM_OK (possibly with *read == 0) or PM_ERR_AGAIN when empty. */
