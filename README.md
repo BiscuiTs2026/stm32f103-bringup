@@ -12,21 +12,30 @@
 
 一套按"接口契约优先"方式组织的 STM32F1 外设代码：上层只依赖 `include/pm/` 里的公共 API，芯片相关的一切都收敛在 port 层。目标是换板子只改一张引脚表，换芯片只换一个 port 目录，核心逻辑永远能在主机上跑单测。
 
-当前版本 **v0.1**，已实现 GPIO 与 UART；其余外设按同一套契约逐步铺开。
+当前处于 **上板验证阶段**：`pm_*` 契约层仍是 GPIO + UART；这块板的实测功能（USART2/USART3 共享命令解析、I2C1 轮询 + AHT20、HC-SR04 非阻塞测距、CH1116 OLED 含 500 ms live 与 1 Hz 自动测距）写在 APP 胶水里，尚未回灌成新契约。
 
 ---
 
 ## 验证状态
 
-| 项目 | 状态 | 证据 |
+每个上板结论都有对应日志，登记表在 [evidence/INDEX.md](evidence/INDEX.md)，逐条推导与失败记录在 [PATCHES.md](PATCHES.md)（下文 § 号均指该文件）。
+
+| 项目 | 状态 | 证据 / 数字 |
 | --- | --- | --- |
-| ARM 交叉编译 | 通过 | `arm-none-eabi-gcc 14.3.1`，无项目代码警告 |
-| 链接 | 通过 | Flash 6440 B / 64 KB（9.83%），RAM 2224 B / 20 KB（10.86%） |
-| 产物 | 已生成 | `pm_f103_demo.elf` / `.bin`（6440 B）/ `.hex` / `.map` |
+| 交叉编译 | 通过 | `arm-none-eabi-gcc 14.3.1`，`-Wall -Wextra -Wshadow`，项目代码无警告 |
+| 尺寸 | 通过 | Flash **16484 B / 64 KB（25.15%）**，RAM **3424 B / 20 KB（16.72%）**（§19） |
+| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（16484 B）、`.hex`、`.map` |
 | 主机单测 | 通过 | 96 项断言，0 失败（MSVC 19.51，C11） |
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
-| 向量表 | 正确 | 首字 `0x20005000`（20 KB RAM 顶），Reset_Handler `0x08000228` |
-| **上板运行** | **未验证** | 本轮未接板，HEX/BIN 未烧录 |
+| 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
+| USART2 调试口 | 通过 | 115200 8N1 双向收发，`hb` 每秒一行（§5） |
+| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；长回包不丢尾（§11、§14），当前 `HELP` 完整回包 **356 B / 9 行**（§19） |
+| I2C1 | 通过 | 扫描到 `0x70`（AHT20）与 `0x7A`（OLED），PB6/PB7，100 kHz（§9） |
+| AHT20 温湿度 | 通过 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0`（§12） |
+| HC-SR04 测距 | 通过 | `DIST cm=<n> us=<n>`，非阻塞，EXTI + TIM2 计宽（§14） |
+| CH1116 OLED | 通过 | 文字、`frame` 图案（col=2 下 9 条竖线、四边完整）、`live` 500 ms + 1 Hz 自动测距（§15–§19） |
+| 按键 | 通过 | 20 ms 消抖，6 组 pressed/released 无重复无漏（§7） |
+| SPI / ADC / PWM | **未验证** | 无实际器件；SPI 只有 HAL 源与默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现 |
 
 未做上板验证的部分不写成"可用"。
 
@@ -37,12 +46,16 @@
 ```
 docs/00-contract.md     接口契约（规范，先读这个）
 docs/01-layering.md     目录、依赖、时序、移植
+docs/PROTOCOL.md        串口命令协议：分帧、响应约定、命令表、判读陷阱
 include/pm/             公共头，无厂商类型
 src/core/               与硬件无关的模型（可在主机编译）
 src/osal/               Cortex-M3 的时基与临界区
 src/port/stm32f1/       HAL 后端、UART ISR、pm_port_get()
+src/components/         CH1116 驱动（总线访问由回调注入）
+src/app/main.c          入口胶水：时钟、按键、命令解析、I2C 轮询、测距、OLED 调度
 platform/stm32f103/     板级引脚表、启动文件、链接脚本、HAL 配置
 tests/host/             内存 mock 后端 + 主机单测
+evidence/               上板抓包日志 + INDEX.md 登记表
 third_party/            CMSIS 与 ST HAL 子集（BSD-3-Clause，原样分发）
 ```
 
@@ -50,7 +63,13 @@ third_party/            CMSIS 与 ST HAL 子集（BSD-3-Clause，原样分发）
 
 ## 构建
 
-工具链：`arm-none-eabi-gcc` 14.x、CMake ≥ 3.20、Ninja。三者都在本机 STM32Cube bundle 里，未加入全局 PATH 时可用绝对路径。
+工具链：`arm-none-eabi-gcc` 14.3.1、CMake ≥ 3.20、Ninja。三者在 STM32Cube bundle 里，未加入全局 PATH 时用绝对路径（版本号随安装变化）：
+
+```
+%LOCALAPPDATA%\stm32cube\bundles\cmake\4.4.0+st.1\bin\cmake.exe
+%LOCALAPPDATA%\stm32cube\bundles\ninja\1.13.2+st.1\bin\ninja.exe
+%LOCALAPPDATA%\stm32cube\bundles\programmer\2.23.0\bin\STM32_Programmer_CLI.exe
+```
 
 ```powershell
 cmake -S . -B build-arm -G Ninja `
@@ -58,9 +77,15 @@ cmake -S . -B build-arm -G Ninja `
 cmake --build build-arm
 ```
 
-产物在 `build-arm/`：`pm_f103_demo.elf`、`.bin`、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用。
+换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（16484 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（当前 16484 B / 3424 B）。
 
-换工具链路径：在配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。
+烧录（ST-Link，带校验、烧完复位）：
+
+```powershell
+STM32_Programmer_CLI -c port=SWD mode=UR -w build-arm/pm_f103_demo.hex -v -rst
+```
+
+本树没有 CMake presets，`build-arm` 只是示例目录名；任务并行时按 `AGENTS.md` 一任务一构建目录，故历史目录叫 `build-bringup/`、`build-oled-live-dist/` 等。
 
 ## 主机单测
 
@@ -73,6 +98,25 @@ cmake --build build-host --config Debug
 ```
 
 输出形如 `96 checks, 0 failure(s)`，退出码 0 表示全过。
+
+---
+
+## 命令接口
+
+USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，两路完全等价**：命令大小写不敏感；行尾 `\r` / `\n` 可带可不带，不带时空闲 **100 ms** 自动提交；**任何命令都必有一条回包**（未知命令回 `ERR unknown=<原文>`），回包是单行 `KEY=value`，以 `\r\n` 结尾。
+
+| 命令 | 作用 |
+| --- | --- |
+| `HELP` | 列出全部命令（9 行、356 B） |
+| `PING` | 回 `PONG` |
+| `STAT` | 时钟、运行秒数、按键计数、串口累计字节 |
+| `I2C` | 扫描 I2C1，列 8 位写地址（本板 `0x70`、`0x7A`） |
+| `KEYS` | 读按键计数并清零 |
+| `AHT` / `AHTS` | 读 AHT20 温湿度；`AHTS` 是 repeated START 对照，拿到的是上一次结果 |
+| `DIST` | 单次 HC-SR04 测距，回 `cm` 与 `us` |
+| `OLED on\|off\|clear\|test\|show\|frame\|col\|live` | 显示开关、清屏、测试页、静态文字、边框图案、列偏移、500 ms live（live 期间自带 1 Hz 测距） |
+
+参数、成功/失败回包原文、是否改变设备状态、蓝牙端的判读陷阱（回包被拆成多个气泡等），见 **[docs/PROTOCOL.md](docs/PROTOCOL.md)**。
 
 ---
 
@@ -153,10 +197,13 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 
 ## 已知限制
 
-- RTC、Flash、看门狗、SPI、I2C、TIM/PWM、ADC、DMA 尚未实现；
-- UART 目前是逐字节中断，尚未提供 DMA + 空闲中断的接收路径；
-- 尚未接入 CMake presets，尚未提供 CI；
-- 对象结构体布局不承诺 ABI 稳定。
+- `pm_*` 契约只有 GPIO 与 UART；I2C1 时序、HC-SR04 捕获、OLED 调度都在 `src/app/main.c` 里用裸寄存器与胶水实现，尚未抽成 `pm_i2c` 等契约；
+- SPI 只有 HAL 源和默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现；ADC、PWM、RTC、Flash 编程、看门狗、DMA 均未实现；
+- UART 是逐字节中断，没有 DMA + 空闲中断的接收路径；TX 环 512 B，超长回包靠"边发边等"（`tx_bytes_all`）；
+- live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间 `OLED show` 回 `err=busy live`；
+- 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；
+- 自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`，是 HC-SR04 余振，不是故障；
+- 没有 CMake presets，没有 CI；对象结构体布局不承诺 ABI 稳定。
 
 ## 第三方代码
 
