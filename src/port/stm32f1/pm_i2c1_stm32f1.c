@@ -133,11 +133,14 @@ static size_t i2c1_scan(uint8_t *found, size_t max)
     return n;
 }
 
+/* Read the result bytes after the conversion window. aht_trigger() already
+ * ended the command with STOP, so this is a plain START on a released bus;
+ * there is no repeated-START path any more. */
 static int i2c1_read_after_trigger(uint8_t addr8r, uint8_t *rd, size_t rn)
 {
     size_t i;
 
-    I2C1->CR1 |= I2C_CR1_START;                     /* repeated START */
+    I2C1->CR1 |= I2C_CR1_START;                     /* START, bus released */
     if (i2c1_wait_sr1(I2C_SR1_SB) == 0) {
         return 0;
     }
@@ -215,11 +218,15 @@ static int aht_trigger(void)
     return 1;
 }
 
+/* Both modes land here after aht_trigger() released the bus with STOP, so the
+ * read below is a plain START. `repeated_start` stays in the signature only
+ * because pm_i2c1_ops_t is the fixed common contract (SPLIT-PLAN §2.2); it is
+ * not consulted on the wire and must not be mistaken for a live branch. */
 static int aht_read(uint8_t *raw, size_t n, int repeated_start)
 {
     int ok;
 
-    PM_UNUSED(repeated_start);       /* both modes release the bus at trigger */
+    PM_UNUSED(repeated_start);
 
     ok = i2c1_read_after_trigger(0x71u, raw, n);
     if (ok == 0) {

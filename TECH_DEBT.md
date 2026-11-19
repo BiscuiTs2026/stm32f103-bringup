@@ -35,6 +35,7 @@
 | D18 | G3 | `src/app/main.c:1388` | `oled_start_screen`，4 个 switch 分支 | 同上 | 同上 |
 | D19 | 第 22 项（单函数 ≤ 80 行） | `src/app/main.c:1434` | `cmd_oled`，123 行 | 命令处理函数过长 | 随 S8 OLED 块拆出组件或改表驱动 |
 | D20 | 第 21 项（字符串 else-if 命令链） | `src/app/main.c:1737` | `cmd_execute`，8 个分支（阈值 4） | 命令分发未改注册表 | 随 S10 分发块处理 |
+| D21 | S4 已知行为偏差（非检查器命中） | `src/port/stm32f1/pm_i2c1_stm32f1.c` `aht_trigger`/`aht_read` | `AHTS`（rst=1）触发后立即释放总线，80 ms 后的读是普通 START，不再重复 START | AHT20 要等命令被 STOP 终止才开始转换；固定单参数 `pm_i2c1_ops_t` 无法保留拆前"握总线 80 ms"的线序（派发方 2026-11-19 裁决保留接口） | 代码已标注 `repeated_start` 不上线、无假分支；若将来确需真·重复 START，另立任务改接口 |
 
 ### 附：这轮不修的边界
 

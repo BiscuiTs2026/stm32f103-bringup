@@ -724,7 +724,7 @@
 | 关键内容 | `HELP` 15 行与拆前逐行一致；`I2C found=0x70,0x7A` 与拆前逐字节相同；`AHT ok` ×3 `rst=0`、`AHTS ok` ×3 `rst=1`，`raw=` 均为 `18 ...`（状态字节正常），字段名/顺序/单位与拆前一致；live 窗口中段 3 次 `AHT`：2 次成功、1 次 `err=busy oled`（页正在推帧）；`OLED on/clear/test/frame/dump/live on/live off` 回包与拆前同格式、`af=0 berr=0 to=0`、`ms=97/98`；`OLED off` 与 `OLED col 2` 各一次 `err=busy i2c`（同第 52 项的既有忙态），干净回包见第 57 项；live 帧 164 条 `ms=98`；其余 14 条命令各一次回包 |
 | 能证明什么 | 总线代码下沉后，I2C 扫描、AHT/AHTS 触发与读、OLED 帧时序、错误计数器读数在板上与拆前等价；`main.c` 已不再含 `I2C1->`/`GPIOB->` |
 | 不能证明什么 | 不证明内部寄存器级时序不变（`i2c1_bus_fix` 的 1 ms 延时改由 SysTick COUNTFLAG 实现，见第 56 项局限）；失败一版（触发后不立即 STOP，AHT 读回状态 0x98 busy）的抓包未单独留档 |
-| 局限 | **已知行为偏差**：`aht_trigger()` 固定以 STOP 结束命令，`AHTS`（rst=1）因此在触发后立即释放总线，80 ms 后的读是普通 START 而非重复 START；原因是 AHT20 在命令被 STOP 终止后才开始转换，延后 STOP 会读回 `0x98`。拆前 `AHTS` 的"握总线 80 ms"写法在固定单参数接口下无法保留，板端两次模式均 3/3 成功 |
+| 局限 | **已知行为偏差**：`aht_trigger()` 固定以 STOP 结束命令，`AHTS`（rst=1）因此在触发后立即释放总线，80 ms 后的读是普通 START 而非重复 START；原因是 AHT20 在命令被 STOP 终止后才开始转换，延后 STOP 会读回 `0x98`。拆前 `AHTS` 的"握总线 80 ms"写法在固定单参数接口下无法保留，板端两次模式均 3/3 成功；代码中该路径已标注（`repeated_start` 不上线、无假分支），并登记为 `TECH_DEBT.md` D21 |
 | PATCHES 引用 | 未引用（S4 拆分证据） |
 
 ## 54. split-s4-build.log

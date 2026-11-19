@@ -17,7 +17,7 @@ typedef struct {
     void   (*init)(void);
     size_t (*scan)(uint8_t *found, size_t max);   /* count, 8-bit write addrs ascending */
     int    (*aht_trigger)(void);
-    int    (*aht_read)(uint8_t *raw, size_t n, int repeated_start);
+    int    (*aht_read)(uint8_t *raw, size_t n, int repeated_start); /* unused on the wire */
     int    (*write)(void *ctx, uint8_t control, const uint8_t *data, uint16_t len);
 } pm_i2c1_ops_t;   /* write matches oled_ch1116_bus_fn */
 
