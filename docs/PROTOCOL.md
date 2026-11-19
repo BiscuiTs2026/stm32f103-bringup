@@ -82,6 +82,7 @@ OLED ready (128x64, 6x8 font)
   | 回包 | 含义 | 什么时候出现 |
   | --- | --- | --- |
   | `AHT err=busy pending` | 上一次 AHT 测量还没结束 | 80 ms 窗口内重复发 `AHT` |
+  | `AHT err=busy oled` | 一次 OLED 整屏推送正在进行 | 98 ms 窗口内发 `AHT`（AHT 触发会重配 I2C1，插进去会把屏写坏） |
   | `AHT err=busy` | AHT20 自己没测完（状态字节 bit7=1），已重试 3 次 | 上电初期、总线异常 |
   | `DIST err=busy` | 上一次手动测距还在进行 | 60 ms 内重复发 `DIST` |
   | `DIST err=busy live` | live 模式自动测距正在进行 | live 开启时手动 `DIST` 撞上 |
@@ -102,7 +103,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 10 行 `HELP ...`，共 **398 B**（见下） | — | 否 |
+| `HELP` | 无 | 10 行 `HELP ...`，共 **403 B**（见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -118,7 +119,8 @@ HELP I2C=scan I2C1 bus, list 8-bit addresses
 HELP AHT=read AHT20, rh and t in 0.1 units
 HELP AHTS=same but read via repeated START
 HELP DIST=one shot, cm and us; live=1Hz
-HELP OLED=on/off/clear/test/show/frame/col/live
+HELP ADC=pot PA5 and NTC PA4, raw and mV
+HELP OLED=on/off/clear/test/show/frame/col/live/dump
 HELP KEYS=key press counters, clears them
 ```
 
@@ -128,7 +130,7 @@ HELP KEYS=key press counters, clears them
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `AHT` | 无 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0` | `AHT err=busy pending` / `AHT err=busy raw=...` / `AHT err=io raw=...` | 触发一次测量 |
+| `AHT` | 无 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0` | `AHT err=busy pending` / `AHT err=busy oled` / `AHT err=busy raw=...` / `AHT err=io raw=...` | 触发一次测量 |
 | `AHTS` | 无 | 同上，`rst=1` | 同上 | 触发一次测量（repeated START 路径，仅作对照） |
 
 - `rh`/`t` 单位是 0.1（`rh=40.8` 即 40.8 %RH，`t=20.4` 即 20.4 °C）。
@@ -162,10 +164,11 @@ HELP KEYS=key press counters, clears them
 | `OLED clear` | 无 | `OLED clear ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0` | `OLED err=io ...` / `err=busy pending` | **是**：整屏黑，3 s 后回 live |
 | `OLED test` | 无 | `OLED test ok ms=98 col=2 live=on hold=3000ms ...` | 同上 | **是**：整屏棋盘格，3 s 后回 live |
 | `OLED frame` | 无 | `OLED frame ok ms=98 col=2 live=on hold=3000ms ...` | 同上 | **是**：边框 + 9 条竖线，3 s 后回 live |
-| `OLED show` | 无 | `OLED show ok ms=98 col=2 live=on hold=3000ms ...` | `OLED err=busy pending` / `err=busy i2c` | **是**：静态三行状态，3 s 后回 live |
+| `OLED show` | 无 | `OLED show ok ms=98 col=2 live=on hold=3000ms ...` | `OLED err=busy pending` / `err=busy i2c` | **是**：把 live 页内容画成静态帧，3 s 后回 live |
 | `OLED col <0..4>` | 列偏移 | `OLED col=2 ok redraw=<图案名>` | `OLED err=usage col=0..4` | **是**：改列偏移并立即重画 |
 | `OLED live on` | 无 | `OLED live=on period=500ms` | `OLED err=busy pending` / `err=busy i2c` | **是**：进入周期刷新 + 1 Hz 自动测距 |
 | `OLED live off` | 无 | `OLED live=off` | — | **是**：停住一帧静态画面，屏保留最后一帧 |
+| `OLED dump` | 无 | `OLED dump mode=<live\|static\|off> [left=<s>s] screen=<页名>` + 8 行 `OLED L<n>=<21 字符>` | — | 否（只读显存文本，不发 I2C） |
 | `OLED live` | 缺参数 | — | `OLED err=usage` | 否 |
 | 其它子命令 | — | — | `OLED err=usage` | 否 |
 
@@ -179,15 +182,31 @@ HELP KEYS=key press counters, clears them
   `af/berr/to=` 是 I2C 错误累计计数（从开机起，不清零）。
 - `frame` 布局：page 0/7 全亮（上下 8 行实心带），page 1..6 在
   x = 0,16,32,48,64,80,96,112,127 处各一条竖线（共 9 条）。
-- `live` 四行（page 0..3，page 4..7 清空）：
+- live 页固定 **8 行 × 21 列**（6x8 字库），字段宽度固定、数值变化不跳位：
 
   ```
-  UP=<秒>S
-  K1=<n> K2=<n>
-  DIST=<cm>.<0.1cm>CM     （无有效测距为 DIST=NONE）
-  I2C af=<n> berr=<n>
+  MODE=LIVE      UP=123S
+  NOW : DIST MEAS
+  LAST: DIST ok 99.0
+  RH=47.3 T=19.8C
+  NTC=1792 POT=2048
+  K1=    0 K2=    0
+  I2C af= 0 berr= 0
+  LIVE ms= 98
   ```
 
+  - `MODE`：`LIVE` / `STAT 3S`（静态页接管中，数字是剩余 hold 秒）/ `OFF`。
+  - `NOW`：此刻真正在跑的后台作业——`IDLE`、`DIST MEAS`、`AHT READ`、
+    `OLED PUSH`；来自运行状态，不是写死的。
+    `DIST`/`AHT` 启动时只重画这一行（单页 ≈12 ms），所以 20/80 ms 的短作业
+    也能在屏上看到；这条单页写只发生在命令路径，不占 500 ms 刷新节拍。
+  - `LAST`：最近一条副作用的命令与结果摘要（最多 15 字符，超长截断），
+    失败时是错误原因，如 `LAST: AHT err=busy`。
+  - `RH`/`T` 来自后台 AHT：**每 2 s 触发一次**，只取最近一次合格结果；
+    还没读到过显示 `--.-`，之后读失败保留上一次的值，不会显示 0、也不会
+    卡住刷新节拍。
+  - `NTC`/`POT` 每帧现读（两次单次转换，成本低），读失败显示 `----`。
+  - `LIVE ms=` 是最近一次整屏推送耗时，反映 I2C 健康度；还没推过显示 `---`。
 - `live` 期间每 500 ms 刷新一次显示，每 1000 ms 自动发一次 `DIST`；
   测量起点比显示周期偏移 250 ms，两者互不阻塞。
 - 静态图案的 3 s 停留期间（以及 `OLED off` 期间）两者都暂停，恢复 live 后
@@ -219,7 +238,7 @@ ADC1，单次软件触发，ADCCLK = PCLK2/6 = 12 MHz，采样时间 55.5 周期
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **10 行 398 B**（含每条 CRLF）。
+   当前 `HELP` 是 **10 行 403 B**（含每条 CRLF）。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。

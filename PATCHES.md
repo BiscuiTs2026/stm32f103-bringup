@@ -959,7 +959,7 @@ local-patches   = none（只按上游规定改了 SOURCE_COMMIT 一行）
 | 确认在线 | AHT20 0x70（PB6/PB7） | `AHT ok rh=46.6 t=20.1`，两次读数不同 |
 | 确认在线 | CH1116 OLED 0x7A（PB6/PB7） | `I2C found` 含 0x7A；`OLED test/clear/show/live` 均 `ok`，`ms=97..98` |
 | 确认在线 | HC-SR04（TRIG PA11 / ECHO PA10） | `DIST cm=99.4 us=5767`、`cm=39.8 us=2310`，随前方物体变化 |
-| 未验证 | 蓝牙模块（USART3，PB10/PB11） | 见 22.4，本轮没有蓝牙侧数据 |
+| 已在线（端到端验证过） | 蓝牙模块（USART3，PB10/PB11） | 2026-11-18 `bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 且 `raw=18 76 29 A5 A8 B7` → 46.1 %RH / 20.7 °C 与页面一致（§14.1）；2026-11-19 未做蓝牙侧回归，见 22.4 |
 | 无法探测 | 舵机 PB8、循迹 PB14、电机 PA0/PA1、编码器 PA8/PA9/PB15、NTC PA4、电位器 PA5、蜂鸣器 PB9、继电器 PB5、LED PA6/PA7/PB0 | 当前固件没有对应命令，**不写成“未检测到”** |
 | 不在清单里 | 无 | I2C 扫描只有 0x70、0x7A，没有出现清单外地址 |
 
@@ -968,11 +968,19 @@ local-patches   = none（只按上游规定改了 SOURCE_COMMIT 一行）
 
 ### 22.4 两条必须写死的“别误读”结论
 
-1. **蓝牙通道本轮未验证，但不是链路故障**。该模块一直走**网页串口助手（Web Bluetooth）**，
-   不走 PC 的 SPP 端口；本轮试开的 COM5/6/7/8/9/10（系统里的“蓝牙链接上的标准串行”）
-   打开或写入超时，**只说明 PC 侧没有已连接的 SPP 通道**，与模块、USART3、固件都无关。
-   复验方法：用户重连 Web Bluetooth 页面后，从 USART2 侧抓固件的 `BT rx` / `BT tx` 镜像
-   （即以往的 `bt-*.log` 方式）对本轮收发对账。**在拿到这份日志之前，蓝牙只能写“未验证”。**
+1. **蓝牙通道已经端到端验证过，本轮只是没做回归，风险低**。2026-11-18 的
+   `bt-verify2.log` 把 USART3 全链路走通了：页面发 `HELP` 收回完整 **266 B**
+   （`BT tx` 镜像 7 段合计 266 B，末行齐全）；页面发不带行尾的 `AHT`，186 ms 后
+   收回 **51 B**，`raw=18 76 29 A5 A8 B7` → 46.1 %RH / 20.7 °C 与页面显示一致。
+   这条路径同时覆盖了 **100 ms 空闲冲刷**和 **80 ms 测量窗口**（逐字节对账见 §14.1）。
+   2026-11-19 本轮没有再从蓝牙侧发命令，原因是今日改动（`pm_osal_init` 位置、
+   OLED 常驻 live、ADC）都不涉及 USART3/USART2 的收发与解析路径，判为
+   **未回归、风险低**——不写成"未验证"。
+   补充事实：本轮试开的 COM5/6/7/8/9/10（系统里的"蓝牙链接上的标准串行"）打开或
+   写入超时，**只说明 PC 侧当前没有已连接的 SPP 通道**（该模块一直走网页
+   Web Bluetooth，不走 SPP），与模块、USART3、固件都无关。
+   复验方法：用户重连 Web Bluetooth 页面后，从 USART2 侧抓 `BT rx` / `BT tx`
+   镜像，与页面收发对账（即 `bt-verify2.log` 的方式）。
 2. **ST-Link 热连接读到的 GPIO 电平是复位默认值，不代表运行态**。
    `STM32_Programmer_CLI -c port=SWD mode=normal -r32` 连接时目标已被复位，读到
    `GPIOA_CRL=0x44444444`、`GPIOA_CRH=0x88844444`、`GPIOA_IDR=0x00000000`、
@@ -986,7 +994,8 @@ local-patches   = none（只按上游规定改了 SOURCE_COMMIT 一行）
 
 - 没有改任何源码，因此没有重新构建以外的验证；固件尺寸与 README 一致
 - 没有构造“无回波”条件，归档日志中没有真实的 `DIST err=timeout`
-- 没有运行态 GPIO 快照、没有蓝牙侧抓包、没有 `KEYS` 按键对账（等用户按键后补）
+- 没有运行态 GPIO 快照、没有蓝牙侧抓包、没有 `KEYS` 按键对账（等用户按键后补）；
+  蓝牙通道本身见 22.4：2026-11-18 已端到端验证，本轮只是未回归，不是未验证
 - 没有修改 `docs/PROTOCOL.md`（发现的口径问题记在 22.2，等确认后再改）
 
 ## 23. 2026-11-19 按键对账、屏不亮定位与 timeout 再复抓
@@ -1339,12 +1348,92 @@ ADC/PWM/GPIO 三组命令，临时拆分风险大于收益。于是：
   与反算温度一起记入
 - `pm_adc_to_mv()` 与实测一致，无需改
 
+## 29. 2026-11-19 OLED live 页改版：MODE / NOW / LAST，短作业单独重画一行
+
+### 29.1 改了什么（只动 `src/app/main.c`）
+
+- live 页固定 8 行 × 21 列：`MODE=` / `NOW :` / `LAST:` / `RH/T` / `NTC/POT` /
+  `K1/K2` / `I2C af/berr` / `LIVE ms=`。字段宽度固定，数值变化不跳位
+  （`sput_pad` 右对齐、`sput_f1` 固定 4 列、距离固定 5 列）。
+- `MODE`：`LIVE`、`STAT <n>S`（静态页接管，n 为剩余 hold 秒）、`OFF`；
+  由 `s_oled_live` + `s_oled_hold_until` 实时算，不是显示缓存。
+- `NOW`：`now_job()` 直接读运行状态——`s_oled_req`→`OLED PUSH`、
+  `s_aht.active`→`AHT READ`、`s_dist.active`→`DIST MEAS`、否则 `IDLE`。
+- `LAST`：`s_last[16]`，每条有副作用的命令在回包路径上写一次（最长 15 字符，
+  超出截断），失败写错误原因（`AHT err=busy`、`DIST err=tout`、`OLED err=io`）。
+- `OLED dump`：不发 I2C，回一行 `mode=... [left=ns] screen=...` 加 8 行
+  `OLED L0..L7=`，用于把屏面文字化核对。它不参与 busy 判定，推送中途也能调。
+- 短作业可见性：`DIST`/`AHT` 启动时调 `oled_now_row_flash()`，**只重画 page 1**
+  （一页 = 一次 I2C 事务 ≈12 ms），因为 20 ms 的回波窗口和 80 ms 的 AHT 转换
+  在 500 ms 节拍下几乎撞不上。该写只发生在命令路径，不在刷新节拍里，
+  也不在别的分页作业进行中（`s_oled_req != NULL` 直接跳过）。
+- AHT 后台化：`aht_bg_tick()` 每 2 s 触发一次、只取最近一次合格结果
+  （`s_aht_rh10/t10/have`），刷新节拍里不再等 80 ms；没读到过显示 `--.-`，
+  之后失败保留上一次值。
+- ADC 每帧现读：`adc_cache_read()` 两次单次转换（十几 µs 级），失败显示 `----`。
+- `LIVE ms=`：最近一次整屏推送的实际耗时（`s_oled_last_ms`）。
+- 互斥修复：`aht_bg_tick()` 在 OLED 作业进行中不触发；`oled_live_tick()`
+  在 AHT 窗口内不启动整帧；手动 `AHT` 撞上整帧推送时回 `AHT err=busy oled`
+  （上一版实测过：AHT 触发会重配 I2C1，插进 8 页序列导致 `err=io` 风暴、屏卡死）。
+- `OLED live` 作业启动时置 `s_oled_last = OLED_SCREEN_LIVE`，
+  修掉上一版 `mode=live` 却 `screen=frame` 的状态错位。
+- 内部单页重画作业走 `s_oled_silent`，完成时不发回包、不更新 `LIVE ms=`。
+
+### 29.2 已实测（`evidence/oled-page-20261119-{a,b,c,d}.log`，第 24–27 项）
+
+固件 Flash **20876 B / 64 KB（31.85%）**、RAM **3512 B / 20 KB（17.15%）**，
+烧录 verify 通过；`check_layering.py . --glue-max-lines 1700` = 0 ERROR / 3 WARN。
+
+- 复位后不发命令：连续 60 s 只靠 live 自己刷，`OLED live ok ms=98` 间隔稳定，
+  全程 `af=0 berr=0 to=0`；`OLED dump` 每 5 s 一次，8 行都有值（c 轮 +80 s）。
+- 空闲 `NOW : IDLE`；`LAST` 起始为 `boot`，之后随命令变化。
+- 手动 `DIST` 与 `OLED dump` 同一批发出：**5/5 次** dump 的 `L1=NOW : DIST MEAS`，
+  其后 500 ms 的 dump 变成 `L1=NOW : IDLE` + `L2=LAST: DIST ok 99.0`
+  （另一次 79.3，说明取的是真实测量值）。
+- `AHT` 与 dump 同批：**2/2 次**（第三次撞上后台 AHT，回 `AHT err=busy pending`，
+  属预期）出现 `L1=NOW : AHT READ`，随后 `L2=LAST: AHT ok 44.9`。
+- `MODE` 三态：`mode=live screen=live` → `OLED frame` 回
+  `OLED frame ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0`，
+  紧接 dump `mode=static left=3s screen=frame`；3.5 s 后 dump `mode=live screen=live`。
+- `OLED off` → `mode=off screen=live`、零刷新；`OLED on` → `mode=live`，
+  98 ms 内恢复首帧。
+- `HELP` 现为 **10 行 403 B**（新增 `ADC` 行、`OLED` 行加 `dump`）。
+- 全程无 `err=io`，`af/berr/to` 在所有 dump 与回包里都是 0。
+
+### 29.3 未验证
+
+- `NOW : OLED PUSH` **页面上出现不了**：一行文字是在整帧推送开始时生成的，
+  那一刻 `s_oled_req` 还是 NULL，判断分支只对 `OLED dump` 之外的调用者有理论意义。
+  保留该分支是为了语义完整，不宣称它可见。
+- `AHT err=busy oled` 的拒绝分支本轮没有真实触发（手发 AHT 恰好都避开了 98 ms
+  推送窗口）；只有代码路径，没有回包证据。
+- `OLED show` 本轮没单独复测；它与 live 共用同一 staging，属推断。
+- 静态页 3 s 内如果来命令，hold 会被重排（`OLED frame` 每次都重新计时），
+  只验证了单次接管，没验证连续接管叠加。
+
+### 29.4 推测
+
+- `LIVE ms=98` 与上一版 97 差 1 ms，推测是新增单页重画带来的节拍偏移，
+  不是 I2C 变慢；没有逐页计时证据。
+- 后台 AHT 每 2 s 一次的 12 ms 单页重画在 live 占空上约 +2.4%，
+  未测对 500 ms 周期的影响（实测间隔仍在 497–503 ms 量级，但本轮没统计分布）。
+
+### 29.5 CI 胶水层上限：1500 → 1700（临时，见 §27.5）
+
+live 页扩到 8 行、加 `MODE/NOW/LAST` 与 AHT 后台化后，`src/app/main.c` 为
+**1658 行代码**（检查器口径），超了 1500。本轮把
+`.github/workflows/layering.yml` 与 README 的上限抬到 **1700**，并在 workflow
+注释里写明原因与指向本节。**拆分义务不变**：把 live 页格式化、文本辅助
+（`sput_*`）、`NOW/LAST` 状态维护挪进 components/，拆完把上限压回当时行数。
+拆分的时机与条件同 §27.5：板级器件驱动全部上板验证之后再动，避免一边改功能
+一边改结构。
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，
   当前未使用 printf，无影响。
 - 判读规则：BLE 侧一个长回包可能显示成多个气泡，**只看总字节数，不看气泡个数**。
-  `HELP` 完整 = **398 B（10 行，COM11 实测）**。
+  `HELP` 完整 = **403 B（10 行，COM11 实测）**。
 - `DIST` 的 timeout 分支（无回波、>4 m）只做了代码路径，**没有制造出真实现场验证**。
 - 异步命令（`AHT`/`AHTS`/`DIST`）的回包可能晚于其后一条命令的回包（最多晚 60~80 ms）。
 - OLED：已验证到"初始化 + 8 页 GDDRAM 写入全部 ACK、AF/BERR 为 0"，

@@ -10,7 +10,9 @@
 ## 怎么读这些日志
 
 - 全部抓在 **USART2（115200，PA2/PA3，CH343P）**，PC 侧串口工具记录；蓝牙侧数据靠固件自己
-  打在 USART2 上的 `BT rx` / `BT tx` 镜像行间接观察。
+  打在 USART2 上的 `BT rx` / `BT tx` 镜像行间接观察。蓝牙通道本身在 2026-11-18 已端到端验证
+  （`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后的日志里没有
+  `BT` 行，只表示那几轮没从蓝牙侧发命令，**不代表通道有问题**。
 - 时间戳是 **PC 侧的**，不是 MCU 时钟：`[+1234ms]` 是从抓包窗口开始算的偏移，
   `21:28:13.306` 是墙上时钟；`[ 14B]` 是这一行的字节数。
 - `<CR><LF>` 是工具把控制字符转义后的写法，不是固件真的发了这 8 个字符。
@@ -41,6 +43,10 @@
 | 21 | `adc-20261119-a.log` | 19:46:53 起，约 120 s | ADC 第一次抓包：NTC 基线 2293 → 手指捏住后单调降到 1792（Δ≈−491）；电位器全程 2122–2133、30 次极差 2 LSB（**没转，缺工具**） | §28.2 |
 | 22 | `adc-20261119-b.log` | 19:49:33 起，约 90 s | ADC 第二次抓包（NTC 自然降温）：1771 → 2065，每 10 s 均值单调回升，证明反方向可分辨 | §28.2 |
 | 23 | `adc-20261119-c.log` | 19:51:43 起，约 6 s | 命令形状核对：`HELP` 10 行 / 398 B、`STAT` 正常、`ADC` 回包字段与 mV 换算一致 | §28.2 |
+| 24 | `oled-page-20261119-a.log` | 188 行 | live 页第一版首抓：前 15694 ms 正常（`mode=live screen=live`、`ms=98`），之后后台 AHT 插进整帧推送，`OLED err=io` 连续、屏卡死；据此加 AHT/OLED 互斥 | §29.1 |
+| 25 | `oled-page-20261119-b.log` | 679 行 / 约 79 s | 互斥修复后复抓：`mode=live screen=live`、`LIVE ms=98`、60 s 浸泡 `af/berr/to` 全 0；`NOW` 在短作业期间仍显示 IDLE（500 ms 节拍抓不到 20/80 ms 作业，见第 26 项） | §29.2 |
+| 26 | `oled-page-20261119-c.log` | 692 行 / 约 80 s | 当前固件：`NOW : DIST MEAS` 5/5、`NOW : AHT READ` 2/2、`LAST: DIST ok 99.0/79.3/99.3`、`LAST: AHT ok 44.9/44.8`、`HELP` 10 行 / 403 B、`off`/`on` 往返；全程无 `err=io` | §29.2 |
+| 27 | `oled-page-20261119-d.log` | 119 行 / 约 22 s | 静态接管专项：`OLED frame ok ... hold=3000ms` → `mode=static left=3s screen=frame` → 3.5 s 后 `mode=live screen=live` | §29.2 |
 
 ---
 
@@ -327,3 +333,55 @@
 | 不能证明什么 | 屏上文字；`ADC err=` 失败分支（没有制造故障） |
 | 局限 | 抓包很短，只作命令形状证据 |
 | PATCHES 引用 | §28.2 |
+
+## 24. oled-page-20261119-a.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 188 行；live 页第一版固件（AHT 后台化 + 8 行页，AHT/OLED 互斥尚未加） |
+| 采样窗口 | 无复位锚点；约 20 s |
+| 当时在做什么 | 空闲 dump → `DIST`+dump → `AHT`+dump → 后续 dump |
+| 关键内容 | 前 15.7 s 正常（`ms=98`、`af/berr/to=0`）；`[+15694ms]` 的 dump 后紧接 `NOW : AHT READ`，`[+15760ms]` 起连续 `OLED err=io`，`to` 从 1 涨到 10，屏停止更新 |
+| 能证明什么 | 后台 AHT 触发会重配 I2C1，插进 OLED 8 页推送序列会让屏卡死——这是第 25 项互斥改动的直接依据 |
+| 不能证明什么 | 屏上画面；单个失效事务的具体波形（无逻辑分析仪） |
+| 局限 | 该日志是"病态证据"，不代表当前固件行为 |
+| PATCHES 引用 | §29.1 |
+
+## 25. oled-page-20261119-b.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 679 行，约 79 s；live 页第一版固件（AHT/OLED 互斥、`screen=live` 修复后） |
+| 采样窗口 | 无复位锚点（板子烧录后已运行）；PC 侧 `DtrEnable=$false`，COM11 |
+| 当时在做什么 | 空闲 dump → `DIST`+dump ×4 → `AHT`+dump → `HELP` → `OLED frame` → `off`/`on` → 每 5 s dump 浸泡 60 s |
+| 关键内容 | `mode=live screen=live`；`LIVE ms=98`；浸泡段每条 dump 都是 `I2C af= 0 berr= 0`，`to` 未再出现；`LAST` 依次出现 `OLED dump` / `DIST ok 98.5`；`DIST` 与 dump 同批时 `NOW` 仍是 `IDLE` |
+| 能证明什么 | ① 60 s 连续刷新期间 I²C 零错误（上一版 `err=io` 风暴已消失）；② `LAST` 跟随命令；③ `MODE`/`screen` 状态不再错位 |
+| 不能证明什么 | 短作业的 `NOW` 变化——500 ms 节拍抓不到 20/80 ms 的作业，本项失败，触发第 26 项的单页重画改动 |
+| 局限 | `OLED frame` 那次被后台 AHT 撞掉（`err=busy i2c`），静态接管在本日志里没验到 |
+| PATCHES 引用 | §29.2 |
+
+## 26. oled-page-20261119-c.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 692 行，约 80 s；当前固件（Flash 20876 B / RAM 3512 B），烧录 verify 通过 |
+| 采样窗口 | 板子烧录复位后由脚本接管，`[+0ms]` 起 |
+| 当时在做什么 | 空闲 dump → `DIST`+dump ×5 → `AHT`+dump ×3 → `HELP` → `OLED frame`+dump → 3.5 s 后 dump → `off`/`on` → 每 5 s dump 浸泡 60 s |
+| 关键内容 | `NOW : DIST MEAS` **5/5**，随后 `LAST: DIST ok 99.0/99.0/99.0/79.3/99.3` 与 `DIST cm=` 逐条对上；`NOW : AHT READ` **2/2**（第三次 `AHT err=busy pending`，后台 AHT 占用，属预期），`LAST: AHT ok 44.9/44.8` 与回包一致；`OLED off`→`mode=off screen=live`、`OLED on`→`mode=live`；`HELP` 10 行 **403 B**；全日志无 `err=io`，`af/berr/to` 无一条非零 |
+| 能证明什么 | ① `NOW` 反映真实运行中的作业，不是写死；② `LAST` 与命令回包一致；③ `MODE` 在 live/off 间正确切换；④ 默认常驻 live 在 60 s 浸泡下 I²C 零错误；⑤ `HELP` 新字节数 |
+| 不能证明什么 | `OLED frame` 的静态接管（本日志那次被 `err=busy i2c` 拒绝，见第 27 项）；`AHT err=busy oled` 拒绝分支；屏上像素 |
+| 局限 | dump 读的是已 staged 的 8 行文本，不是屏上像素回读（CH1116 不支持读 GDDRAM） |
+| PATCHES 引用 | §29.2 |
+
+## 27. oled-page-20261119-d.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 119 行，约 22 s；同一固件 |
+| 采样窗口 | 紧接第 25 项之后，板子未复位 |
+| 当时在做什么 | `OLED frame` 重试 8 次（后台 AHT 会间歇占 I²C），每次后接 dump；3.5 s 后再 dump |
+| 关键内容 | `OLED frame ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0`；紧接 `OLED dump mode=static left=3s screen=frame`（`screen=frame` 时 dump 不列 `L0..L7`，因为面板上是图案不是文本）；3.5 s 后 `OLED dump mode=live screen=live` |
+| 能证明什么 | 静态图案接管 → `MODE=STATIC`+剩余秒 → 3 s 到期自动回 live，闭环成立 |
+| 不能证明什么 | `left=` 的逐秒递减（只采到 3 s 与已归零两个点） |
+| 局限 | 首次尝试被 `OLED err=busy i2c` 拒绝，说明静态命令与后台 AHT 有 80 ms 级碰撞概率 |
+| PATCHES 引用 | §29.2 |

@@ -111,6 +111,62 @@ static int      s_key_last = -1;
 static uint32_t s_rx_total;
 static uint32_t s_tx_total;
 
+/* Last command and result, shown on the live page as "LAST: ". Capped at 15
+ * characters so it fits after the 6-column prefix; longer replies are cut. */
+static char s_last[16] = "boot";
+
+/* Declared here because aht_bg_tick() runs before the OLED block: the
+ * background AHT trigger must not cut into a multi-page I2C push. */
+static cmd_port_t *s_oled_req;         /* NULL = no job running */
+static void oled_now_row_flash(void);  /* repaint the NOW row for a short job */
+
+static char *sput_u32(char *p, uint32_t v);
+static char *sput_s(char *p, const char *s, uint8_t width);
+static char *sput_f1(char *p, int32_t v10);
+
+static void last_set(const char *s)
+{
+    size_t n = 0u;
+
+    while ((s[n] != '\0') && (n < (sizeof(s_last) - 1u))) {
+        s_last[n] = s[n];
+        n++;
+    }
+    s_last[n] = '\0';
+}
+
+static void last_num(const char *pre, uint32_t v, const char *suf)
+{
+    char  b[16];
+    char *p = b;
+
+    while (*pre != '\0') {
+        *p++ = *pre++;
+    }
+    p = sput_u32(p, v);
+    while (*suf != '\0') {
+        *p++ = *suf++;
+    }
+    *p = '\0';
+    last_set(b);
+}
+
+static void last_two(const char *a, const char *b)
+{
+    char        buf[16];
+    char       *p = buf;
+    const char *s;
+
+    for (s = a; (*s != '\0') && (p < &buf[15]); s++) {
+        *p++ = *s;
+    }
+    for (s = b; (*s != '\0') && (p < &buf[15]); s++) {
+        *p++ = *s;
+    }
+    *p = '\0';
+    last_set(buf);
+}
+
 static void cmd_feed(cmd_port_t *c, const uint8_t *d, size_t n);
 
 static void uart_write_str(const char *s)
@@ -542,6 +598,16 @@ typedef struct {
 
 static aht_job_t s_aht;
 
+/* Background sample for the live page: triggered every AHT_BG_PERIOD_MS with
+ * no reply port. Only a successful read replaces the cache, so the page shows
+ * the last good value (or "--" before the first one) and never 0. */
+#define AHT_BG_PERIOD_MS 2000u
+
+static int32_t  s_aht_rh10;
+static int32_t  s_aht_t10;
+static uint8_t  s_aht_have;
+static uint32_t s_aht_next = AHT_BG_PERIOD_MS;
+
 static void tx_fixed1(cmd_port_t *c, int32_t v)
 {
     if (v < 0) {
@@ -568,6 +634,10 @@ static void aht_reply_raw(cmd_port_t *c, const uint8_t *d)
 
 static void aht_reply_err(cmd_port_t *c, const uint8_t *d, const char *why)
 {
+    if (c == NULL) {
+        return;                        /* background sample: no port, no reply */
+    }
+    last_two("AHT err=", why);
     tx_str(c, "AHT err=");
     tx_str(c, why);
     aht_reply_raw(c, d);
@@ -581,6 +651,21 @@ static void aht_reply_ok(cmd_port_t *c, const uint8_t *d, int repeated)
     uint32_t rh10  = (raw_h * 1000u) / 1048576u;
     int32_t  t10   = (int32_t)((raw_t * 2000u) / 1048576u) - 500;
 
+    if (c == NULL) {
+        s_aht_rh10 = (int32_t)rh10;
+        s_aht_t10  = t10;
+        s_aht_have = 1u;
+        return;
+    }
+    {
+        char  lb[16];
+        char *lp = lb;
+
+        lp = sput_s(lp, "AHT ok ", 7u);
+        lp = sput_f1(lp, (int32_t)rh10);
+        *lp = '\0';
+        last_set(lb);
+    }
     tx_str(c, "AHT ok rh=");
     tx_fixed1(c, (int32_t)rh10);
     tx_str(c, " t=");
@@ -599,6 +684,12 @@ static void aht_start(cmd_port_t *c, int repeated)
         tx_str(c, "AHT err=busy pending\r\n");
         return;
     }
+    /* aht_trigger_only() re-initialises I2C1 when the peripheral is off; doing
+     * that between two pages of an OLED push wedged the panel (err=io run). */
+    if (s_oled_req != NULL) {
+        tx_str(c, "AHT err=busy oled\r\n");
+        return;
+    }
     if (aht_trigger_only(repeated) == 0) {
         aht_reply_err(c, zero, "io");
         return;
@@ -608,6 +699,9 @@ static void aht_start(cmd_port_t *c, int repeated)
     s_aht.attempt  = 0u;
     s_aht.t0       = pm_osal_now_ms();
     s_aht.active   = 1u;
+    /* 80 ms is too short for a 500 ms refresh to catch; paint the NOW row once
+     * (one page, ~12 ms) while the sensor waits, well before the read. */
+    oled_now_row_flash();
 }
 
 static void aht_service(uint32_t now)
@@ -649,6 +743,32 @@ static void aht_service(uint32_t now)
         return;
     }
     s_aht.t0 = now;
+}
+
+/* Keeps the live page's RH/T fresh without blocking the 500 ms refresh: one
+ * trigger every 2 s, the result is picked up by aht_service() 80 ms later. */
+static void aht_bg_tick(uint32_t now)
+{
+    if ((int32_t)(now - s_aht_next) < 0) {
+        return;
+    }
+    s_aht_next = now + AHT_BG_PERIOD_MS;
+    if (s_aht.active != 0u) {
+        return;                        /* a manual AHT/AHTS owns the sensor */
+    }
+    /* The OLED push is a long multi-page I2C sequence; re-initialising the bus
+     * in the middle of it wedged the panel (seen as a run of err=io). */
+    if (s_oled_req != NULL) {
+        return;
+    }
+    if (aht_trigger_only(0) == 0) {
+        return;
+    }
+    s_aht.c        = NULL;
+    s_aht.repeated = 0u;
+    s_aht.attempt  = 0u;
+    s_aht.t0       = now;
+    s_aht.active   = 1u;
 }
 
 /* ------------------------------------------------------------ ADC1, PA4/PA5
@@ -718,23 +838,51 @@ static uint32_t adc_to_mv(uint16_t raw)
     return ((uint32_t)raw * 3300u + 2047u) / 4095u;
 }
 
+/* Per-frame read for the live page. Both channels are behind a 55.5-cycle
+ * sample, so this costs well under 1 ms; a failed read blanks the row instead
+ * of showing a stale or zero value. */
+static uint16_t s_live_pot;
+static uint16_t s_live_ntc;
+static uint8_t  s_live_adc_ok;
+
+static void adc_cache_read(void)
+{
+    uint16_t pot;
+    uint16_t ntc;
+
+    s_live_adc_ok = 0u;
+    if (adc_sample(ADC_CHANNEL_5, &pot) == 0) {
+        return;
+    }
+    if (adc_sample(ADC_CHANNEL_4, &ntc) == 0) {
+        return;
+    }
+    s_live_pot    = pot;
+    s_live_ntc    = ntc;
+    s_live_adc_ok = 1u;
+}
+
 static void cmd_adc(cmd_port_t *c)
 {
     uint16_t pot = 0u;
     uint16_t ntc = 0u;
 
     if (s_adc_ok == 0u) {
+        last_set("ADC err=init");
         tx_str(c, "ADC err=init\r\n");
         return;
     }
     if (adc_sample(ADC_CHANNEL_5, &pot) == 0) {
+        last_set("ADC err=tout pa5");
         tx_str(c, "ADC err=timeout ch=pa5\r\n");
         return;
     }
     if (adc_sample(ADC_CHANNEL_4, &ntc) == 0) {
+        last_set("ADC err=tout pa4");
         tx_str(c, "ADC err=timeout ch=pa4\r\n");
         return;
     }
+    last_num("ADC ok ", adc_to_mv(pot), "mV");
     tx_str(c, "ADC pot=");
     tx_u32(c, pot);
     tx_str(c, " pot_mv=");
@@ -783,6 +931,23 @@ static uint8_t  s_dist_last_ok;
  * display refresh (see dist_live_tick()). */
 #define DIST_LIVE_PERIOD_MS 1000u
 static uint32_t s_dist_live_next;
+
+/* One-line summary for the live page's LAST row: "DIST ok 99.0". */
+static void dist_last_ok(uint32_t cm10)
+{
+    char        b[16];
+    char       *p = b;
+    const char *pre = "DIST ok ";
+
+    while (*pre != '\0') {
+        *p++ = *pre++;
+    }
+    p = sput_u32(p, cm10 / 10u);
+    *p++ = '.';
+    *p++ = (char)('0' + (cm10 % 10u));
+    *p = '\0';
+    last_set(b);
+}
 
 static void dist_hw_init(void)
 {
@@ -857,6 +1022,9 @@ static void dist_start(cmd_port_t *c, uint8_t auto_live)
 
     s_dist.t0_ms  = pm_osal_now_ms();
     s_dist.active = 1u;
+    if (auto_live == 0u) {
+        oled_now_row_flash();   /* the echo window is ~20 ms, show it */
+    }
 }
 
 static void dist_service(uint32_t now)
@@ -875,6 +1043,7 @@ static void dist_service(uint32_t now)
         s_dist.active    = 0u;
         s_dist.have_rise = 0u;
         s_dist_last_ok   = 0u;
+        last_set("DIST err=tout");
         if (s_dist.auto_live != 0u) {
             tx_str(s_dist.c, "DIST live ");
             s_dist.auto_live = 0u;
@@ -891,6 +1060,7 @@ static void dist_service(uint32_t now)
     if ((us < DIST_MIN_US) || (us > DIST_MAX_US)) {
         /* HC-SR04 holds ECHO high ~38 ms when nothing reflects the burst. */
         s_dist_last_ok = 0u;
+        last_set("DIST err=tout");
         if (s_dist.auto_live != 0u) {
             tx_str(s_dist.c, "DIST live ");
             s_dist.auto_live = 0u;
@@ -905,6 +1075,9 @@ static void dist_service(uint32_t now)
 
     s_dist_last_cm10 = cm10;
     s_dist_last_ok   = 1u;
+    if (s_dist.auto_live == 0u) {
+        dist_last_ok(cm10);
+    }
 
     if (s_dist.auto_live != 0u) {
         tx_str(s_dist.c, "DIST live ");
@@ -940,7 +1113,6 @@ static uint32_t      s_oled_af;
 static uint32_t      s_oled_berr;
 static uint32_t      s_oled_to;
 
-static cmd_port_t *s_oled_req;         /* NULL = no job running */
 static const char *s_oled_name;
 static uint32_t    s_oled_t0;
 
@@ -950,6 +1122,9 @@ static uint8_t     s_oled_live;        /* 1 = periodic refresh enabled */
 static uint8_t     s_oled_live_job;    /* the running job is a live refresh */
 static cmd_port_t *s_oled_live_port;   /* where live refresh replies go */
 static uint32_t    s_oled_live_next;   /* ms of the next refresh */
+static uint32_t    s_oled_hold_until;  /* non-zero: a static page holds the panel */
+static uint32_t    s_oled_last_ms;     /* duration of the last whole-frame push */
+static uint8_t     s_oled_silent;      /* one-page NOW repaint: do not reply */
 
 /* Live is the default after boot. A static screen holds the panel for this long
  * by pushing the two next-due timestamps forward; `OLED off` clears live. */
@@ -1108,86 +1283,185 @@ static char *sput_u32(char *p, uint32_t v)
     return p;
 }
 
-/* Stage the three STAT-ish lines. Pages 0..2, so they land on the top 24 rows. */
-static void oled_stage_show(void)
+/* Fixed-width text helpers: every field keeps its columns, so a value that
+ * grows a digit never shifts the rest of the row. */
+static char *sput_s(char *p, const char *s, uint8_t width)
 {
-    char    b[OLED_CH1116_LINE_CHARS + 1u];
-    char   *p;
+    uint8_t n = 0u;
 
-    p = b;
-    *p++ = 'U'; *p++ = 'P'; *p++ = '=';
-    p = sput_u32(p, pm_osal_now_ms() / 1000u);
-    *p++ = 'S';
-    *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 0u, b);
-
-    p = b;
-    *p++ = 'K'; *p++ = '1'; *p++ = '=';
-    p = sput_u32(p, s_key_press[0]);
-    *p++ = ' ';
-    *p++ = 'K'; *p++ = '2'; *p++ = '=';
-    p = sput_u32(p, s_key_press[1]);
-    *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 1u, b);
-
-    if (s_dist_last_ok != 0u) {
-        p = b;
-        *p++ = 'D'; *p++ = 'I'; *p++ = 'S'; *p++ = 'T'; *p++ = '=';
-        p = sput_u32(p, s_dist_last_cm10 / 10u);
-        *p++ = '.';
-        *p++ = (char)('0' + (s_dist_last_cm10 % 10u));
-        *p++ = 'C'; *p++ = 'M';
-        *p = '\0';
-        oled_ch1116_stage_line(&s_oled, 2u, b);
-    } else {
-        oled_ch1116_stage_line(&s_oled, 2u, "DIST=NONE");
+    while ((s[n] != '\0') && (n < width)) {
+        *p++ = s[n];
+        n++;
     }
+    while (n < width) {
+        *p++ = ' ';
+        n++;
+    }
+    return p;
 }
 
-/* Four live rows: uptime, key counters, last distance, I2C error counters. */
+static char *sput_pad(char *p, uint32_t v, uint8_t width)
+{
+    char     tmp[11];
+    uint8_t  n = 0u;
+
+    do {
+        tmp[n] = (char)('0' + (v % 10u));
+        v /= 10u;
+        n++;
+    } while (v != 0u);
+    while (n < width) {
+        *p++ = ' ';
+        width--;
+    }
+    while (n != 0u) {
+        n--;
+        *p++ = tmp[n];
+    }
+    return p;
+}
+
+/* One decimal, always 4 columns: "47.3", " 9.5", "-5.0". */
+static char *sput_f1(char *p, int32_t v10)
+{
+    if (v10 < 0) {
+        if (v10 < -99) {
+            v10 = -99;
+        }
+        *p++ = '-';
+        *p++ = (char)('0' + ((-v10) / 10));
+        *p++ = '.';
+        *p++ = (char)('0' + ((-v10) % 10));
+        return p;
+    }
+    if (v10 > 999) {
+        v10 = 999;
+    }
+    if (v10 >= 100) {
+        *p++ = (char)('0' + (v10 / 100));
+    } else {
+        *p++ = ' ';
+    }
+    *p++ = (char)('0' + ((v10 % 100) / 10));
+    *p++ = '.';
+    *p++ = (char)('0' + (v10 % 10));
+    return p;
+}
+
+/* The background job that is running right now, for the NOW row. */
+static const char *now_job(void)
+{
+    if (s_oled_req != NULL) {
+        return "OLED PUSH";
+    }
+    if (s_aht.active != 0u) {
+        return "AHT READ";
+    }
+    if (s_dist.active != 0u) {
+        return "DIST MEAS";
+    }
+    return "IDLE";
+}
+
+static const char *oled_mode_name(uint32_t now)
+{
+    if (s_oled_live == 0u) {
+        return "off";
+    }
+    if ((s_oled_hold_until != 0u) &&
+        ((int32_t)(s_oled_hold_until - now) > 0)) {
+        return "static";
+    }
+    return "live";
+}
+
+/* The live page, 8 rows x 21 columns. Also used by `OLED show`, so a static
+ * text page is the same content the panel shows on its own. */
+
+/* Row 1 only; shared with the short-job repaint below. */
+static void oled_stage_now_row(void)
+{
+    char  b[OLED_CH1116_LINE_CHARS + 1u];
+    char *p = sput_s(b, "NOW : ", 6u);
+
+    p = sput_s(p, now_job(), 15u);
+    *p = '\0';
+    oled_ch1116_stage_line(&s_oled, 1u, b);
+}
+
 static void oled_stage_live(void)
 {
-    char    b[OLED_CH1116_LINE_CHARS + 1u];
-    char   *p;
+    char     b[OLED_CH1116_LINE_CHARS + 1u];
+    char    *p;
+    uint32_t now = pm_osal_now_ms();
 
-    p = b;
-    *p++ = 'U'; *p++ = 'P'; *p++ = '=';
-    p = sput_u32(p, pm_osal_now_ms() / 1000u);
+    /* Row 0: MODE (8) + UP (8). */
+    p = sput_s(b, "MODE=", 5u);
+    if (s_oled_live == 0u) {
+        p = sput_s(p, "OFF", 8u);
+    } else if ((s_oled_hold_until != 0u) &&
+               ((int32_t)(s_oled_hold_until - now) > 0)) {
+        char     m[9];
+        char    *q = m;
+
+        q = sput_s(q, "STAT", 4u);
+        q = sput_pad(q, ((s_oled_hold_until - now) + 999u) / 1000u, 2u);
+        *q++ = 'S';
+        *q = '\0';
+        p = sput_s(p, m, 8u);
+    } else {
+        p = sput_s(p, "LIVE", 8u);
+    }
+    p = sput_s(p, "UP=", 3u);
+    p = sput_pad(p, now / 1000u, 4u);
     *p++ = 'S';
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 0u, b);
 
-    p = b;
-    *p++ = 'K'; *p++ = '1'; *p++ = '=';
-    p = sput_u32(p, s_key_press[0]);
-    *p++ = ' ';
-    *p++ = 'K'; *p++ = '2'; *p++ = '=';
-    p = sput_u32(p, s_key_press[1]);
+    oled_stage_now_row();
+
+    p = sput_s(b, "LAST: ", 6u);
+    p = sput_s(p, s_last, 15u);
     *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 1u, b);
+    oled_ch1116_stage_line(&s_oled, 2u, b);
 
-    if (s_dist_last_ok != 0u) {
-        p = b;
-        *p++ = 'D'; *p++ = 'I'; *p++ = 'S'; *p++ = 'T'; *p++ = '=';
-        p = sput_u32(p, s_dist_last_cm10 / 10u);
-        *p++ = '.';
-        *p++ = (char)('0' + (s_dist_last_cm10 % 10u));
-        *p++ = 'C'; *p++ = 'M';
-        *p = '\0';
-        oled_ch1116_stage_line(&s_oled, 2u, b);
-    } else {
-        oled_ch1116_stage_line(&s_oled, 2u, "DIST=NONE");
-    }
-
-    p = b;
-    *p++ = 'I'; *p++ = '2'; *p++ = 'C'; *p++ = ' ';
-    *p++ = 'a'; *p++ = 'f'; *p++ = '=';
-    p = sput_u32(p, s_oled_af);
-    *p++ = ' ';
-    *p++ = 'b'; *p++ = 'e'; *p++ = 'r'; *p++ = 'r'; *p++ = '=';
-    p = sput_u32(p, s_oled_berr);
+    p = sput_s(b, "RH=", 3u);
+    p = (s_aht_have != 0u) ? sput_f1(p, s_aht_rh10) : sput_s(p, "--.-", 4u);
+    p = sput_s(p, " T=", 3u);
+    p = (s_aht_have != 0u) ? sput_f1(p, s_aht_t10) : sput_s(p, "--.-", 4u);
+    *p++ = 'C';
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 3u, b);
+
+    adc_cache_read();
+    p = sput_s(b, "NTC=", 4u);
+    p = (s_live_adc_ok != 0u) ? sput_pad(p, s_live_ntc, 4u)
+                              : sput_s(p, "----", 4u);
+    p = sput_s(p, " POT=", 5u);
+    p = (s_live_adc_ok != 0u) ? sput_pad(p, s_live_pot, 4u)
+                              : sput_s(p, "----", 4u);
+    *p = '\0';
+    oled_ch1116_stage_line(&s_oled, 4u, b);
+
+    p = sput_s(b, "K1=", 3u);
+    p = sput_pad(p, s_key_press[0], 5u);
+    p = sput_s(p, " K2=", 4u);
+    p = sput_pad(p, s_key_press[1], 5u);
+    *p = '\0';
+    oled_ch1116_stage_line(&s_oled, 5u, b);
+
+    p = sput_s(b, "I2C af=", 7u);
+    p = sput_pad(p, s_oled_af, 2u);
+    p = sput_s(p, " berr=", 6u);
+    p = sput_pad(p, s_oled_berr, 2u);
+    *p = '\0';
+    oled_ch1116_stage_line(&s_oled, 6u, b);
+
+    p = sput_s(b, "LIVE ms=", 8u);
+    p = (s_oled_last_ms != 0u) ? sput_pad(p, s_oled_last_ms, 3u)
+                               : sput_s(p, "---", 3u);
+    *p = '\0';
+    oled_ch1116_stage_line(&s_oled, 7u, b);
 }
 
 /* Every screen command paints all 8 pages, so the result never depends on what
@@ -1217,6 +1491,35 @@ static const char *oled_screen_name(oled_screen_t s)
     }
 }
 
+/* A DIST echo window (~20 ms) or an AHT conversion (80 ms) is far shorter than
+ * the 500 ms page period, so a normal frame would almost never show it. Repaint
+ * row 1 alone at job start: one page is one I2C transaction (~12 ms), so it
+ * still finishes well before the AHT read. Never called from the refresh tick
+ * and never in the middle of another panel job. */
+static void oled_now_row_flash(void)
+{
+    uint32_t now = pm_osal_now_ms();
+
+    if ((s_oled_live == 0u) || (s_oled_req != NULL)) {
+        return;
+    }
+    if (s_oled_last != OLED_SCREEN_LIVE) {
+        return;                        /* a static page owns the panel */
+    }
+    if ((s_oled_hold_until != 0u) && ((int32_t)(s_oled_hold_until - now) > 0)) {
+        return;
+    }
+    oled_stage_now_row();
+    if (oled_ch1116_start_text(&s_oled, 1u, 1u) != 0) {
+        return;
+    }
+    s_oled_req      = s_oled_live_port;
+    s_oled_name     = "now";
+    s_oled_t0       = now;
+    s_oled_live_job = 1u;
+    s_oled_silent   = 1u;
+}
+
 /* Starts a full-screen job; pages 3..7 of a show are written blank. */
 static int oled_start_screen(oled_screen_t s)
 {
@@ -1228,7 +1531,7 @@ static int oled_start_screen(oled_screen_t s)
     case OLED_SCREEN_FRAME:
         return oled_ch1116_start_frame(&s_oled);
     case OLED_SCREEN_SHOW:
-        oled_stage_show();
+        oled_stage_live();
         return oled_ch1116_start_text(&s_oled, 0u, (uint8_t)OLED_CH1116_PAGES);
     default:
         return -1;
@@ -1248,6 +1551,7 @@ static int oled_start_live_job(cmd_port_t *port, const char *name, uint32_t now)
     s_oled_name     = name;
     s_oled_t0       = now;
     s_oled_live_job = 1u;
+    s_oled_last     = OLED_SCREEN_LIVE;
     return 0;
 }
 
@@ -1259,6 +1563,7 @@ static void oled_live_arm(cmd_port_t *port, uint32_t first_ms)
 {
     s_oled_live      = 1u;   s_oled_live_port = port;   s_oled_last = OLED_SCREEN_LIVE;
     s_oled_live_next = first_ms;
+    s_oled_hold_until = 0u;
     s_dist_live_next = first_ms + (OLED_LIVE_PERIOD_MS / 2u);
 }
 
@@ -1282,7 +1587,40 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
             oled_ch1116_abort(&s_oled);
             s_oled_req      = NULL;
             s_oled_live_job = 0u;
+            s_oled_silent   = 0u;
         }
+    }
+
+    /* Text dump of the page: no I2C, so it is allowed even mid-push and is the
+     * only way to read MODE/STATIC/OFF back while the panel is blank or shows
+     * a static pattern. */
+    if (ci_equal(arg, "DUMP")) {
+        uint32_t now = pm_osal_now_ms();
+        uint8_t  pg;
+
+        tx_str(c, "OLED dump mode=");
+        tx_str(c, oled_mode_name(now));
+        if ((s_oled_live != 0u) && (s_oled_hold_until != 0u) &&
+            ((int32_t)(s_oled_hold_until - now) > 0)) {
+            tx_str(c, " left=");
+            tx_u32(c, ((s_oled_hold_until - now) + 999u) / 1000u);
+            tx_str(c, "s");
+        }
+        tx_str(c, " screen=");
+        tx_str(c, oled_screen_name(s_oled_last));
+        tx_str(c, "\r\n");
+        if ((s_oled_last == OLED_SCREEN_LIVE) ||
+            (s_oled_last == OLED_SCREEN_SHOW)) {
+            for (pg = 0u; pg < (uint8_t)OLED_CH1116_PAGES; pg++) {
+                tx_str(c, "OLED L");
+                tx_u32(c, pg);
+                tx_str(c, "=");
+                tx_str(c, s_oled.line[pg]);
+                tx_str(c, "\r\n");
+            }
+        }
+        last_set("OLED dump");
+        return;
     }
 
     if (s_oled_req != NULL) {
@@ -1301,6 +1639,7 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
             return;
         }
         oled_live_arm(c, pm_osal_now_ms());
+        last_set("OLED on ok");
         tx_str(c, "OLED on ok display=on live=on");
         oled_tx_counters(c);
         tx_str(c, "\r\n");
@@ -1312,6 +1651,8 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
             return;
         }
         s_oled_live = 0u;   /* stop refreshing and stop the 1 Hz ranging */
+        s_oled_hold_until = 0u;
+        last_set("OLED off ok");
         tx_str(c, "OLED off ok display=off live=paused");
         oled_tx_counters(c);
         tx_str(c, "\r\n");
@@ -1400,6 +1741,7 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
     s_oled_req   = c;
     s_oled_name  = oled_screen_name(s);
     s_oled_t0    = pm_osal_now_ms();
+    last_two("OLED ", oled_screen_name(s));
 }
 
 /* Called once per main loop iteration: at most one page per call. */
@@ -1407,6 +1749,7 @@ static void oled_service(void)
 {
     cmd_port_t *c;
     int         was_live;
+    uint32_t    ms;
 
     if (s_oled_req == NULL) {
         return;
@@ -1419,15 +1762,26 @@ static void oled_service(void)
     was_live    = (int)s_oled_live_job;
     s_oled_req  = NULL;
     s_oled_live_job = 0u;
+    ms          = (uint32_t)(pm_osal_now_ms() - s_oled_t0);
 
+    if (s_oled_silent != 0u) {
+        s_oled_silent = 0u;
+        if (oled_ch1116_err(&s_oled) != 0) {
+            oled_ch1116_abort(&s_oled);
+        }
+        return;                        /* internal NOW repaint, not a reply */
+    }
     if (oled_ch1116_err(&s_oled) != 0) {
         oled_err_reply(c, "io");
         return;
     }
+    if (was_live != 0) {
+        s_oled_last_ms = ms;           /* health value shown as "LIVE ms=" */
+    }
     tx_str(c, "OLED ");
     tx_str(c, s_oled_name);
     tx_str(c, " ok ms=");
-    tx_u32(c, (uint32_t)(pm_osal_now_ms() - s_oled_t0));
+    tx_u32(c, ms);
     tx_str(c, " col=");
     tx_u32(c, (uint32_t)oled_ch1116_col_offset(&s_oled));
     /* A periodic refresh already implies live=on; pattern commands report that
@@ -1438,6 +1792,7 @@ static void oled_service(void)
         /* A static screen only holds the panel briefly before live returns. */
         if (s_oled_live != 0u) {
             s_oled_live_next = pm_osal_now_ms() + OLED_STATIC_HOLD_MS;
+            s_oled_hold_until = s_oled_live_next;
             s_dist_live_next = s_oled_live_next + (OLED_LIVE_PERIOD_MS / 2u);
             tx_str(c, " hold="); tx_u32(c, OLED_STATIC_HOLD_MS); tx_str(c, "ms");
         }
@@ -1459,7 +1814,11 @@ static void oled_live_tick(uint32_t now)
     if ((int32_t)(now - s_oled_live_next) < 0) {
         return;
     }
+    if (s_aht.active != 0u) {
+        return;                        /* do not interleave with the AHT window */
+    }
     s_oled_live_next = now + OLED_LIVE_PERIOD_MS;
+    s_oled_hold_until = 0u;            /* the static page's hold has expired */
     (void)oled_start_live_job(s_oled_live_port, "live", now);
 }
 
@@ -1524,7 +1883,7 @@ static void cmd_execute(cmd_port_t *c, const char *line)
         tx_str(c, "HELP AHTS=same but read via repeated START\r\n");
         tx_str(c, "HELP DIST=one shot, cm and us; live=1Hz\r\n");
         tx_str(c, "HELP ADC=pot PA5 and NTC PA4, raw and mV\r\n");
-        tx_str(c, "HELP OLED=on/off/clear/test/show/frame/col/live\r\n");
+        tx_str(c, "HELP OLED=on/off/clear/test/show/frame/col/live/dump\r\n");
         tx_str(c, "HELP KEYS=key press counters, clears them\r\n");
     } else if (ci_equal(line, "STAT")) {
         tx_str(c, "STAT clk=");
@@ -1730,6 +2089,7 @@ int main(void)
         t = pm_osal_now_ms();
         cmd_flush_idle(&s_debug, t);
         cmd_flush_idle(&s_ble, t);
+        aht_bg_tick(t);
         aht_service(t);
         dist_service(t);
         dist_live_tick(t);

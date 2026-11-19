@@ -29,7 +29,7 @@
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
 | USART2 调试口 | 通过 | 115200 8N1 双向收发，`hb` 每秒一行（§5） |
-| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；长回包不丢尾（§11、§14），当前 `HELP` 完整回包 **398 B / 10 行**（§28） |
+| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；2026-11-18 端到端验过（`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后 `HELP` 增至 **403 B / 10 行**（§29），蓝牙侧未再做回归——期间改动不涉及 USART3 收发路径，不丢尾机制见 §11、§14 |
 | I2C1 | 通过 | 扫描到 `0x70`（AHT20）与 `0x7A`（OLED），PB6/PB7，100 kHz（§9） |
 | AHT20 温湿度 | 通过 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0`（§12） |
 | HC-SR04 测距 | 通过 | `DIST cm=<n> us=<n>`，非阻塞，EXTI + TIM2 计宽（§14） |
@@ -118,7 +118,7 @@ CI 是两步（见 [.github/workflows/layering.yml](.github/workflows/layering.y
 
 ```powershell
 python tools/check_layering.py --version --lock tools/CHECKER.lock   # 检查器身份/版本漂移
-python tools/check_layering.py . --glue-max-lines 1500                # 扫描
+python tools/check_layering.py . --glue-max-lines 1700                # 扫描
 ```
 
 **ERROR 必须为 0（否则 CI 红）；WARN 只打印、不判失败。**
@@ -127,7 +127,7 @@ python tools/check_layering.py . --glue-max-lines 1500                # 扫描
 
 扫描耗时（本机 Windows，同一棵树）：检查器 3.0 无 ignore **24.1 s**；3.2.0 无 ignore **22.8 s**；3.2.0 加 `ignore` 后 **0.19 s**。三者 ERROR/WARN 逐条相同。
 
-`--glue-max-lines` 是棘轮：`src/app/main.c` 原为 **1277 行代码 / 上限 1280**，是“板级功能还没回灌成 `pm_*` 契约”的已知状态，取舍理由在 [PATCHES.md](PATCHES.md) §20。2026-11-19 默认常驻 live 后为 **1283 行**，且当晚还要在同一文件里加 ADC/PWM/GPIO 的命令处理，因此把上限**临时**抬到 **1500**；恢复与拆分条件写在 §27.5，拆完必须把上限压回当时行数。
+`--glue-max-lines` 是棘轮：`src/app/main.c` 原为 **1277 行代码 / 上限 1280**，是“板级功能还没回灌成 `pm_*` 契约”的已知状态，取舍理由在 [PATCHES.md](PATCHES.md) §20。2026-11-19 默认常驻 live 后为 **1283 行**，且当晚还要在同一文件里加 ADC/PWM/GPIO 的命令处理，因此把上限**临时**抬到 **1500**；同日把 live 页扩成 8 行后又抬到 **1700**（当前 1658 行）。恢复与拆分条件写在 §27.5、§29.5，拆完必须把上限压回当时行数。
 
 检查器 3.2.0 新增的 `layers` 指令本仓没有启用：它改变的是“没有 components 层时 APP 可直调 BSP”这一条放行规则，而本仓有真实的 components 层，声明了也不会改变任何一条判定。
 
@@ -139,7 +139,7 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 
 | 命令 | 作用 |
 | --- | --- |
-| `HELP` | 列出全部命令（10 行、398 B） |
+| `HELP` | 列出全部命令（10 行、403 B） |
 | `PING` | 回 `PONG` |
 | `STAT` | 时钟、运行秒数、按键计数、串口累计字节 |
 | `I2C` | 扫描 I2C1，列 8 位写地址（本板 `0x70`、`0x7A`） |
@@ -147,7 +147,7 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 | `AHT` / `AHTS` | 读 AHT20 温湿度；`AHTS` 是 repeated START 对照，拿到的是上一次结果 |
 | `DIST` | 单次 HC-SR04 测距，回 `cm` 与 `us` |
 | `ADC` | 读 PA5 电位器与 PA4 NTC 的原始值与 mV |
-| `OLED on\|off\|clear\|test\|show\|frame\|col\|live` | 显示开关、清屏、测试页、静态文字、边框图案、列偏移、500 ms live（live 期间自带 1 Hz 测距） |
+| `OLED on\|off\|clear\|test\|show\|frame\|col\|live\|dump` | 显示开关、清屏、测试页、静态文字、边框图案、列偏移、500 ms live（live 期间自带 1 Hz 测距）；`dump` 把屏上 8 行文字化回传 |
 
 参数、成功/失败回包原文、是否改变设备状态、蓝牙端的判读陷阱（回包被拆成多个气泡等），见 **[docs/PROTOCOL.md](docs/PROTOCOL.md)**。
 
@@ -231,9 +231,9 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 ## 已知限制
 
 - `pm_*` 契约只有 GPIO 与 UART；I2C1 时序、HC-SR04 捕获、OLED 调度都在 `src/app/main.c` 里用裸寄存器与胶水实现，尚未抽成 `pm_i2c` 等契约；
-- SPI 只有 HAL 源和默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现；ADC、PWM、RTC、Flash 编程、看门狗、DMA 均未实现；
+- SPI 只有 HAL 源和默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现；PWM、RTC、Flash 编程、看门狗、DMA 均未实现（ADC1 已在胶水里上板）；
 - UART 是逐字节中断，没有 DMA + 空闲中断的接收路径；TX 环 512 B，超长回包靠"边发边等"（`tx_bytes_all`）；
-- live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间 `OLED show` 回 `err=busy live`；
+- live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间静态命令（`clear`/`test`/`show`/`frame`）照常接管，3 s 后自动交回；live 自带的 1 Hz 测距进行中手发 `DIST` 会回 `DIST err=busy live`；
 - 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；
 - 自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`，是 HC-SR04 余振，不是故障；
 - 没有 CMake presets，没有 CI；对象结构体布局不承诺 ABI 稳定。

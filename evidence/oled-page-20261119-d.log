@@ -1,0 +1,119 @@
+﻿# board-bringup 2026-11-19: static takeover / hold / return to live (run d)
+# capture start 2026-11-19 20:08:19.504 local
+[+136ms] hb
+[+472ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+630ms] DIST live cm=99.0 us=5742
+[+972ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+1126ms] hb
+[+1471ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+1630ms] DIST live cm=99.0 us=5741
+[+1971ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+2126ms] hb
+[+2472ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+2630ms] DIST live cm=99.8 us=5789
+[+2972ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+# 1 OLED frame, retry until accepted (background AHT may hold the bus)
+# 1.1 attempt
+[+3037ms] >> OLED frame | 
+[+3043ms] OLED err=busy i2c
+[+3126ms] hb
+[+3472ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+3630ms] DIST live cm=99.8 us=5789
+[+3751ms] >> OLED dump | 
+[+3759ms] OLED dump mode=live screen=live
+[+3760ms] OLED L0=MODE=LIVE    UP= 120S
+[+3765ms] OLED L1=NOW : IDLE           
+[+3766ms] OLED L2=LAST: OLED dump      
+[+3770ms] OLED L3=RH=44.0 T=21.2C
+[+3771ms] OLED L4=NTC=2270 POT=2124
+[+3775ms] OLED L5=K1=    0 K2=    0
+[+3776ms] OLED L6=I2C af= 0 berr= 0
+[+3777ms] OLED L7=LIVE ms= 98
+[+3971ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+4126ms] hb
+# 1.2 attempt
+[+4359ms] >> OLED frame | 
+[+4465ms] OLED frame ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0
+[+5087ms] >> OLED dump | 
+[+5094ms] OLED dump mode=static left=3s screen=frame
+[+5126ms] hb
+# 1.3 attempt
+[+5697ms] >> OLED frame | 
+[+5804ms] OLED frame ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0
+[+6126ms] hb
+[+6413ms] >> OLED dump | 
+[+6420ms] OLED dump mode=static left=3s screen=frame
+# 1.4 attempt
+[+7022ms] >> OLED frame | 
+[+7129ms] OLED frame ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0
+[+7129ms] hb
+[+7723ms] >> OLED dump | 
+[+7730ms] OLED dump mode=static left=3s screen=frame
+# 1.5 attempt
+[+8331ms] >> OLED frame | 
+[+8332ms] hb
+[+8438ms] OLED frame ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0
+[+9060ms] >> OLED dump | 
+[+9066ms] OLED dump mode=static left=3s screen=frame
+[+9126ms] hb
+# 1.6 attempt
+[+9680ms] >> OLED frame | 
+[+9792ms] OLED frame ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0
+[+10126ms] hb
+[+10409ms] >> OLED dump | 
+[+10416ms] OLED dump mode=static left=3s screen=frame
+# 1.7 attempt
+[+11017ms] >> OLED frame | 
+[+11124ms] OLED frame ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0
+[+11126ms] hb
+[+11720ms] >> OLED dump | 
+[+11727ms] OLED dump mode=static left=3s screen=frame
+# 1.8 attempt
+[+12339ms] >> OLED frame | 
+[+12340ms] hb
+[+12445ms] OLED frame ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0
+[+13070ms] >> OLED dump | 
+[+13077ms] OLED dump mode=static left=3s screen=frame
+[+13126ms] hb
+# 2 wait out the 3 s hold, then dump: mode must be live again
+[+14126ms] hb
+[+15126ms] hb
+[+15541ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+15700ms] DIST live cm=98.6 us=5716
+[+16041ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+16126ms] hb
+[+16541ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+16699ms] DIST live cm=99.3 us=5762
+[+17041ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+17126ms] hb
+[+17218ms] >> OLED dump | 
+[+17226ms] OLED dump mode=live screen=live
+[+17228ms] OLED L0=MODE=LIVE    UP= 133S
+[+17232ms] OLED L1=NOW : IDLE           
+[+17233ms] OLED L2=LAST: OLED dump      
+[+17237ms] OLED L3=RH=43.8 T=21.2C
+[+17238ms] OLED L4=NTC=2261 POT=2125
+[+17243ms] OLED L5=K1=    0 K2=    0
+[+17244ms] OLED L6=I2C af= 0 berr= 0
+[+17244ms] OLED L7=LIVE ms= 98
+[+17541ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+17699ms] DIST live cm=98.5 us=5715
+# 3 second sample
+[+18041ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+18126ms] hb
+[+18541ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+18699ms] DIST live cm=98.5 us=5715
+[+19040ms] >> OLED dump | 
+[+19043ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+19049ms] OLED dump mode=live screen=live
+[+19050ms] OLED L0=MODE=LIVE    UP= 135S
+[+19054ms] OLED L1=NOW : IDLE           
+[+19055ms] OLED L2=LAST: OLED dump      
+[+19060ms] OLED L3=RH=43.9 T=21.2C
+[+19061ms] OLED L4=NTC=2268 POT=2125
+[+19065ms] OLED L5=K1=    0 K2=    0
+[+19066ms] OLED L6=I2C af= 0 berr= 0
+[+19067ms] OLED L7=LIVE ms= 98
+[+19126ms] hb
+[+19541ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+# capture closed at +19664ms
