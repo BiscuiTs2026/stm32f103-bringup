@@ -651,6 +651,101 @@ static void aht_service(uint32_t now)
     s_aht.t0 = now;
 }
 
+/* ------------------------------------------------------------ ADC1, PA4/PA5
+ * HARDWARE.md §3: PA4 = NTC (ADC1_IN4, beta 3950, 10 k divider),
+ * PA5 = potentiometer (ADC1_IN5, 3.3 V/GND divider). Polling single-shot on
+ * purpose, same bring-up style as the I2C1 scan above; there is no async ADC
+ * model in this repository yet. ADCCLK = PCLK2 / 6 = 12 MHz (limit 14 MHz). */
+
+static ADC_HandleTypeDef s_adc1;
+static uint8_t           s_adc_ok;
+
+static void adc_boot(void)
+{
+    GPIO_InitTypeDef g = { 0 };
+
+    __HAL_RCC_ADC1_CLK_ENABLE();
+    __HAL_RCC_ADC_CONFIG(RCC_ADCPCLK2_DIV6);
+    g.Pin  = GPIO_PIN_4 | GPIO_PIN_5;
+    g.Mode = GPIO_MODE_ANALOG;
+    HAL_GPIO_Init(GPIOA, &g);
+
+    s_adc1.Instance = ADC1;
+    s_adc1.Init.ScanConvMode          = ADC_SCAN_DISABLE;
+    s_adc1.Init.ContinuousConvMode    = DISABLE;
+    s_adc1.Init.DiscontinuousConvMode = DISABLE;
+    s_adc1.Init.ExternalTrigConv      = ADC_SOFTWARE_START;
+    s_adc1.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
+    s_adc1.Init.NbrOfConversion       = 1;
+    if (HAL_ADC_Init(&s_adc1) != HAL_OK) {
+        uart_write_str("ADC1 init FAILED\r\n");
+        return;
+    }
+    if (HAL_ADCEx_Calibration_Start(&s_adc1) != HAL_OK) {
+        uart_write_str("ADC1 calibration FAILED\r\n");
+        return;
+    }
+    s_adc_ok = 1u;
+    uart_write_str("ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit\r\n");
+}
+
+/* One software-triggered conversion; 0 on any HAL failure. */
+static int adc_sample(uint32_t channel, uint16_t *raw)
+{
+    ADC_ChannelConfTypeDef ch = { 0 };
+
+    ch.Channel      = channel;
+    ch.Rank         = ADC_REGULAR_RANK_1;
+    ch.SamplingTime = ADC_SAMPLETIME_55CYCLES_5;
+    if (HAL_ADC_ConfigChannel(&s_adc1, &ch) != HAL_OK) {
+        return 0;
+    }
+    if (HAL_ADC_Start(&s_adc1) != HAL_OK) {
+        return 0;
+    }
+    if (HAL_ADC_PollForConversion(&s_adc1, 5u) != HAL_OK) {
+        (void)HAL_ADC_Stop(&s_adc1);
+        return 0;
+    }
+    *raw = (uint16_t)HAL_ADC_GetValue(&s_adc1);
+    (void)HAL_ADC_Stop(&s_adc1);
+    return 1;
+}
+
+/* Same rounding as pm_adc_to_mv() in the model repo: raw * 3300 / 4095. */
+static uint32_t adc_to_mv(uint16_t raw)
+{
+    return ((uint32_t)raw * 3300u + 2047u) / 4095u;
+}
+
+static void cmd_adc(cmd_port_t *c)
+{
+    uint16_t pot = 0u;
+    uint16_t ntc = 0u;
+
+    if (s_adc_ok == 0u) {
+        tx_str(c, "ADC err=init\r\n");
+        return;
+    }
+    if (adc_sample(ADC_CHANNEL_5, &pot) == 0) {
+        tx_str(c, "ADC err=timeout ch=pa5\r\n");
+        return;
+    }
+    if (adc_sample(ADC_CHANNEL_4, &ntc) == 0) {
+        tx_str(c, "ADC err=timeout ch=pa4\r\n");
+        return;
+    }
+    tx_str(c, "ADC pot=");
+    tx_u32(c, pot);
+    tx_str(c, " pot_mv=");
+    tx_u32(c, adc_to_mv(pot));
+    tx_str(c, " ntc=");
+    tx_u32(c, ntc);
+    tx_str(c, " ntc_mv=");
+    tx_u32(c, adc_to_mv(ntc));
+    tx_str(c, " vref=3300\r\n");
+}
+
 /* ---------------------------------------------- HC-SR04 distance, PA11/PA10
  * Board header (HARDWARE.md §3 第 6 条 + 附录引脚表): 1=GND, 2=PA10 (ECHO),
  * 3=PA11 (TRIG), 4=3.3V. PA10/PA11 are FT (5 V tolerant) on STM32F103x8/xB,
@@ -1428,6 +1523,7 @@ static void cmd_execute(cmd_port_t *c, const char *line)
         tx_str(c, "HELP AHT=read AHT20, rh and t in 0.1 units\r\n");
         tx_str(c, "HELP AHTS=same but read via repeated START\r\n");
         tx_str(c, "HELP DIST=one shot, cm and us; live=1Hz\r\n");
+        tx_str(c, "HELP ADC=pot PA5 and NTC PA4, raw and mV\r\n");
         tx_str(c, "HELP OLED=on/off/clear/test/show/frame/col/live\r\n");
         tx_str(c, "HELP KEYS=key press counters, clears them\r\n");
     } else if (ci_equal(line, "STAT")) {
@@ -1452,6 +1548,8 @@ static void cmd_execute(cmd_port_t *c, const char *line)
         aht_start(c, 1);
     } else if (ci_equal(line, "DIST")) {
         dist_start(c, 0u);
+    } else if (ci_equal(line, "ADC")) {
+        cmd_adc(c);
     } else if (ci_equal(line, "KEYS")) {
         tx_str(c, "KEYS k1=");
         tx_u32(c, s_key_press[0]);
@@ -1606,6 +1704,7 @@ int main(void)
 
     bt_init();
     dist_hw_init();
+    adc_boot();
     oled_boot();
 
     /* Boot default: live. Armed only after oled_boot() has finished the init

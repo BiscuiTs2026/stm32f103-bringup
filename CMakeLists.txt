@@ -17,6 +17,8 @@ set(PM_OPT_FLAGS  -Os -g3 -ffunction-sections -fdata-sections)
 add_library(pm_hal STATIC
     third_party/stm32f1xx_hal/src/stm32f1xx_hal.c
     third_party/stm32f1xx_hal/src/stm32f1xx_hal_cortex.c
+    third_party/stm32f1xx_hal/src/stm32f1xx_hal_adc.c
+    third_party/stm32f1xx_hal/src/stm32f1xx_hal_adc_ex.c
     third_party/stm32f1xx_hal/src/stm32f1xx_hal_dma.c
     third_party/stm32f1xx_hal/src/stm32f1xx_hal_flash.c
     third_party/stm32f1xx_hal/src/stm32f1xx_hal_flash_ex.c

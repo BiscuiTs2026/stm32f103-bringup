@@ -1,0 +1,46 @@
+﻿# board-bringup 2026-11-19 run c: HELP / STAT / ADC command shape check
+# capture start 2026-11-19 19:51:43.548 local
+[+99ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+247ms] DIST live cm=97.7 us=5666<CR>
+[+511ms] hb<CR>
+[+589ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+1030ms] >> HELP
+[+1041ms] HELP HELP=list commands<CR>
+[+1044ms] HELP PING=reply PONG<CR>
+[+1047ms] HELP STAT=clk/up/tick/keys/uart counters<CR>
+[+1052ms] HELP I2C=scan I2C1 bus, list 8-bit addresses<CR>
+[+1053ms] HELP AHT=read AHT20, rh and t in 0.1 units<CR>
+[+1058ms] HELP AHTS=same but read via repeated START<CR>
+[+1063ms] HELP DIST=one shot, cm and us; live=1Hz<CR>
+[+1064ms] HELP ADC=pot PA5 and NTC PA4, raw and mV<CR>
+[+1069ms] HELP OLED=on/off/clear/test/show/frame/col/live<CR>
+[+1070ms] HELP KEYS=key press counters, clears them<CR>
+[+1089ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+1247ms] DIST live cm=98.1 us=5692<CR>
+[+1512ms] hb<CR>
+[+1589ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+2089ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+2247ms] DIST live cm=97.7 us=5668<CR>
+[+2511ms] hb<CR>
+[+2547ms] >> STAT
+[+2567ms] STAT clk=72000000 up=356173 tick=1 key1=0 key2=0 uart_rx=2112 uart_tx=66263<CR>
+[+2589ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+3089ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+3247ms] DIST live cm=97.7 us=5666<CR>
+[+3370ms] >> ADC
+[+3377ms] ADC pot=2126 pot_mv=1713 ntc=2141 ntc_mv=1725 vref=3300<CR>
+[+3511ms] hb<CR>
+[+3589ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+4089ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+4175ms] >> ADC
+[+4183ms] ADC pot=2125 pot_mv=1712 ntc=2141 ntc_mv=1725 vref=3300<CR>
+[+4247ms] DIST live cm=97.7 us=5666<CR>
+[+4511ms] hb<CR>
+[+4589ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+4996ms] >> ADC
+[+5004ms] ADC pot=2125 pot_mv=1712 ntc=2137 ntc_mv=1722 vref=3300<CR>
+[+5089ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+5248ms] DIST live cm=108.9 us=6316<CR>
+[+5511ms] hb<CR>
+[+5589ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+# capture closed at +5802ms

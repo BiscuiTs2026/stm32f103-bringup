@@ -102,7 +102,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 9 行 `HELP ...`，共 **356 B**（见下） | — | 否 |
+| `HELP` | 无 | 10 行 `HELP ...`，共 **398 B**（见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -194,12 +194,32 @@ HELP KEYS=key press counters, clears them
   立刻重画一帧（实测 `OLED on` 后 98 ms 内出现首条 `OLED live ok`）。
 - `OLED col` 在 live 期间可用，回 `redraw=live` 并立即重画。
 
+### 4.5 ADC（PA5 电位器 / PA4 NTC）
+
+ADC1，单次软件触发，ADCCLK = PCLK2/6 = 12 MHz，采样时间 55.5 周期。
+
+| 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
+| --- | --- | --- | --- | --- |
+| `ADC` | 无 | `ADC pot=<0..4095> pot_mv=<mV> ntc=<0..4095> ntc_mv=<mV> vref=3300` | `ADC err=init` / `ADC err=timeout ch=pa5` / `ADC err=timeout ch=pa4` | 否 |
+
+说明：
+
+- `pot` = PA5 = ADC1_IN5，`ntc` = PA4 = ADC1_IN4；两次转换是先后单次触发，不是扫描，
+  两路之间相差约几十 µs。
+- `*_mv` = `(raw * 3300 + 2047) / 4095`（四舍五入），与外设模型仓 `pm_adc_to_mv()` 相同。
+- 失败路径：ADC1 初始化或校准失败回 `err=init`；某一路 `HAL_ADC_PollForConversion`
+  5 ms 超时回 `err=timeout ch=pa5|pa4`，不会静默返回旧值。
+- **NTC 是分压低端（接 GND），10 kΩ 在上端接 3.3 V**：升温 → 阻值下降 → `ntc` 下降。
+  本板实测 25 ℃ 附近 `ntc≈2293`（1848 mV），手指捏住后 90 s 内降到 1792（Δ≈−491）。
+- 电位器是本轮唯一没有转动验证的通道：手边没有十字螺丝刀，只记录了静态值
+  （30 次 2124–2126，极差 2 LSB）。
+
 ---
 
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **9 行 356 B**（含每条 CRLF）。
+   当前 `HELP` 是 **10 行 398 B**（含每条 CRLF）。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。

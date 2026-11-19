@@ -1,0 +1,967 @@
+﻿# board-bringup 2026-11-19: ADC PA4 (NTC) / PA5 (pot), poll every 500 ms for 120 s
+# capture start 2026-11-19 19:46:53.254 local
+[+414ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+562ms] DIST live cm=99.0 us=5740<CR>
+[+826ms] hb<CR>
+[+903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+1403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+1527ms] >> ADC
+[+1536ms] ADC pot=2125 pot_mv=1712 ntc=2294 ntc_mv=1849 vref=3300<CR>
+[+1562ms] DIST live cm=98.2 us=5693<CR>
+[+1826ms] hb<CR>
+[+1903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+2025ms] >> ADC
+[+2033ms] ADC pot=2126 pot_mv=1713 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+2403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+2521ms] >> ADC
+[+2528ms] ADC pot=2126 pot_mv=1713 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+2561ms] DIST live cm=99.5 us=5769<CR>
+[+2826ms] hb<CR>
+[+2903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+3003ms] >> ADC
+[+3013ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+3403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+3505ms] >> ADC
+[+3514ms] ADC pot=2126 pot_mv=1713 ntc=2286 ntc_mv=1842 vref=3300<CR>
+[+3562ms] DIST live cm=98.5 us=5715<CR>
+[+3825ms] hb<CR>
+[+3903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+3989ms] >> ADC
+[+3997ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+4403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+4488ms] >> ADC
+[+4496ms] ADC pot=2126 pot_mv=1713 ntc=2294 ntc_mv=1849 vref=3300<CR>
+[+4562ms] DIST live cm=99.0 us=5742<CR>
+[+4826ms] hb<CR>
+[+4903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+4970ms] >> ADC
+[+4978ms] ADC pot=2125 pot_mv=1712 ntc=2294 ntc_mv=1849 vref=3300<CR>
+[+5403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+5467ms] >> ADC
+[+5475ms] ADC pot=2126 pot_mv=1713 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+5561ms] DIST live cm=99.0 us=5742<CR>
+[+5825ms] hb<CR>
+[+5903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+5965ms] >> ADC
+[+5973ms] ADC pot=2124 pot_mv=1712 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+6403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+6462ms] >> ADC
+[+6470ms] ADC pot=2126 pot_mv=1713 ntc=2295 ntc_mv=1849 vref=3300<CR>
+[+6561ms] DIST live cm=99.0 us=5741<CR>
+[+6825ms] hb<CR>
+[+6903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+6957ms] >> ADC
+[+6965ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+7403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+7457ms] >> ADC
+[+7465ms] ADC pot=2124 pot_mv=1712 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+7561ms] DIST live cm=99.0 us=5740<CR>
+[+7825ms] hb<CR>
+[+7902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+7968ms] >> ADC
+[+7976ms] ADC pot=2125 pot_mv=1712 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+8403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+8468ms] >> ADC
+[+8476ms] ADC pot=2125 pot_mv=1712 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+8561ms] DIST live cm=99.0 us=5741<CR>
+[+8825ms] hb<CR>
+[+8903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+8968ms] >> ADC
+[+8976ms] ADC pot=2125 pot_mv=1712 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+9403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+9464ms] >> ADC
+[+9472ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+9562ms] DIST live cm=99.4 us=5767<CR>
+[+9825ms] hb<CR>
+[+9903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+9964ms] >> ADC
+[+9972ms] ADC pot=2125 pot_mv=1712 ntc=2295 ntc_mv=1849 vref=3300<CR>
+[+10403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+10460ms] >> ADC
+[+10468ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+10562ms] DIST live cm=99.9 us=5793<CR>
+[+10825ms] hb<CR>
+[+10902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+10957ms] >> ADC
+[+10964ms] ADC pot=2126 pot_mv=1713 ntc=2291 ntc_mv=1846 vref=3300<CR>
+[+11402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+11458ms] >> ADC
+[+11465ms] ADC pot=2124 pot_mv=1712 ntc=2298 ntc_mv=1852 vref=3300<CR>
+[+11561ms] DIST live cm=99.4 us=5766<CR>
+[+11825ms] hb<CR>
+[+11903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+11957ms] >> ADC
+[+11964ms] ADC pot=2125 pot_mv=1712 ntc=2294 ntc_mv=1849 vref=3300<CR>
+[+12403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+12438ms] >> ADC
+[+12446ms] ADC pot=2125 pot_mv=1712 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+12561ms] DIST live cm=99.8 us=5789<CR>
+[+12825ms] hb<CR>
+[+12903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+12936ms] >> ADC
+[+12944ms] ADC pot=2126 pot_mv=1713 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+13403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+13428ms] >> ADC
+[+13435ms] ADC pot=2126 pot_mv=1713 ntc=2285 ntc_mv=1841 vref=3300<CR>
+[+13561ms] DIST live cm=99.8 us=5790<CR>
+[+13825ms] hb<CR>
+[+13902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+13940ms] >> ADC
+[+13947ms] ADC pot=2126 pot_mv=1713 ntc=2294 ntc_mv=1849 vref=3300<CR>
+[+14402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+14437ms] >> ADC
+[+14444ms] ADC pot=2125 pot_mv=1712 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+14561ms] DIST live cm=99.8 us=5788<CR>
+[+14825ms] hb<CR>
+[+14903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+14936ms] >> ADC
+[+14944ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+15402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+15430ms] >> ADC
+[+15439ms] ADC pot=2126 pot_mv=1713 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+15561ms] DIST live cm=99.0 us=5741<CR>
+[+15825ms] hb<CR>
+[+15902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+15925ms] >> ADC
+[+15933ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+16402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+16437ms] >> ADC
+[+16445ms] ADC pot=2126 pot_mv=1713 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+16561ms] DIST live cm=99.3 us=5762<CR>
+[+16825ms] hb<CR>
+[+16902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+16935ms] >> ADC
+[+16943ms] ADC pot=2125 pot_mv=1712 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+17403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+17434ms] >> ADC
+[+17442ms] ADC pot=2126 pot_mv=1713 ntc=2284 ntc_mv=1841 vref=3300<CR>
+[+17559ms] DIST live cm=62.7 us=3636<CR>
+[+17825ms] hb<CR>
+[+17902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+17930ms] >> ADC
+[+17938ms] ADC pot=2132 pot_mv=1718 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+18402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+18427ms] >> ADC
+[+18436ms] ADC pot=2126 pot_mv=1713 ntc=2291 ntc_mv=1846 vref=3300<CR>
+[+18558ms] DIST live cm=53.7 us=3115<CR>
+[+18825ms] hb<CR>
+[+18902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+18936ms] >> ADC
+[+18944ms] ADC pot=2125 pot_mv=1712 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+19403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+19433ms] >> ADC
+[+19441ms] ADC pot=2125 pot_mv=1712 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+19561ms] DIST live cm=99.4 us=5764<CR>
+[+19825ms] hb<CR>
+[+19902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+19930ms] >> ADC
+[+19937ms] ADC pot=2125 pot_mv=1712 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+20402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+20428ms] >> ADC
+[+20436ms] ADC pot=2125 pot_mv=1712 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+20561ms] DIST live cm=99.4 us=5763<CR>
+[+20825ms] hb<CR>
+[+20902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+20940ms] >> ADC
+[+20947ms] ADC pot=2125 pot_mv=1712 ntc=2295 ntc_mv=1849 vref=3300<CR>
+[+21402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+21435ms] >> ADC
+[+21443ms] ADC pot=2125 pot_mv=1712 ntc=2296 ntc_mv=1850 vref=3300<CR>
+[+21561ms] DIST live cm=99.8 us=5790<CR>
+[+21825ms] hb<CR>
+[+21902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+21936ms] >> ADC
+[+21943ms] ADC pot=2126 pot_mv=1713 ntc=2290 ntc_mv=1845 vref=3300<CR>
+[+22403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+22434ms] >> ADC
+[+22441ms] ADC pot=2126 pot_mv=1713 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+22561ms] DIST live cm=99.8 us=5789<CR>
+[+22825ms] hb<CR>
+[+22902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+22932ms] >> ADC
+[+22940ms] ADC pot=2125 pot_mv=1712 ntc=2291 ntc_mv=1846 vref=3300<CR>
+[+23402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+23428ms] >> ADC
+[+23436ms] ADC pot=2126 pot_mv=1713 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+23560ms] DIST live cm=99.8 us=5789<CR>
+[+23824ms] hb<CR>
+[+23902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+23926ms] >> ADC
+[+23933ms] ADC pot=2126 pot_mv=1713 ntc=2302 ntc_mv=1855 vref=3300<CR>
+[+24402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+24425ms] >> ADC
+[+24433ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+24560ms] DIST live cm=98.5 us=5714<CR>
+[+24824ms] hb<CR>
+[+24902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+24936ms] >> ADC
+[+24943ms] ADC pot=2125 pot_mv=1712 ntc=2291 ntc_mv=1846 vref=3300<CR>
+[+25402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+25435ms] >> ADC
+[+25442ms] ADC pot=2125 pot_mv=1712 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+25560ms] DIST live cm=98.1 us=5689<CR>
+[+25824ms] hb<CR>
+[+25902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+25931ms] >> ADC
+[+25939ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+26404ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+26430ms] >> ADC
+[+26437ms] ADC pot=2127 pot_mv=1714 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+26561ms] DIST live cm=99.3 us=5762<CR>
+[+26825ms] hb<CR>
+[+26903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+26928ms] >> ADC
+[+26950ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+27402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+27429ms] >> ADC
+[+27436ms] ADC pot=2126 pot_mv=1713 ntc=2289 ntc_mv=1845 vref=3300<CR>
+[+27560ms] DIST live cm=98.9 us=5736<CR>
+[+27824ms] hb<CR>
+[+27902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+27925ms] >> ADC
+[+27932ms] ADC pot=2126 pot_mv=1713 ntc=2294 ntc_mv=1849 vref=3300<CR>
+[+28403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+28436ms] >> ADC
+[+28444ms] ADC pot=2125 pot_mv=1712 ntc=2291 ntc_mv=1846 vref=3300<CR>
+[+28561ms] DIST live cm=99.3 us=5762<CR>
+[+28825ms] hb<CR>
+[+28902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+28933ms] >> ADC
+[+28942ms] ADC pot=2126 pot_mv=1713 ntc=2294 ntc_mv=1849 vref=3300<CR>
+[+29402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+29430ms] >> ADC
+[+29437ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+29562ms] DIST live cm=98.5 us=5714<CR>
+[+29824ms] hb<CR>
+[+29902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+29930ms] >> ADC
+[+29938ms] ADC pot=2126 pot_mv=1713 ntc=2291 ntc_mv=1846 vref=3300<CR>
+[+30402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+30426ms] >> ADC
+[+30434ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+30561ms] DIST live cm=99.4 us=5763<CR>
+[+30824ms] hb<CR>
+[+30903ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+30926ms] >> ADC
+[+30933ms] ADC pot=2126 pot_mv=1713 ntc=2294 ntc_mv=1849 vref=3300<CR>
+[+31402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+31439ms] >> ADC
+[+31447ms] ADC pot=2125 pot_mv=1712 ntc=2291 ntc_mv=1846 vref=3300<CR>
+[+31560ms] DIST live cm=98.9 us=5738<CR>
+[+31824ms] hb<CR>
+[+31902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+31938ms] >> ADC
+[+31945ms] ADC pot=2125 pot_mv=1712 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+32403ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+32435ms] >> ADC
+[+32443ms] ADC pot=2126 pot_mv=1713 ntc=2291 ntc_mv=1846 vref=3300<CR>
+[+32560ms] DIST live cm=99.4 us=5763<CR>
+[+32825ms] hb<CR>
+[+32902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+32931ms] >> ADC
+[+32939ms] ADC pot=2126 pot_mv=1713 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+33404ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+33426ms] >> ADC
+[+33435ms] ADC pot=2126 pot_mv=1713 ntc=2294 ntc_mv=1849 vref=3300<CR>
+[+33557ms] DIST live cm=57.4 us=3331<CR>
+[+33824ms] hb<CR>
+[+33902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+33924ms] >> ADC
+[+33932ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+34402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+34438ms] >> ADC
+[+34446ms] ADC pot=2125 pot_mv=1712 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+34560ms] DIST live cm=99.4 us=5764<CR>
+[+34824ms] hb<CR>
+[+34902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+34933ms] >> ADC
+[+34941ms] ADC pot=2126 pot_mv=1713 ntc=2297 ntc_mv=1851 vref=3300<CR>
+[+35402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+35432ms] >> ADC
+[+35439ms] ADC pot=2126 pot_mv=1713 ntc=2293 ntc_mv=1848 vref=3300<CR>
+[+35560ms] DIST live cm=99.0 us=5742<CR>
+[+35824ms] hb<CR>
+[+35902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+35927ms] >> ADC
+[+35936ms] ADC pot=2125 pot_mv=1712 ntc=2292 ntc_mv=1847 vref=3300<CR>
+[+36402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+36425ms] >> ADC
+[+36433ms] ADC pot=2126 pot_mv=1713 ntc=2297 ntc_mv=1851 vref=3300<CR>
+[+36556ms] DIST live cm=36.6 us=2120<CR>
+[+36824ms] hb<CR>
+[+36902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+36939ms] >> ADC
+[+36947ms] ADC pot=2125 pot_mv=1712 ntc=2300 ntc_mv=1853 vref=3300<CR>
+[+37402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+37435ms] >> ADC
+[+37442ms] ADC pot=2125 pot_mv=1712 ntc=2291 ntc_mv=1846 vref=3300<CR>
+[+37560ms] DIST live cm=97.2 us=5640<CR>
+[+37824ms] hb<CR>
+[+37902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+37933ms] >> ADC
+[+37940ms] ADC pot=2125 pot_mv=1712 ntc=2310 ntc_mv=1862 vref=3300<CR>
+[+38402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+38430ms] >> ADC
+[+38437ms] ADC pot=2125 pot_mv=1712 ntc=2285 ntc_mv=1841 vref=3300<CR>
+[+38560ms] DIST live cm=98.1 us=5688<CR>
+[+38824ms] hb<CR>
+[+38902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+38927ms] >> ADC
+[+38935ms] ADC pot=2126 pot_mv=1713 ntc=2287 ntc_mv=1843 vref=3300<CR>
+[+39402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+39442ms] >> ADC
+[+39449ms] ADC pot=2126 pot_mv=1713 ntc=2277 ntc_mv=1835 vref=3300<CR>
+[+39560ms] DIST live cm=98.6 us=5716<CR>
+[+39824ms] hb<CR>
+[+39902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+39924ms] >> ADC
+[+39931ms] ADC pot=2126 pot_mv=1713 ntc=2266 ntc_mv=1826 vref=3300<CR>
+[+40401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+40434ms] >> ADC
+[+40442ms] ADC pot=2125 pot_mv=1712 ntc=2256 ntc_mv=1818 vref=3300<CR>
+[+40560ms] DIST live cm=97.6 us=5663<CR>
+[+40824ms] hb<CR>
+[+40902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+40932ms] >> ADC
+[+40940ms] ADC pot=2125 pot_mv=1712 ntc=2247 ntc_mv=1811 vref=3300<CR>
+[+41401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+41430ms] >> ADC
+[+41437ms] ADC pot=2125 pot_mv=1712 ntc=2227 ntc_mv=1795 vref=3300<CR>
+[+41560ms] DIST live cm=98.9 us=5736<CR>
+[+41824ms] hb<CR>
+[+41901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+41928ms] >> ADC
+[+41936ms] ADC pot=2126 pot_mv=1713 ntc=2216 ntc_mv=1786 vref=3300<CR>
+[+42401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+42429ms] >> ADC
+[+42436ms] ADC pot=2125 pot_mv=1712 ntc=2198 ntc_mv=1771 vref=3300<CR>
+[+42559ms] DIST live cm=98.5 us=5715<CR>
+[+42824ms] hb<CR>
+[+42901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+42930ms] >> ADC
+[+42937ms] ADC pot=2125 pot_mv=1712 ntc=2190 ntc_mv=1765 vref=3300<CR>
+[+43401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+43430ms] >> ADC
+[+43438ms] ADC pot=2125 pot_mv=1712 ntc=2164 ntc_mv=1744 vref=3300<CR>
+[+43559ms] DIST live cm=86.6 us=5023<CR>
+[+43824ms] hb<CR>
+[+43901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+43940ms] >> ADC
+[+43948ms] ADC pot=2125 pot_mv=1712 ntc=2151 ntc_mv=1733 vref=3300<CR>
+[+44401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+44437ms] >> ADC
+[+44444ms] ADC pot=2126 pot_mv=1713 ntc=2142 ntc_mv=1726 vref=3300<CR>
+[+44560ms] DIST live cm=99.0 us=5740<CR>
+[+44824ms] hb<CR>
+[+44901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+44933ms] >> ADC
+[+44942ms] ADC pot=2126 pot_mv=1713 ntc=2128 ntc_mv=1715 vref=3300<CR>
+[+45402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+45432ms] >> ADC
+[+45440ms] ADC pot=2125 pot_mv=1712 ntc=2121 ntc_mv=1709 vref=3300<CR>
+[+45556ms] DIST live cm=38.0 us=2203<CR>
+[+45824ms] hb<CR>
+[+45901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+45931ms] >> ADC
+[+45938ms] ADC pot=2126 pot_mv=1713 ntc=2112 ntc_mv=1702 vref=3300<CR>
+[+46401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+46427ms] >> ADC
+[+46436ms] ADC pot=2126 pot_mv=1713 ntc=2088 ntc_mv=1683 vref=3300<CR>
+[+46557ms] DIST live cm=36.3 us=2107<CR>
+[+46824ms] hb<CR>
+[+46901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+46923ms] >> ADC
+[+46931ms] ADC pot=2126 pot_mv=1713 ntc=2062 ntc_mv=1662 vref=3300<CR>
+[+47401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+47435ms] >> ADC
+[+47442ms] ADC pot=2126 pot_mv=1713 ntc=2074 ntc_mv=1671 vref=3300<CR>
+[+47556ms] DIST live cm=36.6 us=2120<CR>
+[+47824ms] hb<CR>
+[+47901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+47933ms] >> ADC
+[+47941ms] ADC pot=2125 pot_mv=1712 ntc=2068 ntc_mv=1667 vref=3300<CR>
+[+48401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+48429ms] >> ADC
+[+48436ms] ADC pot=2124 pot_mv=1712 ntc=2057 ntc_mv=1658 vref=3300<CR>
+[+48556ms] DIST live cm=38.0 us=2202<CR>
+[+48824ms] hb<CR>
+[+48901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+48930ms] >> ADC
+[+48938ms] ADC pot=2127 pot_mv=1714 ntc=2048 ntc_mv=1650 vref=3300<CR>
+[+49401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+49429ms] >> ADC
+[+49437ms] ADC pot=2126 pot_mv=1713 ntc=2038 ntc_mv=1642 vref=3300<CR>
+[+49556ms] DIST live cm=37.0 us=2148<CR>
+[+49823ms] hb<CR>
+[+49901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+49929ms] >> ADC
+[+49937ms] ADC pot=2126 pot_mv=1713 ntc=2036 ntc_mv=1641 vref=3300<CR>
+[+50401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+50425ms] >> ADC
+[+50433ms] ADC pot=2126 pot_mv=1713 ntc=2027 ntc_mv=1633 vref=3300<CR>
+[+50556ms] DIST live cm=36.6 us=2120<CR>
+[+50823ms] hb<CR>
+[+50901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+50935ms] >> ADC
+[+50942ms] ADC pot=2125 pot_mv=1712 ntc=2019 ntc_mv=1627 vref=3300<CR>
+[+51401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+51433ms] >> ADC
+[+51441ms] ADC pot=2125 pot_mv=1712 ntc=2015 ntc_mv=1624 vref=3300<CR>
+[+51559ms] DIST live cm=86.9 us=5038<CR>
+[+51823ms] hb<CR>
+[+51902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+51930ms] >> ADC
+[+51937ms] ADC pot=2125 pot_mv=1712 ntc=2007 ntc_mv=1617 vref=3300<CR>
+[+52401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+52428ms] >> ADC
+[+52436ms] ADC pot=2125 pot_mv=1712 ntc=2001 ntc_mv=1613 vref=3300<CR>
+[+52559ms] DIST live cm=98.1 us=5688<CR>
+[+52823ms] hb<CR>
+[+52901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+52925ms] >> ADC
+[+52933ms] ADC pot=2126 pot_mv=1713 ntc=1995 ntc_mv=1608 vref=3300<CR>
+[+53401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+53425ms] >> ADC
+[+53434ms] ADC pot=2125 pot_mv=1712 ntc=1991 ntc_mv=1604 vref=3300<CR>
+[+53556ms] DIST live cm=36.3 us=2108<CR>
+[+53823ms] hb<CR>
+[+53901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+53938ms] >> ADC
+[+53946ms] ADC pot=2126 pot_mv=1713 ntc=1988 ntc_mv=1602 vref=3300<CR>
+[+54402ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+54436ms] >> ADC
+[+54445ms] ADC pot=2125 pot_mv=1712 ntc=1978 ntc_mv=1594 vref=3300<CR>
+[+54559ms] DIST live cm=98.1 us=5688<CR>
+[+54823ms] hb<CR>
+[+54901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+54935ms] >> ADC
+[+54943ms] ADC pot=2124 pot_mv=1712 ntc=1971 ntc_mv=1588 vref=3300<CR>
+[+55401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+55432ms] >> ADC
+[+55439ms] ADC pot=2125 pot_mv=1712 ntc=1972 ntc_mv=1589 vref=3300<CR>
+[+55559ms] DIST live cm=98.5 us=5715<CR>
+[+55823ms] hb<CR>
+[+55901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+55932ms] >> ADC
+[+55939ms] ADC pot=2126 pot_mv=1713 ntc=1965 ntc_mv=1584 vref=3300<CR>
+[+56400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+56430ms] >> ADC
+[+56437ms] ADC pot=2126 pot_mv=1713 ntc=1952 ntc_mv=1573 vref=3300<CR>
+[+56559ms] DIST live cm=98.9 us=5737<CR>
+[+56823ms] hb<CR>
+[+56900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+56928ms] >> ADC
+[+56936ms] ADC pot=2126 pot_mv=1713 ntc=1950 ntc_mv=1571 vref=3300<CR>
+[+57400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+57425ms] >> ADC
+[+57433ms] ADC pot=2124 pot_mv=1712 ntc=1953 ntc_mv=1574 vref=3300<CR>
+[+57559ms] DIST live cm=98.2 us=5693<CR>
+[+57823ms] hb<CR>
+[+57901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+57937ms] >> ADC
+[+57944ms] ADC pot=2126 pot_mv=1713 ntc=1944 ntc_mv=1567 vref=3300<CR>
+[+58400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+58435ms] >> ADC
+[+58442ms] ADC pot=2126 pot_mv=1713 ntc=1942 ntc_mv=1565 vref=3300<CR>
+[+58559ms] DIST live cm=97.7 us=5668<CR>
+[+58823ms] hb<CR>
+[+58900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+58929ms] >> ADC
+[+58937ms] ADC pot=2125 pot_mv=1712 ntc=1932 ntc_mv=1557 vref=3300<CR>
+[+59401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+59424ms] >> ADC
+[+59433ms] ADC pot=2126 pot_mv=1713 ntc=1932 ntc_mv=1557 vref=3300<CR>
+[+59559ms] DIST live cm=99.0 us=5741<CR>
+[+59823ms] hb<CR>
+[+59900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+59937ms] >> ADC
+[+59944ms] ADC pot=2125 pot_mv=1712 ntc=1936 ntc_mv=1560 vref=3300<CR>
+[+60401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+60434ms] >> ADC
+[+60443ms] ADC pot=2126 pot_mv=1713 ntc=1930 ntc_mv=1555 vref=3300<CR>
+[+60559ms] DIST live cm=98.6 us=5717<CR>
+[+60823ms] hb<CR>
+[+60901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+60931ms] >> ADC
+[+60938ms] ADC pot=2126 pot_mv=1713 ntc=1921 ntc_mv=1548 vref=3300<CR>
+[+61400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+61425ms] >> ADC
+[+61433ms] ADC pot=2126 pot_mv=1713 ntc=1918 ntc_mv=1546 vref=3300<CR>
+[+61559ms] DIST live cm=98.6 us=5716<CR>
+[+61823ms] hb<CR>
+[+61900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+61937ms] >> ADC
+[+61945ms] ADC pot=2126 pot_mv=1713 ntc=1921 ntc_mv=1548 vref=3300<CR>
+[+62400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+62438ms] >> ADC
+[+62445ms] ADC pot=2126 pot_mv=1713 ntc=1911 ntc_mv=1540 vref=3300<CR>
+[+62559ms] DIST live cm=98.2 us=5693<CR>
+[+62823ms] hb<CR>
+[+62900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+62933ms] >> ADC
+[+62941ms] ADC pot=2125 pot_mv=1712 ntc=1908 ntc_mv=1538 vref=3300<CR>
+[+63400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+63429ms] >> ADC
+[+63437ms] ADC pot=2124 pot_mv=1712 ntc=1905 ntc_mv=1535 vref=3300<CR>
+[+63559ms] DIST live cm=98.6 us=5716<CR>
+[+63823ms] hb<CR>
+[+63900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+63929ms] >> ADC
+[+63937ms] ADC pot=2126 pot_mv=1713 ntc=1911 ntc_mv=1540 vref=3300<CR>
+[+64400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+64426ms] >> ADC
+[+64433ms] ADC pot=2125 pot_mv=1712 ntc=1902 ntc_mv=1533 vref=3300<CR>
+[+64559ms] DIST live cm=97.3 us=5642<CR>
+[+64823ms] hb<CR>
+[+64900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+64925ms] >> ADC
+[+64933ms] ADC pot=2126 pot_mv=1713 ntc=1896 ntc_mv=1528 vref=3300<CR>
+[+65400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+65436ms] >> ADC
+[+65443ms] ADC pot=2125 pot_mv=1712 ntc=1896 ntc_mv=1528 vref=3300<CR>
+[+65559ms] DIST live cm=95.9 us=5564<CR>
+[+65823ms] hb<CR>
+[+65901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+65931ms] >> ADC
+[+65938ms] ADC pot=2125 pot_mv=1712 ntc=1896 ntc_mv=1528 vref=3300<CR>
+[+66401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+66431ms] >> ADC
+[+66438ms] ADC pot=2125 pot_mv=1712 ntc=1898 ntc_mv=1530 vref=3300<CR>
+[+66554ms] DIST live cm=31.1 us=1801<CR>
+[+66823ms] hb<CR>
+[+66900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+66931ms] >> ADC
+[+66939ms] ADC pot=2125 pot_mv=1712 ntc=1889 ntc_mv=1522 vref=3300<CR>
+[+67400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+67427ms] >> ADC
+[+67434ms] ADC pot=2126 pot_mv=1713 ntc=1873 ntc_mv=1509 vref=3300<CR>
+[+67554ms] DIST live cm=14.5 us=842<CR>
+[+67823ms] hb<CR>
+[+67900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+67924ms] >> ADC
+[+67931ms] ADC pot=2125 pot_mv=1712 ntc=1884 ntc_mv=1518 vref=3300<CR>
+[+68400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+68424ms] >> ADC
+[+68431ms] ADC pot=2126 pot_mv=1713 ntc=1880 ntc_mv=1515 vref=3300<CR>
+[+68556ms] DIST live cm=53.5 us=3105<CR>
+[+68823ms] hb<CR>
+[+68900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+68934ms] >> ADC
+[+68942ms] ADC pot=2126 pot_mv=1713 ntc=1881 ntc_mv=1516 vref=3300<CR>
+[+69400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+69432ms] >> ADC
+[+69439ms] ADC pot=2126 pot_mv=1713 ntc=1886 ntc_mv=1520 vref=3300<CR>
+[+69557ms] DIST live cm=72.0 us=4176<CR>
+[+69823ms] hb<CR>
+[+69900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+69926ms] >> ADC
+[+69934ms] ADC pot=2126 pot_mv=1713 ntc=1880 ntc_mv=1515 vref=3300<CR>
+[+70400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+70438ms] >> ADC
+[+70446ms] ADC pot=2126 pot_mv=1713 ntc=1846 ntc_mv=1488 vref=3300<CR>
+[+70555ms] DIST live cm=39.1 us=2270<CR>
+[+70822ms] hb<CR>
+[+70900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+70932ms] >> ADC
+[+70939ms] ADC pot=2126 pot_mv=1713 ntc=1883 ntc_mv=1517 vref=3300<CR>
+[+71400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+71427ms] >> ADC
+[+71434ms] ADC pot=2125 pot_mv=1712 ntc=1876 ntc_mv=1512 vref=3300<CR>
+[+71556ms] DIST live cm=57.2 us=3315<CR>
+[+71822ms] hb<CR>
+[+71900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+71926ms] >> ADC
+[+71933ms] ADC pot=2125 pot_mv=1712 ntc=1868 ntc_mv=1505 vref=3300<CR>
+[+72400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+72437ms] >> ADC
+[+72444ms] ADC pot=2124 pot_mv=1712 ntc=1867 ntc_mv=1505 vref=3300<CR>
+[+72553ms] DIST live cm=16.5 us=959<CR>
+[+72822ms] hb<CR>
+[+72900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+72936ms] >> ADC
+[+72943ms] ADC pot=2127 pot_mv=1714 ntc=1871 ntc_mv=1508 vref=3300<CR>
+[+73400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+73433ms] >> ADC
+[+73440ms] ADC pot=2123 pot_mv=1711 ntc=1865 ntc_mv=1503 vref=3300<CR>
+[+73559ms] DIST live cm=100.6 us=5835<CR>
+[+73822ms] hb<CR>
+[+73900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+73931ms] >> ADC
+[+73939ms] ADC pot=2126 pot_mv=1713 ntc=1868 ntc_mv=1505 vref=3300<CR>
+[+74399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+74429ms] >> ADC
+[+74437ms] ADC pot=2126 pot_mv=1713 ntc=1862 ntc_mv=1501 vref=3300<CR>
+[+74559ms] DIST live cm=100.6 us=5837<CR>
+[+74822ms] hb<CR>
+[+74899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+74926ms] >> ADC
+[+74933ms] ADC pot=2126 pot_mv=1713 ntc=1846 ntc_mv=1488 vref=3300<CR>
+[+75400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+75436ms] >> ADC
+[+75444ms] ADC pot=2126 pot_mv=1713 ntc=1861 ntc_mv=1500 vref=3300<CR>
+[+75556ms] DIST live cm=57.3 us=3323<CR>
+[+75822ms] hb<CR>
+[+75900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+75933ms] >> ADC
+[+75941ms] ADC pot=2122 pot_mv=1710 ntc=1852 ntc_mv=1492 vref=3300<CR>
+[+76399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+76433ms] >> ADC
+[+76440ms] ADC pot=2125 pot_mv=1712 ntc=1856 ntc_mv=1496 vref=3300<CR>
+[+76558ms] DIST live cm=98.5 us=5715<CR>
+[+76822ms] hb<CR>
+[+76899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+76929ms] >> ADC
+[+76938ms] ADC pot=2126 pot_mv=1713 ntc=1860 ntc_mv=1499 vref=3300<CR>
+[+77400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+77427ms] >> ADC
+[+77435ms] ADC pot=2125 pot_mv=1712 ntc=1835 ntc_mv=1479 vref=3300<CR>
+[+77559ms] DIST live cm=98.1 us=5690<CR>
+[+77822ms] hb<CR>
+[+77899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+77924ms] >> ADC
+[+77932ms] ADC pot=2126 pot_mv=1713 ntc=1853 ntc_mv=1493 vref=3300<CR>
+[+78399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+78437ms] >> ADC
+[+78444ms] ADC pot=2126 pot_mv=1713 ntc=1868 ntc_mv=1505 vref=3300<CR>
+[+78555ms] DIST live cm=50.3 us=2915<CR>
+[+78822ms] hb<CR>
+[+78899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+78933ms] >> ADC
+[+78940ms] ADC pot=2126 pot_mv=1713 ntc=1850 ntc_mv=1491 vref=3300<CR>
+[+79400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+79431ms] >> ADC
+[+79438ms] ADC pot=2125 pot_mv=1712 ntc=1852 ntc_mv=1492 vref=3300<CR>
+[+79556ms] DIST live cm=57.1 us=3314<CR>
+[+79822ms] hb<CR>
+[+79899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+79927ms] >> ADC
+[+79935ms] ADC pot=2125 pot_mv=1712 ntc=1856 ntc_mv=1496 vref=3300<CR>
+[+80399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+80424ms] >> ADC
+[+80432ms] ADC pot=2126 pot_mv=1713 ntc=1844 ntc_mv=1486 vref=3300<CR>
+[+80555ms] DIST live cm=57.9 us=3357<CR>
+[+80822ms] hb<CR>
+[+80899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+80923ms] >> ADC
+[+80931ms] ADC pot=2126 pot_mv=1713 ntc=1852 ntc_mv=1492 vref=3300<CR>
+[+81404ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+81406ms] >> ADC
+[+81415ms] ADC pot=2125 pot_mv=1712 ntc=1850 ntc_mv=1491 vref=3300<CR>
+[+81556ms] DIST live cm=57.1 us=3314<CR>
+[+81822ms] hb<CR>
+[+81888ms] >> ADC
+[+81901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+81905ms] ADC pot=2125 pot_mv=1712 ntc=1843 ntc_mv=1485 vref=3300<CR>
+[+82399ms] >> ADC
+[+82401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+82406ms] ADC pot=2125 pot_mv=1712 ntc=1844 ntc_mv=1486 vref=3300<CR>
+[+82558ms] DIST live cm=99.1 us=5746<CR>
+[+82822ms] hb<CR>
+[+82884ms] >> ADC
+[+82901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+82904ms] ADC pot=2126 pot_mv=1713 ntc=1843 ntc_mv=1485 vref=3300<CR>
+[+83395ms] >> ADC
+[+83401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+83404ms] ADC pot=2126 pot_mv=1713 ntc=1850 ntc_mv=1491 vref=3300<CR>
+[+83558ms] DIST live cm=99.9 us=5794<CR>
+[+83822ms] hb<CR>
+[+83877ms] >> ADC
+[+83888ms] ADC pot=2126 pot_mv=1713 ntc=1842 ntc_mv=1484 vref=3300<CR>
+[+83899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+84387ms] >> ADC
+[+84401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+84404ms] ADC pot=2126 pot_mv=1713 ntc=1842 ntc_mv=1484 vref=3300<CR>
+[+84559ms] DIST live cm=101.2 us=5869<CR>
+[+84822ms] hb<CR>
+[+84884ms] >> ADC
+[+84901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+84904ms] ADC pot=2125 pot_mv=1712 ntc=1840 ntc_mv=1483 vref=3300<CR>
+[+85368ms] >> ADC
+[+85376ms] ADC pot=2125 pot_mv=1712 ntc=1842 ntc_mv=1484 vref=3300<CR>
+[+85399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+85555ms] DIST live cm=57.2 us=3315<CR>
+[+85822ms] hb<CR>
+[+85850ms] >> ADC
+[+85864ms] ADC pot=2124 pot_mv=1712 ntc=1840 ntc_mv=1483 vref=3300<CR>
+[+85899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+86361ms] >> ADC
+[+86378ms] ADC pot=2126 pot_mv=1713 ntc=1853 ntc_mv=1493 vref=3300<CR>
+[+86399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+86558ms] DIST live cm=99.4 us=5768<CR>
+[+86822ms] hb<CR>
+[+86858ms] >> ADC
+[+86876ms] ADC pot=2126 pot_mv=1713 ntc=1839 ntc_mv=1482 vref=3300<CR>
+[+86899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+87369ms] >> ADC
+[+87388ms] ADC pot=2125 pot_mv=1712 ntc=1846 ntc_mv=1488 vref=3300<CR>
+[+87399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+87558ms] DIST live cm=99.4 us=5766<CR>
+[+87822ms] hb<CR>
+[+87882ms] >> ADC
+[+87901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+87904ms] ADC pot=2126 pot_mv=1713 ntc=1837 ntc_mv=1480 vref=3300<CR>
+[+88393ms] >> ADC
+[+88401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+88404ms] ADC pot=2125 pot_mv=1712 ntc=1833 ntc_mv=1477 vref=3300<CR>
+[+88558ms] DIST live cm=99.4 us=5768<CR>
+[+88822ms] hb<CR>
+[+88875ms] >> ADC
+[+88888ms] ADC pot=2126 pot_mv=1713 ntc=1836 ntc_mv=1480 vref=3300<CR>
+[+88899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+89371ms] >> ADC
+[+89389ms] ADC pot=2126 pot_mv=1713 ntc=1829 ntc_mv=1474 vref=3300<CR>
+[+89399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+89557ms] DIST live cm=99.4 us=5768<CR>
+[+89822ms] hb<CR>
+[+89883ms] >> ADC
+[+89901ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+89904ms] ADC pot=2126 pot_mv=1713 ntc=1842 ntc_mv=1484 vref=3300<CR>
+[+90393ms] >> ADC
+[+90401ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+90404ms] ADC pot=2125 pot_mv=1712 ntc=1818 ntc_mv=1465 vref=3300<CR>
+[+90557ms] DIST live cm=99.4 us=5767<CR>
+[+90822ms] hb<CR>
+[+90887ms] >> ADC
+[+90902ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+90905ms] ADC pot=2126 pot_mv=1713 ntc=1829 ntc_mv=1474 vref=3300<CR>
+[+91398ms] >> ADC
+[+91400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+91406ms] ADC pot=2125 pot_mv=1712 ntc=1830 ntc_mv=1475 vref=3300<CR>
+[+91557ms] DIST live cm=99.1 us=5746<CR>
+[+91822ms] hb<CR>
+[+91879ms] >> ADC
+[+91889ms] ADC pot=2126 pot_mv=1713 ntc=1805 ntc_mv=1455 vref=3300<CR>
+[+91899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+92361ms] >> ADC
+[+92380ms] ADC pot=2125 pot_mv=1712 ntc=1840 ntc_mv=1483 vref=3300<CR>
+[+92400ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+92555ms] DIST live cm=57.0 us=3306<CR>
+[+92821ms] hb<CR>
+[+92857ms] >> ADC
+[+92876ms] ADC pot=2125 pot_mv=1712 ntc=1832 ntc_mv=1476 vref=3300<CR>
+[+92899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+93370ms] >> ADC
+[+93388ms] ADC pot=2126 pot_mv=1713 ntc=1828 ntc_mv=1473 vref=3300<CR>
+[+93399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+93558ms] DIST live cm=99.0 us=5744<CR>
+[+93821ms] hb<CR>
+[+93880ms] >> ADC
+[+93888ms] ADC pot=2126 pot_mv=1713 ntc=1830 ntc_mv=1475 vref=3300<CR>
+[+93899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+94364ms] >> ADC
+[+94376ms] ADC pot=2125 pot_mv=1712 ntc=1824 ntc_mv=1470 vref=3300<CR>
+[+94399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+94557ms] DIST live cm=99.4 us=5766<CR>
+[+94821ms] hb<CR>
+[+94857ms] >> ADC
+[+94876ms] ADC pot=2125 pot_mv=1712 ntc=1823 ntc_mv=1469 vref=3300<CR>
+[+94899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+95368ms] >> ADC
+[+95377ms] ADC pot=2125 pot_mv=1712 ntc=1824 ntc_mv=1470 vref=3300<CR>
+[+95399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+95557ms] DIST live cm=99.9 us=5792<CR>
+[+95821ms] hb<CR>
+[+95852ms] >> ADC
+[+95863ms] ADC pot=2126 pot_mv=1713 ntc=1808 ntc_mv=1457 vref=3300<CR>
+[+95900ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+96334ms] >> ADC
+[+96351ms] ADC pot=2125 pot_mv=1712 ntc=1840 ntc_mv=1483 vref=3300<CR>
+[+96399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+96557ms] DIST live cm=99.4 us=5768<CR>
+[+96821ms] >> ADC
+[+96822ms] hb<CR>
+[+96839ms] ADC pot=2126 pot_mv=1713 ntc=1824 ntc_mv=1470 vref=3300<CR>
+[+96899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+97325ms] >> ADC
+[+97339ms] ADC pot=2126 pot_mv=1713 ntc=1823 ntc_mv=1469 vref=3300<CR>
+[+97399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+97556ms] DIST live cm=77.2 us=4477<CR>
+[+97821ms] >> ADC
+[+97822ms] hb<CR>
+[+97839ms] ADC pot=2126 pot_mv=1713 ntc=1824 ntc_mv=1470 vref=3300<CR>
+[+97899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+98304ms] >> ADC
+[+98316ms] ADC pot=2126 pot_mv=1713 ntc=1823 ntc_mv=1469 vref=3300<CR>
+[+98401ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+98556ms] DIST live cm=84.6 us=4908<CR>
+[+98802ms] >> ADC
+[+98816ms] ADC pot=2125 pot_mv=1712 ntc=1822 ntc_mv=1468 vref=3300<CR>
+[+98821ms] hb<CR>
+[+98900ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+99301ms] >> ADC
+[+99316ms] ADC pot=2126 pot_mv=1713 ntc=1819 ntc_mv=1466 vref=3300<CR>
+[+99399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+99557ms] DIST live cm=98.1 us=5689<CR>
+[+99799ms] >> ADC
+[+99816ms] ADC pot=2126 pot_mv=1713 ntc=1827 ntc_mv=1472 vref=3300<CR>
+[+99821ms] hb<CR>
+[+99899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+100299ms] >> ADC
+[+100315ms] ADC pot=2125 pot_mv=1712 ntc=1819 ntc_mv=1466 vref=3300<CR>
+[+100399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+100557ms] DIST live cm=98.1 us=5687<CR>
+[+100799ms] >> ADC
+[+100815ms] ADC pot=2126 pot_mv=1713 ntc=1815 ntc_mv=1463 vref=3300<CR>
+[+100821ms] hb<CR>
+[+100899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+101297ms] >> ADC
+[+101315ms] ADC pot=2126 pot_mv=1713 ntc=1810 ntc_mv=1459 vref=3300<CR>
+[+101400ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+101557ms] DIST live cm=98.5 us=5715<CR>
+[+101779ms] >> ADC
+[+101787ms] ADC pot=2122 pot_mv=1710 ntc=1818 ntc_mv=1465 vref=3300<CR>
+[+101821ms] hb<CR>
+[+101899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+102274ms] >> ADC
+[+102282ms] ADC pot=2122 pot_mv=1710 ntc=1820 ntc_mv=1467 vref=3300<CR>
+[+102399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+102557ms] DIST live cm=98.1 us=5689<CR>
+[+102769ms] >> ADC
+[+102777ms] ADC pot=2125 pot_mv=1712 ntc=1819 ntc_mv=1466 vref=3300<CR>
+[+102821ms] hb<CR>
+[+102899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+103263ms] >> ADC
+[+103271ms] ADC pot=2125 pot_mv=1712 ntc=1817 ntc_mv=1464 vref=3300<CR>
+[+103399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+103557ms] DIST live cm=99.0 us=5741<CR>
+[+103747ms] >> ADC
+[+103754ms] ADC pot=2125 pot_mv=1712 ntc=1823 ntc_mv=1469 vref=3300<CR>
+[+103821ms] hb<CR>
+[+103899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+104242ms] >> ADC
+[+104249ms] ADC pot=2125 pot_mv=1712 ntc=1849 ntc_mv=1490 vref=3300<CR>
+[+104398ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+104556ms] DIST live cm=85.9 us=4982<CR>
+[+104740ms] >> ADC
+[+104747ms] ADC pot=2125 pot_mv=1712 ntc=1825 ntc_mv=1471 vref=3300<CR>
+[+104821ms] hb<CR>
+[+104898ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+105235ms] >> ADC
+[+105242ms] ADC pot=2126 pot_mv=1713 ntc=1817 ntc_mv=1464 vref=3300<CR>
+[+105398ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+105554ms] DIST live cm=39.1 us=2270<CR>
+[+105732ms] >> ADC
+[+105740ms] ADC pot=2126 pot_mv=1713 ntc=1818 ntc_mv=1465 vref=3300<CR>
+[+105821ms] hb<CR>
+[+105899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+106244ms] >> ADC
+[+106251ms] ADC pot=2126 pot_mv=1713 ntc=1819 ntc_mv=1466 vref=3300<CR>
+[+106398ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+106556ms] DIST live cm=84.3 us=4892<CR>
+[+106741ms] >> ADC
+[+106749ms] ADC pot=2125 pot_mv=1712 ntc=1823 ntc_mv=1469 vref=3300<CR>
+[+106821ms] hb<CR>
+[+106899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+107242ms] >> ADC
+[+107249ms] ADC pot=2126 pot_mv=1713 ntc=1817 ntc_mv=1464 vref=3300<CR>
+[+107399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+107557ms] DIST live cm=111.2 us=6451<CR>
+[+107738ms] >> ADC
+[+107745ms] ADC pot=2133 pot_mv=1719 ntc=1813 ntc_mv=1461 vref=3300<CR>
+[+107821ms] hb<CR>
+[+107900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+108238ms] >> ADC
+[+108248ms] ADC pot=2125 pot_mv=1712 ntc=1816 ntc_mv=1463 vref=3300<CR>
+[+108399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+108558ms] DIST live cm=99.9 us=5792<CR>
+[+108741ms] >> ADC
+[+108749ms] ADC pot=2125 pot_mv=1712 ntc=1811 ntc_mv=1459 vref=3300<CR>
+[+108821ms] hb<CR>
+[+108900ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+109240ms] >> ADC
+[+109248ms] ADC pot=2127 pot_mv=1714 ntc=1808 ntc_mv=1457 vref=3300<CR>
+[+109399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+109557ms] DIST live cm=104.6 us=6068<CR>
+[+109738ms] >> ADC
+[+109746ms] ADC pot=2125 pot_mv=1712 ntc=1814 ntc_mv=1462 vref=3300<CR>
+[+109821ms] hb<CR>
+[+109899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+110238ms] >> ADC
+[+110246ms] ADC pot=2125 pot_mv=1712 ntc=1812 ntc_mv=1460 vref=3300<CR>
+[+110399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+110557ms] DIST live cm=99.4 us=5767<CR>
+[+110749ms] >> ADC
+[+110757ms] ADC pot=2125 pot_mv=1712 ntc=1813 ntc_mv=1461 vref=3300<CR>
+[+110821ms] hb<CR>
+[+110899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+111247ms] >> ADC
+[+111255ms] ADC pot=2125 pot_mv=1712 ntc=1810 ntc_mv=1459 vref=3300<CR>
+[+111399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+111558ms] DIST live cm=99.9 us=5794<CR>
+[+111746ms] >> ADC
+[+111754ms] ADC pot=2125 pot_mv=1712 ntc=1819 ntc_mv=1466 vref=3300<CR>
+[+111821ms] hb<CR>
+[+111899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+112249ms] >> ADC
+[+112256ms] ADC pot=2125 pot_mv=1712 ntc=1810 ntc_mv=1459 vref=3300<CR>
+[+112398ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+112557ms] DIST live cm=98.6 us=5718<CR>
+[+112744ms] >> ADC
+[+112751ms] ADC pot=2132 pot_mv=1718 ntc=1819 ntc_mv=1466 vref=3300<CR>
+[+112821ms] hb<CR>
+[+112899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+113241ms] >> ADC
+[+113251ms] ADC pot=2125 pot_mv=1712 ntc=1805 ntc_mv=1455 vref=3300<CR>
+[+113400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+113556ms] DIST live cm=98.6 us=5720<CR>
+[+113738ms] >> ADC
+[+113745ms] ADC pot=2125 pot_mv=1712 ntc=1806 ntc_mv=1455 vref=3300<CR>
+[+113820ms] hb<CR>
+[+113898ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+114234ms] >> ADC
+[+114243ms] ADC pot=2126 pot_mv=1713 ntc=1868 ntc_mv=1505 vref=3300<CR>
+[+114398ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+114556ms] DIST live cm=99.1 us=5747<CR>
+[+114744ms] >> ADC
+[+114751ms] ADC pot=2125 pot_mv=1712 ntc=1804 ntc_mv=1454 vref=3300<CR>
+[+114821ms] hb<CR>
+[+114899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+115243ms] >> ADC
+[+115250ms] ADC pot=2126 pot_mv=1713 ntc=1808 ntc_mv=1457 vref=3300<CR>
+[+115399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+115557ms] DIST live cm=106.8 us=6194<CR>
+[+115739ms] >> ADC
+[+115747ms] ADC pot=2126 pot_mv=1713 ntc=1805 ntc_mv=1455 vref=3300<CR>
+[+115820ms] hb<CR>
+[+115898ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+116237ms] >> ADC
+[+116245ms] ADC pot=2126 pot_mv=1713 ntc=1806 ntc_mv=1455 vref=3300<CR>
+[+116399ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+116556ms] DIST live cm=99.4 us=5767<CR>
+[+116736ms] >> ADC
+[+116743ms] ADC pot=2125 pot_mv=1712 ntc=1802 ntc_mv=1452 vref=3300<CR>
+[+116821ms] hb<CR>
+[+116898ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+117235ms] >> ADC
+[+117243ms] ADC pot=2125 pot_mv=1712 ntc=1808 ntc_mv=1457 vref=3300<CR>
+[+117398ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+117555ms] DIST live cm=74.4 us=4313<CR>
+[+117732ms] >> ADC
+[+117740ms] ADC pot=2126 pot_mv=1713 ntc=1802 ntc_mv=1452 vref=3300<CR>
+[+117820ms] hb<CR>
+[+117899ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+118214ms] >> ADC
+[+118222ms] ADC pot=2125 pot_mv=1712 ntc=1800 ntc_mv=1451 vref=3300<CR>
+[+118398ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+118554ms] DIST live cm=67.4 us=3911<CR>
+[+118709ms] >> ADC
+[+118717ms] ADC pot=2125 pot_mv=1712 ntc=1799 ntc_mv=1450 vref=3300<CR>
+[+118820ms] hb<CR>
+[+118897ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+119210ms] >> ADC
+[+119217ms] ADC pot=2126 pot_mv=1713 ntc=1802 ntc_mv=1452 vref=3300<CR>
+[+119398ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+119555ms] DIST live cm=79.5 us=4613<CR>
+[+119710ms] >> ADC
+[+119717ms] ADC pot=2126 pot_mv=1713 ntc=1797 ntc_mv=1448 vref=3300<CR>
+[+119820ms] hb<CR>
+[+119898ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+120208ms] >> ADC
+[+120216ms] ADC pot=2122 pot_mv=1710 ntc=1813 ntc_mv=1461 vref=3300<CR>
+[+120400ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+120556ms] DIST live cm=99.4 us=5767<CR>
+[+120703ms] >> ADC
+[+120711ms] ADC pot=2126 pot_mv=1713 ntc=1792 ntc_mv=1444 vref=3300<CR>
+[+120820ms] hb<CR>
+[+120897ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+# capture closed at +121199ms

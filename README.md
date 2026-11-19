@@ -29,13 +29,14 @@
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
 | USART2 调试口 | 通过 | 115200 8N1 双向收发，`hb` 每秒一行（§5） |
-| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；长回包不丢尾（§11、§14），当前 `HELP` 完整回包 **356 B / 9 行**（§19） |
+| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；长回包不丢尾（§11、§14），当前 `HELP` 完整回包 **398 B / 10 行**（§28） |
 | I2C1 | 通过 | 扫描到 `0x70`（AHT20）与 `0x7A`（OLED），PB6/PB7，100 kHz（§9） |
 | AHT20 温湿度 | 通过 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0`（§12） |
 | HC-SR04 测距 | 通过 | `DIST cm=<n> us=<n>`，非阻塞，EXTI + TIM2 计宽（§14） |
 | CH1116 OLED | 通过 | 文字、`frame` 图案（col=2 下 9 条竖线、四边完整）、`live` 500 ms + 1 Hz 自动测距（§15–§19） |
 | 按键 | 通过 | 20 ms 消抖，6 组 pressed/released 无重复无漏（§7） |
-| SPI / ADC / PWM | **未验证** | 无实际器件；SPI 只有 HAL 源与默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现 |
+| ADC1 | **部分通过** | PA5 电位器静态 2124–2126（30 次极差 2 LSB）；PA4 NTC 升温 raw 2293→1792、降温回升，判定 NTC 在分压低端（§28）。**电位器转动响应未验证：缺十字螺丝刀** |
+| SPI / PWM | **未验证** | 无实际器件；SPI 只有 HAL 源与默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现 |
 
 未做上板验证的部分不写成"可用"。
 
@@ -138,13 +139,14 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 
 | 命令 | 作用 |
 | --- | --- |
-| `HELP` | 列出全部命令（9 行、356 B） |
+| `HELP` | 列出全部命令（10 行、398 B） |
 | `PING` | 回 `PONG` |
 | `STAT` | 时钟、运行秒数、按键计数、串口累计字节 |
 | `I2C` | 扫描 I2C1，列 8 位写地址（本板 `0x70`、`0x7A`） |
 | `KEYS` | 读按键计数并清零 |
 | `AHT` / `AHTS` | 读 AHT20 温湿度；`AHTS` 是 repeated START 对照，拿到的是上一次结果 |
 | `DIST` | 单次 HC-SR04 测距，回 `cm` 与 `us` |
+| `ADC` | 读 PA5 电位器与 PA4 NTC 的原始值与 mV |
 | `OLED on\|off\|clear\|test\|show\|frame\|col\|live` | 显示开关、清屏、测试页、静态文字、边框图案、列偏移、500 ms live（live 期间自带 1 Hz 测距） |
 
 参数、成功/失败回包原文、是否改变设备状态、蓝牙端的判读陷阱（回包被拆成多个气泡等），见 **[docs/PROTOCOL.md](docs/PROTOCOL.md)**。
