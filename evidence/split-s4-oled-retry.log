@@ -1,0 +1,41 @@
+﻿[      6ms] ===== capture start 2026-11-19 22:35:13.448 port=COM11 plan=retry =====
+[    322ms] hb
+[   1018ms] >> OLED off
+[   1046ms] OLED off ok display=off live=paused af=0 berr=0 to=0
+[   1326ms] hb
+[   2009ms] >> OLED off
+[   2025ms] OLED off ok display=off live=paused af=0 berr=0 to=0
+[   2321ms] hb
+[   3327ms] hb
+[   3516ms] >> OLED on
+[   3532ms] OLED on ok display=on live=on af=0 berr=0 to=0
+[   3625ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4119ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4321ms] hb
+[   4632ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5020ms] >> OLED col 2
+[   5051ms] OLED col=2 ok redraw=live
+[   5143ms] OLED redraw ok ms=98 col=2 af=0 berr=0 to=0
+[   5314ms] hb
+[   5640ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6013ms] >> OLED col 2
+[   6028ms] OLED col=2 ok redraw=live
+[   6123ms] OLED redraw ok ms=98 col=2 af=0 berr=0 to=0
+[   6323ms] hb
+[   6619ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7006ms] >> OLED col 2
+[   7022ms] OLED col=2 ok redraw=live
+[   7117ms] OLED redraw ok ms=98 col=2 af=0 berr=0 to=0
+[   7320ms] hb
+[   7617ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8113ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8316ms] hb
+[   8610ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9015ms] >> STAT
+[   9030ms] STAT clk=72000000 up=309807 tick=1 key1=0 key2=0 uart_rx=366 uart_tx=16609
+[   9123ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9323ms] hb
+[   9617ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10114ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10316ms] hb
+[  10501ms] ===== capture end =====

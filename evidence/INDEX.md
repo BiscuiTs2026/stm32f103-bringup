@@ -1,7 +1,7 @@
 # 上板抓包证据登记表
 
 本目录是 `2026-11-18/board-bringup/work` 这一轮上板验证留下的串口抓包归档。
-共 53 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
+共 62 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
 根目录原件保留（`PATCHES.md` 里的路径引用仍然有效），但根目录副本被 `.gitignore` 忽略，
 只有本目录的副本进版本库；第 10–23 个（`retest-20261119*.log`、`dist-probe-20261119-*.log`、
 `autolive-20261119*.log`、`adc-20261119-*.log`）是 2026-11-19 复测与排查时**直接写在本目录**的，
@@ -12,7 +12,8 @@
 `main.c` 拆分 S1（纯计算搬家）的拆前/拆后上板回归、编译输出与主机单测输出；
 第 39–45 项是拆分 S2（输出层搬家）的拆前/拆后回归、编译、单测、分层扫描、
 夹带判据，以及**未取到**的蓝牙镜像证据记录；第 46–51 项是拆分 S3（命令注册表）的
-拆前/拆后回归、编译、单测、分层扫描与夹带判据。
+拆前/拆后回归、编译、单测、分层扫描与夹带判据；第 52–59 项是拆分 S4（I2C1/OLED 总线
+下沉 bsp）的拆前/拆后回归、编译、主机单测、分层扫描、60 s live 窗口、OLED 忙态重试与烧录校验。
 
 ## 怎么读这些日志
 
@@ -699,3 +700,103 @@
 | 不能证明什么 | **不能**满足 SPLIT-PLAN 验收里"两个 numstat 逐项相同"的字面判据——该项需要复核方裁决（缩进变化是表驱动写法的必然结果） |
 | 局限 | 判据只看 main.c 与新文件清单；新文件 `pm_cmd_table.c` 的等价性由第 49 项主机用例覆盖 |
 | PATCHES 引用 | 未引用（S3 拆分证据，待裁决） |
+
+## 52. split-s4-before.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 340 行；COM11 @115200，99 s 窗口（22:25:42 起）；板内固件 S3 `765a35e` |
+| 采样窗口 | 复位后 1.5 s 起发命令：`PING`/`HELP`/`STAT`/`I2C`/`AHT`×3/`AHTS`×3/`OLED on/off/clear/test/frame/dump/col 2/live on`/`AHT`×3（live 窗口中部）/`OLED live off`/`ADC`/`DIST`/`PWM stat`/`TRACK`/`ENC`/`RELAY stat`/`MOTOR stat`/`STAT`/`KEYS` |
+| 当时在做什么 | S4 拆前基线（拆前的 I2C/OLED 全部由 `main.c` 直接操作寄存器） |
+| 关键内容 | `HELP` 15 行、636 B；`I2C found=0x70,0x7A`；`AHT ok ... rst=0` ×3、`rst=1` ×3，字段名/顺序一致、无 `err=`；`OLED` 各子命令各一次回包，`af=0 berr=0 to=0`、`ms=97/98`；live 帧共 164 条、`ms=98`；`OLED off` 与 `OLED col 2` 各一次 `err=busy i2c`（live 页正在推帧时的既有忙态保护，非本轮引入）；`STAT uart_tx` 递增 |
+| 能证明什么 | 拆前行为基线，供第 53 项逐项对照 |
+| 不能证明什么 | 不证明 S4 的行为——由第 53 项覆盖；`busy i2c` 说明这两条命令需重试才拿到完整回包 |
+| 局限 | 板内固件是 S3，不是工作树 HEAD 的祖先之外的版本；`HELP` 字节数按 CRLF 拼接计 |
+| PATCHES 引用 | 未引用（S4 拆分证据） |
+
+## 53. split-s4-after.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 341 行；COM11 @115200，99 s 窗口（22:30:13 起）；板内固件 S4（本任务构建） |
+| 采样窗口 | 与第 52 项同一时序 |
+| 当时在做什么 | S4 拆后回归：`cmd_i2c`/AHT 触发与读/OLED 帧写全部经 `pm_i2c1_ops()`，计数器经 `pm_i2c1_stats()` |
+| 关键内容 | `HELP` 15 行与拆前逐行一致；`I2C found=0x70,0x7A` 与拆前逐字节相同；`AHT ok` ×3 `rst=0`、`AHTS ok` ×3 `rst=1`，`raw=` 均为 `18 ...`（状态字节正常），字段名/顺序/单位与拆前一致；live 窗口中段 3 次 `AHT`：2 次成功、1 次 `err=busy oled`（页正在推帧）；`OLED on/clear/test/frame/dump/live on/live off` 回包与拆前同格式、`af=0 berr=0 to=0`、`ms=97/98`；`OLED off` 与 `OLED col 2` 各一次 `err=busy i2c`（同第 52 项的既有忙态），干净回包见第 57 项；live 帧 164 条 `ms=98`；其余 14 条命令各一次回包 |
+| 能证明什么 | 总线代码下沉后，I2C 扫描、AHT/AHTS 触发与读、OLED 帧时序、错误计数器读数在板上与拆前等价；`main.c` 已不再含 `I2C1->`/`GPIOB->` |
+| 不能证明什么 | 不证明内部寄存器级时序不变（`i2c1_bus_fix` 的 1 ms 延时改由 SysTick COUNTFLAG 实现，见第 56 项局限）；失败一版（触发后不立即 STOP，AHT 读回状态 0x98 busy）的抓包未单独留档 |
+| 局限 | **已知行为偏差**：`aht_trigger()` 固定以 STOP 结束命令，`AHTS`（rst=1）因此在触发后立即释放总线，80 ms 后的读是普通 START 而非重复 START；原因是 AHT20 在命令被 STOP 终止后才开始转换，延后 STOP 会读回 `0x98`。拆前 `AHTS` 的"握总线 80 ms"写法在固定单参数接口下无法保留，板端两次模式均 3/3 成功 |
+| PATCHES 引用 | 未引用（S4 拆分证据） |
+
+## 54. split-s4-build.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 21 行；`build-split-s4`，Ninja + arm-none-eabi-gcc 14.3.1+st.2 |
+| 当时在做什么 | S4 全量构建（新增 `src/port/stm32f1/pm_i2c1_stm32f1.c`） |
+| 关键内容 | 编译器告警 **0 条**；warning 共 5 条，全部是既有链接期项（newlib nosys 的 `_close`/`_lseek`/`_read`/`_write` 桩 + RWX LOAD segment），与 `split-s3-build.log` 集合逐条相同；Flash 27700 B / RAM 4976 B（S3 为 27620 / 4976，+80 B 代码，RAM 不变）；`.data 460 B / .bss 4524 B` |
+| 能证明什么 | 总线下沉没有引入编译告警，RAM 未增长；三个自愈初始化点与新计数器编译进固件 |
+| 不能证明什么 | 不证明运行行为（见第 53/56/57 项） |
+| 局限 | 固件未开全 `-Werror`，告警靠人工核对 |
+| PATCHES 引用 | 未引用（S4 拆分证据） |
+
+## 55. split-s4-layering.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 15 行；`tools/check_layering.py` 3.3.1 默认参数（`--version --lock` 一致，源提交 `7facd2b`） |
+| 当时在做什么 | S4 拆后全工程扫描 |
+| 关键内容 | **0 ERROR / 11 WARN**，与 SPLIT-PLAN §3 S4 的清单逐条对应：胶水层行数 1220（闸门 200）1 条、`main.c:424/426` `GPIO_PIN_4`/`GPIOA`（`adc_boot`）2 条、`main.c:632` `dist_start` 寄存器 1 条、`main.c:667` `dist` 忙等 1 条、`main.c:933` `oled_screen_name` 分支 1 条、`main.c:975` `oled_start_screen` 分支 1 条、`main.c:1021` `cmd_oled` 123 行 1 条、`pm_port_stm32f1.c:352/362/374` `*_hw_*` 3 条；`pm_i2c1` 相关命中 **0 条**；S3 的 23 WARN 中 12 条已清除（6 条驱动类 + 4 条 1 ms 延时 + 2 条 STOP 忙等） |
+| 能证明什么 | S4 清掉了 12 条命中且未引入新命中；新的 bsp 文件通过分层检查（未包含 components 头、未调用 OSAL 的 delay） |
+| 不能证明什么 | 不证明行为等价（见第 53 项）；行数闸门下的存量债仍在 |
+| 局限 | 判据是启发式静态检查，`i2c1_delay_ms` 用 SysTick COUNTFLAG 而非 OSAL，属为满足规则 17 的实现选择 |
+| PATCHES 引用 | 未引用（S4 拆分证据） |
+
+## 56. split-s4-oled-live.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 197 行；COM11 @115200，65 s 窗口（22:33:58 起） |
+| 采样窗口 | 1.0 s `OLED off` → 2.0 s `OLED live on` → 62 s `STAT` → 63 s `OLED live off` |
+| 当时在做什么 | S4 长窗口刷新验收：60 s live 的帧周期与错误计数 |
+| 关键内容 | `OLED off ok ... af=0 berr=0 to=0`；live 窗口内 **122 帧**，`ms` 最小 98 / 最大 98（全部落在 95..105），`af=0 berr=0 to=0` 全部成立；`STAT ... uart_tx=15628`；无 `err=` |
+| 能证明什么 | 帧写迁到 bsp 后，500 ms 节拍与单帧 ~98 ms 不变，错误计数保持 0 |
+| 不能证明什么 | 不覆盖 OLED 断线/总线故障下的自愈路径（需人为制造故障）；不覆盖 AHT 并发 |
+| 局限 | `i2c1_delay_ms` 的 1 ms 精度未单独测量，只在总线修复路径使用 |
+| PATCHES 引用 | 未引用（S4 拆分证据） |
+
+## 57. split-s4-oled-retry.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 41 行；COM11 @115200，10.5 s 窗口（22:35:13 起） |
+| 采样窗口 | `OLED off` ×2 → `OLED on` → `OLED col 2` ×3 → `STAT` |
+| 当时在做什么 | 补第 53 项里两条 `err=busy i2c` 的干净回包 |
+| 关键内容 | `OLED off ok display=off live=paused af=0 berr=0 to=0` ×2；`OLED on ok display=on live=on af=0 berr=0 to=0`；`OLED col=2 ok redraw=live` ×3，紧随的 `OLED redraw ok ms=98 col=2 af=0 berr=0 to=0`；`STAT ... uart_tx=16609` |
+| 能证明什么 | `OLED off` 与 `OLED col 2` 在无页在推时回包完整，计数器为 0；第 53 项的忙态是时序竞争而非功能缺失 |
+| 不能证明什么 | 不证明忙态概率——只在 live 推帧期间偶发，未做统计 |
+| 局限 | 采样窗口短；`busy i2c` 的判定属既有逻辑，不在 S4 改动范围 |
+| PATCHES 引用 | 未引用（S4 拆分证据） |
+
+## 58. split-s4-flash.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 58 行；`STM32_Programmer_CLI -c port=SWD mode=UR -w build-split-s4/pm_f103_demo.hex -v -rst` |
+| 当时在做什么 | S4 固件烧录并回读校验 |
+| 关键内容 | `File download complete` / `Download verified successfully` / `Software reset is performed` |
+| 能证明什么 | 板内运行的确为本任务构建的 S4 固件（第 53/56/57 项的抓包对象） |
+| 不能证明什么 | 不证明运行行为 |
+| 局限 | 只记录最后一次成功烧录；首版失败（AHT busy）的烧录记录已被覆盖 |
+| PATCHES 引用 | 未引用（S4 拆分证据） |
+
+## 59. split-s4-host.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 2 行；`build-host-s3-vs`（VS 18 2026 x64，/W4）重新构建后运行 |
+| 当时在做什么 | S4 回归：主机单测不随本次改动而变化，确认无回归 |
+| 关键内容 | **164 checks, 0 failure(s)**，与 S3 相同 |
+| 能证明什么 | 本次只改 bsp 与 glue，未触碰 `src/core/` 与 `tests/host/`，主机侧无回归 |
+| 不能证明什么 | 主机用例不覆盖 I2C/OLED 总线（依赖真实寄存器），那部分由第 53/56/57 项覆盖 |
+| 局限 | 主机侧无 I2C 模拟，`pm_i2c1_stm32f1.c` 不参与主机构建 |
+| PATCHES 引用 | 未引用（S4 拆分证据） |

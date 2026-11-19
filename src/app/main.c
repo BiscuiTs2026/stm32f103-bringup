@@ -19,6 +19,7 @@
 #include "pm_cmd.h"
 #include "pm_cmd_out.h"
 #include "pm_cmd_table.h"
+#include "pm_i2c1.h"
 #include "pm_platform.h"
 #include "board_f103c8.h"
 #include "oled_ch1116.h"
@@ -194,112 +195,10 @@ static void error_loop(void)
  * No dynamic allocation is used anywhere. */
 
 /* -------------------------------------------------------------- I2C1 scan
- * Bring-up only: polling access on purpose (the model has no I2C driver yet)
- * so the bus can be exercised without touching the build system. PB6 = SCL,
- * PB7 = SDA, 100 kHz from APB1 = 36 MHz. Reported addresses are 8-bit write
- * addresses (7-bit << 1), matching the OLED 0x7A / AHT20 0x70 convention. */
-
-#define I2C_SPIN 200000u
-
-static int i2c1_wait_sr1(uint32_t mask)
-{
-    uint32_t t = I2C_SPIN;
-
-    while (t-- != 0u) {
-        uint32_t sr1 = I2C1->SR1;
-
-        if ((sr1 & mask) != 0u) {
-            return 1;
-        }
-        if ((sr1 & (I2C_SR1_AF | I2C_SR1_BERR)) != 0u) {
-            return 0;
-        }
-    }
-    return 0;
-}
-
-static void i2c1_bus_fix(void)
-{
-    /* Release a slave that holds SDA low: 9 clocks on SCL, then STOP. */
-    uint32_t i;
-
-    I2C1->CR1 &= ~I2C_CR1_PE;
-    I2C1->CR1 |= I2C_CR1_SWRST;
-    I2C1->CR1 &= ~I2C_CR1_SWRST;
-
-    /* PB6/PB7 back to GPIO open-drain while clocking. */
-    GPIOB->CRL = (GPIOB->CRL & ~((0xFu << 24) | (0xFu << 28)))
-               | (0x7u << 24) | (0x7u << 28);
-    for (i = 0u; i < 9u; i++) {
-        GPIOB->BRR = (1u << 6);
-        pm_osal_delay_ms(1u);
-        GPIOB->BSRR = (1u << 6);
-        pm_osal_delay_ms(1u);
-    }
-    GPIOB->BRR = (1u << 6);
-    pm_osal_delay_ms(1u);
-    GPIOB->BSRR = (1u << 6);
-    pm_osal_delay_ms(1u);
-
-    I2C1->CR1 = 0u;
-    I2C1->CR2 = 36u;
-    I2C1->CCR = 180u;
-    I2C1->TRISE = 37u;
-    I2C1->CR1 = I2C_CR1_PE;
-}
-
-static void i2c1_bus_init(void)
-{
-    RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;
-    RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
-    GPIOB->CRL = (GPIOB->CRL & ~((0xFu << 24) | (0xFu << 28)))
-               | (0xFu << 24) | (0xFu << 28);      /* PB6/PB7 AF open-drain */
-
-    I2C1->CR1 = I2C_CR1_SWRST;
-    I2C1->CR1 = 0u;
-    I2C1->CR2 = 36u;                                /* APB1 = 36 MHz */
-    I2C1->CCR = 180u;                               /* 100 kHz */
-    I2C1->TRISE = 37u;
-    I2C1->CR1 = I2C_CR1_PE;
-}
-
-static size_t i2c1_scan(uint8_t *found, size_t max)
-{
-    size_t   n = 0u;
-    uint16_t addr;
-
-    i2c1_bus_init();
-
-    for (addr = 0x08u; addr <= 0x77u; addr++) {
-        I2C1->CR1 |= I2C_CR1_START;
-        if (i2c1_wait_sr1(I2C_SR1_SB) == 0) {
-            i2c1_bus_fix();
-            continue;
-        }
-        (void)I2C1->SR2;                            /* clear SB */
-        I2C1->DR = (uint8_t)(addr << 1);
-        if (i2c1_wait_sr1(I2C_SR1_ADDR | I2C_SR1_AF) != 0) {
-            if ((I2C1->SR1 & I2C_SR1_ADDR) != 0u) {
-                (void)I2C1->SR2;
-                if (n < max) {
-                    found[n] = (uint8_t)(addr << 1);
-                    n++;
-                }
-            } else {
-                I2C1->SR1 &= ~I2C_SR1_AF;
-            }
-        }
-        I2C1->CR1 |= I2C_CR1_STOP;
-        {
-            uint32_t t = I2C_SPIN;
-
-            while (((I2C1->CR1 & I2C_CR1_STOP) != 0u) && (t-- != 0u)) {
-            }
-        }
-    }
-    I2C1->CR1 &= ~I2C_CR1_PE;
-    return n;
-}
+ * The polling master (bus fix/init/scan) lives in
+ * src/port/stm32f1/pm_i2c1_stm32f1.c; this file only formats the reply.
+ * Reported addresses are 8-bit write addresses (7-bit << 1), matching the
+ * OLED 0x7A / AHT20 0x70 convention. */
 
 static void cmd_i2c(cmd_port_t *c)
 {
@@ -307,7 +206,7 @@ static void cmd_i2c(cmd_port_t *c)
     size_t  n;
     size_t  i;
 
-    n = i2c1_scan(found, sizeof(found));
+    n = pm_i2c1_ops()->scan(found, sizeof(found));
     pm_cmd_out_tx_str(c, "I2C found=");
     if (n == 0u) {
         pm_cmd_out_tx_str(c, "none\r\n");
@@ -331,87 +230,6 @@ static void cmd_i2c(cmd_port_t *c)
  *   RH% = raw_h / 2^20 * 100
  *   T C = raw_t / 2^20 * 200 - 50
  * Reported as tenths so no float support is needed. */
-
-static int i2c1_read_after_trigger(uint8_t addr8r, uint8_t *rd, size_t rn)
-{
-    size_t i;
-
-    I2C1->CR1 |= I2C_CR1_START;                     /* repeated START */
-    if (i2c1_wait_sr1(I2C_SR1_SB) == 0) {
-        return 0;
-    }
-    (void)I2C1->SR2;
-    I2C1->DR = addr8r;
-    I2C1->CR1 |= I2C_CR1_ACK;
-    if (i2c1_wait_sr1(I2C_SR1_ADDR) == 0) {
-        if ((I2C1->SR1 & I2C_SR1_AF) != 0u) {
-            I2C1->SR1 &= ~I2C_SR1_AF;
-        }
-        return 0;
-    }
-    (void)I2C1->SR2;
-    for (i = 0u; i < rn; i++) {
-        if (i == (rn - 1u)) {
-            I2C1->CR1 &= ~I2C_CR1_ACK;
-        }
-        if (i2c1_wait_sr1(I2C_SR1_RXNE) == 0) {
-            return 0;
-        }
-        rd[i] = (uint8_t)I2C1->DR;
-    }
-    I2C1->CR1 |= I2C_CR1_STOP;
-    return 1;
-}
-
-static void i2c1_stop_and_wait(void)
-{
-    uint32_t t = I2C_SPIN;
-
-    I2C1->CR1 |= I2C_CR1_STOP;
-    while (((I2C1->CR1 & I2C_CR1_STOP) != 0u) && (t-- != 0u)) {
-    }
-}
-
-static int aht20_trigger(void)
-{
-    static const uint8_t trig[3] = { 0xACu, 0x33u, 0x00u };
-    size_t i;
-
-    I2C1->CR1 |= I2C_CR1_START;
-    if (i2c1_wait_sr1(I2C_SR1_SB) == 0) {
-        return 0;
-    }
-    (void)I2C1->SR2;
-    I2C1->DR = 0x70u;
-    if (i2c1_wait_sr1(I2C_SR1_ADDR) == 0) {
-        return 0;
-    }
-    (void)I2C1->SR2;
-    for (i = 0u; i < 3u; i++) {
-        if (i2c1_wait_sr1(I2C_SR1_TXE) == 0) {
-            return 0;
-        }
-        I2C1->DR = trig[i];
-    }
-    return i2c1_wait_sr1(I2C_SR1_BTF);
-}
-
-/* Trigger one conversion. repeated != 0 keeps bus ownership (repeated START
- * read, the path mock tests never covered); repeated == 0 ends the command
- * with STOP, which is what the AHT20 datasheet timing assumes. */
-static int aht_trigger_only(int repeated)
-{
-    i2c1_bus_init();
-    if (aht20_trigger() == 0) {
-        i2c1_stop_and_wait();
-        I2C1->CR1 &= ~I2C_CR1_PE;
-        return 0;
-    }
-    if (repeated == 0) {
-        i2c1_stop_and_wait();
-    }
-    return 1;
-}
 
 /* The 80 ms conversion window runs from the main loop, not inside the command
  * handler: a command must never block the heartbeat or the other port, and it
@@ -504,13 +322,14 @@ static void aht_start(cmd_port_t *c, int repeated)
         pm_cmd_out_tx_str(c, "AHT err=busy pending\r\n");
         return;
     }
-    /* aht_trigger_only() re-initialises I2C1 when the peripheral is off; doing
-     * that between two pages of an OLED push wedged the panel (err=io run). */
+    /* pm_i2c1_ops()->aht_trigger() re-initialises I2C1 when the peripheral is
+     * off; doing that between two pages of an OLED push wedged the panel
+     * (err=io run). */
     if (s_oled_req != NULL) {
         pm_cmd_out_tx_str(c, "AHT err=busy oled\r\n");
         return;
     }
-    if (aht_trigger_only(repeated) == 0) {
+    if (pm_i2c1_ops()->aht_trigger() == 0) {
         aht_reply_err(c, zero, "io");
         return;
     }
@@ -537,11 +356,7 @@ static void aht_service(uint32_t now)
         return;
     }
 
-    read_ok = i2c1_read_after_trigger(0x71u, d, 6u);
-    if (read_ok == 0) {
-        i2c1_stop_and_wait();
-    }
-    I2C1->CR1 &= ~I2C_CR1_PE;
+    read_ok = pm_i2c1_ops()->aht_read(d, 6u, (int)s_aht.repeated);
 
     if ((read_ok != 0) && ((d[0] & 0x80u) == 0u)) {
         s_aht.active = 0u;
@@ -557,7 +372,7 @@ static void aht_service(uint32_t now)
         aht_reply_err(s_aht.c, d, why);
         return;
     }
-    if (aht_trigger_only((int)s_aht.repeated) == 0) {
+    if (pm_i2c1_ops()->aht_trigger() == 0) {
         s_aht.active = 0u;
         aht_reply_err(s_aht.c, d, why);
         return;
@@ -581,7 +396,7 @@ static void aht_bg_tick(uint32_t now)
     if (s_oled_req != NULL) {
         return;
     }
-    if (aht_trigger_only(0) == 0) {
+    if (pm_i2c1_ops()->aht_trigger() == 0) {
         return;
     }
     s_aht.c        = NULL;
@@ -938,13 +753,9 @@ static void dist_service(uint32_t now)
  * for a whole-frame transfer.
  */
 
-#define OLED_FRAME_SPIN 50000u
 #define OLED_LIVE_PERIOD_MS 500u
 
 static oled_ch1116_t s_oled;
-static uint32_t      s_oled_af;
-static uint32_t      s_oled_berr;
-static uint32_t      s_oled_to;
 
 static const char *s_oled_name;
 static uint32_t    s_oled_t0;
@@ -963,80 +774,17 @@ static uint8_t     s_oled_silent;      /* one-page NOW repaint: do not reply */
  * by pushing the two next-due timestamps forward; `OLED off` clears live. */
 #define OLED_STATIC_HOLD_MS 3000u
 
-static int oled_i2c_wait(uint32_t mask)
-{
-    uint32_t t = OLED_FRAME_SPIN;
-
-    while (t-- != 0u) {
-        uint32_t sr1 = I2C1->SR1;
-
-        if ((sr1 & mask) != 0u) {
-            return 0;
-        }
-        if ((sr1 & I2C_SR1_AF) != 0u) {
-            I2C1->SR1 &= ~I2C_SR1_AF;
-            s_oled_af++;
-            return -1;
-        }
-        if ((sr1 & I2C_SR1_BERR) != 0u) {
-            I2C1->SR1 &= ~I2C_SR1_BERR;
-            s_oled_berr++;
-            return -2;
-        }
-    }
-    s_oled_to++;
-    return -3;
-}
-
-/* One I2C frame: START, 0x7A, control byte, payload, STOP. */
-static int oled_bus_write(void *ctx, uint8_t control, const uint8_t *d,
-                          uint16_t n)
-{
-    uint16_t i;
-    int      rc;
-
-    PM_UNUSED(ctx);
-
-    if (((RCC->APB1ENR & RCC_APB1ENR_I2C1EN) == 0u) ||
-        ((I2C1->CR1 & I2C_CR1_PE) == 0u)) {
-        i2c1_bus_init();
-    }
-
-    I2C1->CR1 |= I2C_CR1_START;
-    rc = oled_i2c_wait(I2C_SR1_SB);
-    if (rc == 0) {
-        (void)I2C1->SR2;                    /* clear SB */
-        I2C1->DR = OLED_CH1116_ADDR8;
-        rc = oled_i2c_wait(I2C_SR1_ADDR);
-    }
-    if (rc == 0) {
-        (void)I2C1->SR2;                    /* clear ADDR, slave ACKed */
-        rc = oled_i2c_wait(I2C_SR1_TXE);
-    }
-    if (rc == 0) {
-        I2C1->DR = control;
-        for (i = 0u; (i < n) && (rc == 0); i++) {
-            rc = oled_i2c_wait(I2C_SR1_TXE);
-            if (rc == 0) {
-                I2C1->DR = d[i];
-            }
-        }
-    }
-    if (rc == 0) {
-        rc = oled_i2c_wait(I2C_SR1_BTF);
-    }
-    i2c1_stop_and_wait();
-    return rc;
-}
-
 static void oled_tx_counters(cmd_port_t *c)
 {
+    pm_i2c1_stats_t st;
+
+    pm_i2c1_stats(&st);
     pm_cmd_out_tx_str(c, " af=");
-    pm_cmd_out_tx_u32(c, s_oled_af);
+    pm_cmd_out_tx_u32(c, st.af);
     pm_cmd_out_tx_str(c, " berr=");
-    pm_cmd_out_tx_u32(c, s_oled_berr);
+    pm_cmd_out_tx_u32(c, st.berr);
     pm_cmd_out_tx_str(c, " to=");
-    pm_cmd_out_tx_u32(c, s_oled_to);
+    pm_cmd_out_tx_u32(c, st.to);
 }
 
 static void oled_err_reply(cmd_port_t *c, const char *why)
@@ -1095,6 +843,7 @@ static void oled_stage_live(void)
     char     b[OLED_CH1116_LINE_CHARS + 1u];
     char    *p;
     uint32_t now = pm_osal_now_ms();
+    pm_i2c1_stats_t st;
 
     /* Row 0: MODE (8) + UP (8). */
     p = pm_cmd_sput_s(b, "MODE=", 5u);
@@ -1151,10 +900,11 @@ static void oled_stage_live(void)
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 5u, b);
 
+    pm_i2c1_stats(&st);
     p = pm_cmd_sput_s(b, "I2C af=", 7u);
-    p = pm_cmd_sput_pad(p, s_oled_af, 2u);
+    p = pm_cmd_sput_pad(p, st.af, 2u);
     p = pm_cmd_sput_s(p, " berr=", 6u);
-    p = pm_cmd_sput_pad(p, s_oled_berr, 2u);
+    p = pm_cmd_sput_pad(p, st.berr, 2u);
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 6u, b);
 
@@ -1739,7 +1489,7 @@ static void oled_boot(void)
 {
     uint8_t guard = 0u;
 
-    if (oled_ch1116_init(&s_oled, oled_bus_write, NULL) != 0) {
+    if (oled_ch1116_init(&s_oled, pm_i2c1_ops()->write, NULL) != 0) {
         pm_cmd_out_uart_write_str("OLED CH1116 addr=7A init FAILED\r\n");
         return;
     }
