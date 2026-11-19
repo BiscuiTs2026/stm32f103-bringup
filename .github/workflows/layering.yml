@@ -17,10 +17,8 @@ jobs:
         run: python3 tools/check_layering.py --version --lock tools/CHECKER.lock
 
       # 第二步：扫描。ERROR 必须为 0；WARN 只打印，不判失败。
-      # --glue-max-lines 是棘轮：src/app/main.c 原来 1277 行、上限 1280（见 PATCHES.md §20）。
-      # 2026-11-19 为板级 bring-up 的 ADC/PWM/GPIO 命令处理临时抬到 1500，
-      # 同日 OLED live 页扩到 8 行后再抬到 1700，
-      # 原因与"收尾后必须拆出 main.c、再把上限压回当时行数"写在 PATCHES.md §27.5 / §29.5。
-      # 放宽必须改这一行，让它留在 diff 里被看见。
+      # 2026-11-19 起不再传 --glue-max-lines：3.3.1 里行数规则已降为 WARN（默认 200），
+      # 只作体积兜底；继续传 1700 等于把 main.c 的行数债藏起来。
+      # 存量命中记在 TECH_DEBT.md，按拆分进度消除（PATCHES.md §36）。
       - name: Four-layer static check
-        run: python3 tools/check_layering.py . --glue-max-lines 1700
+        run: python3 tools/check_layering.py .
