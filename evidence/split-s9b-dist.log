@@ -1,0 +1,6 @@
+﻿===== S9b DIST/STAT check 2026-11-19 23:40:32 port=COM11 =====
+[   2363ms] DIST err=disabled
+[   2367ms] hb
+[   2367ms] hb
+[   2367ms] STAT clk=72000000 up=165541 tick=1 key1=0 key2=0 uart_rx=247 uart_tx=13065
+[   2367ms] hb

@@ -1,0 +1,199 @@
+﻿[      7ms] ===== capture start 2026-11-19 23:38:45.071 port=COM11 plan=live =====
+[     89ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    267ms] hb
+[    580ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1019ms] >> OLED off
+[   1045ms] OLED off ok display=off live=paused af=0 berr=0 to=0
+[   1260ms] hb
+[   2004ms] >> OLED live on
+[   2019ms] OLED live=on period=500ms
+[   2112ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2267ms] hb
+[   2610ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3122ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3263ms] hb
+[   3622ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4119ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4259ms] hb
+[   4614ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5117ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5270ms] hb
+[   5609ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6122ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6262ms] hb
+[   6620ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7118ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7257ms] hb
+[   7613ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8110ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8263ms] hb
+[   8621ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9113ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9270ms] hb
+[   9612ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10111ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10267ms] hb
+[  10609ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11122ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11261ms] hb
+[  11617ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12115ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12269ms] hb
+[  12613ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  13109ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  13265ms] hb
+[  13608ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14120ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14258ms] hb
+[  14614ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15111ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15267ms] hb
+[  15608ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16120ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16260ms] hb
+[  16620ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  17119ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  17259ms] hb
+[  17620ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  18115ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  18270ms] hb
+[  18613ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  19116ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  19269ms] hb
+[  19609ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  20108ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  20264ms] hb
+[  20622ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  21120ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  21260ms] hb
+[  21615ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  22113ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  22269ms] hb
+[  22609ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  23123ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  23264ms] hb
+[  23606ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  24117ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  24259ms] hb
+[  24615ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  25112ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  25265ms] hb
+[  25609ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  26120ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  26259ms] hb
+[  26618ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  27114ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  27269ms] hb
+[  27616ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  28116ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  28271ms] hb
+[  28613ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  29111ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  29268ms] hb
+[  29608ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  30120ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  30261ms] hb
+[  30616ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  31114ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  31269ms] hb
+[  31610ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  32111ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  32268ms] hb
+[  32613ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  33111ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  33266ms] hb
+[  33608ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  34119ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  34259ms] hb
+[  34619ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  35118ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  35258ms] hb
+[  35618ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  36111ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  36265ms] hb
+[  36610ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  37108ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  37263ms] hb
+[  37619ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  38115ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  38269ms] hb
+[  38612ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  39110ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  39266ms] hb
+[  39608ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  40120ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  40259ms] hb
+[  40634ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  41115ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  41271ms] hb
+[  41613ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  42110ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  42265ms] hb
+[  42608ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  43107ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  43262ms] hb
+[  43619ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  44117ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  44257ms] hb
+[  44613ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  45113ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  45269ms] hb
+[  45616ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  46110ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  46269ms] hb
+[  46610ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  47106ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  47260ms] hb
+[  47634ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  48112ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  48267ms] hb
+[  48610ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  49108ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  49264ms] hb
+[  49607ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  50120ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  50260ms] hb
+[  50616ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  51113ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  51269ms] hb
+[  51610ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  52105ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  52260ms] hb
+[  52618ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  53116ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  53256ms] hb
+[  53612ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  54108ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  54262ms] hb
+[  54619ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  55119ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  55258ms] hb
+[  55613ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  56110ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  56267ms] hb
+[  56611ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  57108ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  57265ms] hb
+[  57607ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  58119ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  58257ms] hb
+[  58614ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  59107ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  59263ms] hb
+[  59605ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  60117ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  60257ms] hb
+[  60614ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  61111ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  61267ms] hb
+[  61609ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  62013ms] >> STAT
+[  62028ms] STAT clk=72000000 up=120861 tick=1 key1=0 key2=0 uart_rx=209 uart_tx=12594
+[  62106ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  62260ms] hb
+[  62618ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  63003ms] >> OLED live off
+[  63019ms] OLED live=off
+[  63265ms] hb
+[  64267ms] hb
+[  65016ms] ===== capture end =====

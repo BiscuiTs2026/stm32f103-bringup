@@ -102,6 +102,7 @@ target_link_libraries(pm_port_stm32f1 PUBLIC pm_core pm_osal pm_hal)
 add_library(pm_components STATIC
     src/components/oled_ch1116/oled_ch1116.c
     src/components/oled_ui/oled_ui_page.c
+    src/components/oled_ui/oled_ui_job.c
     src/components/aht20_dev/aht20_dev.c
     src/components/adc_dev/adc_dev.c
     src/components/keypad_dev/keypad_dev.c

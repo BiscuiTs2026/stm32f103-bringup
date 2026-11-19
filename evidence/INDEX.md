@@ -1168,3 +1168,28 @@
 | 关键内容 | `main.c` 普通 `26/142`，`-w` `25/141`；差 1 对空白行，为 git 在 `-w` 下把空白行当上下文配对；逐块（-U3）加减行数两口径完全相同，无空白改写 |
 | 能证明什么 | S9a 无空白夹带；除新增组件文件与行数下降外无其它夹带 |
 | 不能证明什么 | 不构成"两口径逐字相同"的字面判据，需复核方按逐块表裁决 |
+
+## 90. S9b 作业搬迁（split-s9b-build / split-s9-oled / split-s9b-live / split-s9b-dist / split-s9b-flash / split-s9-layering 9b 段）
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 新增 `src/components/oled_ui/oled_ui.h` 41 行、`oled_ui_job.c` 546 行；`main.c` 物理 1176→663 行，检查器口径 857→470 |
+| 关键内容 | 搬走 `s_oled` 及全部作业状态、`oled_tx_counters`/`oled_err_reply`、`s_oled_last`/`oled_screen_name`、`oled_now_row_flash`、`oled_start_screen`、`oled_start_live_job`/`oled_live_arm`、`cmd_oled` 整函数（未拆）、`oled_service`、`oled_live_tick`、`oled_arg`、`boot` 序列、`s_oled_req`；`main.c` 只保留 DIST 两个 hook 与接线 |
+| 接口偏差 | 公开为 `oled_ui_boot(hooks, live_port)` / `oled_ui_cmd` / `oled_ui_service` / `oled_ui_live_tick` / `oled_ui_busy` / `oled_ui_now_row` / `oled_ui_arg`；`oled_arg` 必须导出供注册表；boot 末尾在组件内 arm live（原 `main.c` 的 `oled_live_arm` 行删除）；`dist_live_tick` 折进 `oled_ui_live_tick`（先 DIST 后刷新） |
+| 扫描 | **0 ERROR / 6 WARN**：胶水 470 行、`dist_start` 寄存器、TRIG 忙等、三条端口钩子；9a 的 `oled_screen_name`/`oled_start_screen`/`cmd_oled` 三条随搬迁消失 |
+| 上板 | 烧录 `-v` verified；HELP 15 行、9 个子命令各 1 条无 ERR、`OLED` 裸命令 `err=usage`、dump 8 行宽度与 9a 逐行相同、`show` 后 dump `mode=static left=3s screen=show` 再回 `mode=live screen=live`、`DIST err=disabled`、STAT 字段齐全；60 s 窗口 120 帧 `ms=98`、`af=berr=to=0`；FLASH 28212 B / RAM 5032 B（9a 为 28108/5024） |
+| 能证明什么 | 作业搬迁未改变板端可见输出与节拍；WARN 从 9 降到 6，且未新增 ERROR |
+| 不能证明什么 | 屏上图案/对齐（人眼，挂 M9）；按键类（L5 行、LED 镜像）仍按 M1 挂账；`oled_ui_view` 临时接口是否能在 S9 之后收敛 |
+| 局限 | 首次扫描 2 ERROR：组件层调用 `s_hooks->dist_busy()`/`dist_live_poke()`，检查器按函数名把 hook 成员当成 glue 函数；按项目既有 hook 命名方式把 glue 适配器改名 `oled_ui_dist_busy`/`oled_ui_dist_poke` 后消除，未用 `arch-allow` |
+| PATCHES 引用 | 未引用（S9b 拆分证据） |
+
+## 91. split-s9b-diff-numstat.txt
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 12 行；S9b 工作树 `--numstat` 与 `-w --numstat` 对照，附两个新文件行数 |
+| 关键内容 | 两口径逐条相同：`CMakeLists.txt 1/0`、`main.c 19/532`；新增 `oled_ui.h` 41 行、`oled_ui_job.c` 546 行 |
+| 能证明什么 | S9b 无空白夹带 |
+| 不能证明什么 | 不覆盖新文件内容审查（行数已单列） |
+| 局限 | 只统计行数，不看语义 |
+| PATCHES 引用 | 未引用（S9b 拆分证据） |

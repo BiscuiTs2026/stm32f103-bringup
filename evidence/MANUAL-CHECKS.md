@@ -3,7 +3,8 @@
 用途：`SPLIT-PLAN.md` §5.0 的 **H 组**统一登记在这里。机器项（编译、扫描、烧录校验、
 串口回文）不写在本表，见 `evidence/INDEX.md` 与各 `split-s*.log`。
 
-固件：`build-split-s8/pm_f103_demo.hex`（S8b 提交，`git log -1` 可查），已 `-v` 回读校验通过。
+固件：`build-split-s9/pm_f103_demo.hex`（S9b 提交，`git log -1` 可查），已 `-v` 回读校验通过。
+（M1–M8 原登记时对应 `build-split-s8`；S9a/S9b 未改按键、继电器、电机、蜂鸣器、ADC、蓝牙代码。）
 条件：板子通电、ST-Link 已断开（或至少不占用）、串口 **COM11 @ 115200 8N1**，
 串口工具的 DTR/RTS 保持无效（避免打开端口即复位）。
 
@@ -32,6 +33,7 @@
 | M6 | 电位器响应（十字螺丝刀） | 手转 + 看数 | `docs/PROTOCOL.md` §4.5、SPLIT-PLAN S7 判据 | PENDING | — |
 | M7 | 蓝牙镜像专项（S2 欠账） | 手机 Web Bluetooth | SPLIT-PLAN §5.4、§8.3 核账 S2 行 | PENDING | — |
 | M8 | 编码器按键与手感 | 手转 / 手按 | `docs/PROTOCOL.md` §4.7 | PENDING | — |
+| M9 | OLED 面板图案与对齐 | 目视 | SPLIT-PLAN §3 S9、`HARDWARE.md` 第 9 条 | PENDING | — |
 
 ---
 
@@ -192,6 +194,24 @@ OLED L5=K1=    1 K2=    0
 
 判据：count 方向与幅度正确、btn 跟随按压、clear 生效。
 出处：`docs/PROTOCOL.md` §4.7。
+
+---
+
+## M9 OLED 面板图案与对齐（S9a/S9b 搬迁后人眼看）
+
+前置：串口先 `OLED off` 停止刷屏，做完 `OLED live` 恢复。
+
+1. `OLED test` → 屏上应出现 0xAA 测试花屏（棋盘/竖条），无整屏空白、无半屏残留。
+2. `OLED clear` → 整屏熄黑。
+3. `OLED show` → 8 行文本齐全：`MODE=LIVE`、`NOW`、`LAST`、`RH/T`、`NTC/POT`、
+   `K1/K2`、`I2C`、`LIVE ms`；行间不重叠、右侧字符不被裁掉。
+4. `OLED col 0` / `col 4` 各发一次，比较同一页文字的左边缘位置：列偏移应改变，
+   且两个极值下首字符都不贴边、末字符不出界。
+5. `OLED frame` → 屏幕边框图案完整。
+6. 3 s 无命令后应自动回到 live 页（`dump` 显示 `mode=live`）。
+
+判据：图案/文字与上述一致，肉眼无花屏、无错位、无残影到下一屏。
+证据：照片或视频文件名；无照片则记 `PENDING`，不得只凭串口 `dump` 判 PASS。
 
 ---
 

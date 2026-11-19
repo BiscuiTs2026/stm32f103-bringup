@@ -1,0 +1,13 @@
+﻿# S9b diff numstat (working tree, uncommitted)
+## git diff --numstat
+1	0	CMakeLists.txt
+11	0	evidence/split-s9-layering.log
+19	532	src/app/main.c
+## git diff -w --numstat
+1	0	CMakeLists.txt
+11	0	evidence/split-s9-layering.log
+19	532	src/app/main.c
+## new files (line count)
+src/components/oled_ui/oled_ui.h 41
+src/components/oled_ui/oled_ui_job.c 546
+## main.c physical lines: 663
