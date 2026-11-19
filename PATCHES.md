@@ -917,6 +917,78 @@ local-patches   = none（只按上游规定改了 SOURCE_COMMIT 一行）
   本仓有真实 components 层，声明与否判定相同
 - 本轮**没有改任何源码**，因此没有重新构建，固件尺寸仍是 16480 B / 3424 B
 
+## 22. 2026-11-19 上板复测与器件清点
+
+背景：`pm_osal_init()` 从平台层移到 `main()`（§21 的附带改动）之后，代码没有在硬件上跑过；
+本节补上板验证，并把“哪些器件真的在线”一次说清。原始串口日志见 `evidence/retest-20261119*.log`
+（登记在 `evidence/INDEX.md` 第 10、11 项）。
+
+### 22.1 复测结果（已实测）
+
+- 构建 `build-retest`：FLASH **16480 B**、RAM **3424 B**，与 README 一致；
+  `STM32_Programmer_CLI -w ... -v -rst` → `Download verified successfully` + `Software reset`
+- tick / 时基：`STAT up=72369` → `82794`，Δup=**10425 ms**，墙钟 10433 ms（+8 ms/10.4 s）；
+  `tick=1`，`hb` 每秒一行不中断 → `pm_osal_init()` 移动后时基正常
+- 命令通道：`PING`→`PONG`；`HELP` 9 行 356 B；`I2C found=0x70,0x7A`；
+  `AHT ok rh=46.6 t=20.1 raw=18 77 61 55 9C 6E rst=0`；`AHTS` 回上一条 + 忙位；
+  `DIST cm=99.4 us=5767`；背靠背两条 `DIST` → `DIST err=busy` + 一条有效值
+- OLED：`OLED live ok ms=97..98` 每 500 ms 一次、1 Hz `DIST live`；live 期间 `OLED show`
+  → `OLED err=busy live`；`OLED off`/`test`/`clear` 均有 `ok` 回包
+- 未烧板端行为回归：本轮**没有**改源码，只做了构建、烧录与命令复测
+
+### 22.2 `DIST err=timeout`：现场见到过，但不是“必然”行为
+
+- **首轮现场（未落盘，控制台观测）**：`OLED live on` 之后，同步到每条 `DIST live` 立刻手动 `DIST`，
+  12 轮全部返回 `DIST err=timeout`，当时 live 测距值约 99 cm
+- **复抓两次（已归档）**：同样方法 12 轮（`retest-20261119.log`）与 24 轮
+  （`retest-20261119-sweep.log`），**36/36 全部拿到有效回波**，0 timeout、0 busy
+- 结论：`timeout` 路径在硬件上**确实可达**（已观测），但它不是“紧随 live 就必然超时”的确定性行为；
+  更可能的条件是**当时没有有效回波**（ECHO 保持高约 38 ms 或根本没有上升沿），
+  而不是单纯的时间窗口。目标回波强弱、距离变化（本轮同一会话里出现过 99 cm 与 39.8 cm 两种读数）
+  都会影响结果
+- 待办：`docs/PROTOCOL.md` 第 5 节把“手动 DIST 在自动测距结束后 60 ms 内会回 timeout”写成必然现象，
+  与本次 36 次复抓不符，应按“条件性现象”改写；**本轮没有改 PROTOCOL.md**，等确认
+- 尚未构造的确定性实验（需要动手）：把 HC-SR04 指向空旷方向、或用纸板完全遮住探头，
+  再做单次 `DIST`，预期 `DIST err=timeout`——只有这一种构造能把 timeout 固化进归档日志
+
+### 22.3 器件清点（对照 `HARDWARE.md` §3）
+
+| 类别 | 器件 | 证据 |
+| --- | --- | --- |
+| 确认在线 | CH343 USB 串口（USART2，PA2/PA3） | COM11 115200 双向收发，`hb` 每秒一行 |
+| 确认在线 | AHT20 0x70（PB6/PB7） | `AHT ok rh=46.6 t=20.1`，两次读数不同 |
+| 确认在线 | CH1116 OLED 0x7A（PB6/PB7） | `I2C found` 含 0x7A；`OLED test/clear/show/live` 均 `ok`，`ms=97..98` |
+| 确认在线 | HC-SR04（TRIG PA11 / ECHO PA10） | `DIST cm=99.4 us=5767`、`cm=39.8 us=2310`，随前方物体变化 |
+| 未验证 | 蓝牙模块（USART3，PB10/PB11） | 见 22.4，本轮没有蓝牙侧数据 |
+| 无法探测 | 舵机 PB8、循迹 PB14、电机 PA0/PA1、编码器 PA8/PA9/PB15、NTC PA4、电位器 PA5、蜂鸣器 PB9、继电器 PB5、LED PA6/PA7/PB0 | 当前固件没有对应命令，**不写成“未检测到”** |
+| 不在清单里 | 无 | I2C 扫描只有 0x70、0x7A，没有出现清单外地址 |
+
+按键 PB12/PB13 有 `KEYS` 计数通道，但需要人按下去才有增量；本轮开始时 `k1=0 k2=0`，
+说明复位后没有人按过，不能据此判断按键好坏。
+
+### 22.4 两条必须写死的“别误读”结论
+
+1. **蓝牙通道本轮未验证，但不是链路故障**。该模块一直走**网页串口助手（Web Bluetooth）**，
+   不走 PC 的 SPP 端口；本轮试开的 COM5/6/7/8/9/10（系统里的“蓝牙链接上的标准串行”）
+   打开或写入超时，**只说明 PC 侧没有已连接的 SPP 通道**，与模块、USART3、固件都无关。
+   复验方法：用户重连 Web Bluetooth 页面后，从 USART2 侧抓固件的 `BT rx` / `BT tx` 镜像
+   （即以往的 `bt-*.log` 方式）对本轮收发对账。**在拿到这份日志之前，蓝牙只能写“未验证”。**
+2. **ST-Link 热连接读到的 GPIO 电平是复位默认值，不代表运行态**。
+   `STM32_Programmer_CLI -c port=SWD mode=normal -r32` 连接时目标已被复位，读到
+   `GPIOA_CRL=0x44444444`、`GPIOA_CRH=0x88844444`、`GPIOA_IDR=0x00000000`、
+   `GPIOA_ODR=0x0000A000`、`GPIOB_CRL=0x44484444`、`GPIOB_IDR=0x00000000`、`GPIOB_ODR=0x00000010`
+   ——全是复位默认值 + JTAG 脚配置，固件的输出/上拉设置一条都没体现。
+   所以这批数值**不能**用来判断“LED 没亮”“按键没接”之类的结论；要读运行态必须 halt 后
+   在固件初始化完成的状态下读 IDR/ODR，本轮没有可用 GDB server，未做。
+   读取后已 `-rst`，固件恢复（`STAT up=6263` 重新计数）。
+
+### 22.5 本轮未做
+
+- 没有改任何源码，因此没有重新构建以外的验证；固件尺寸与 README 一致
+- 没有构造“无回波”条件，归档日志中没有真实的 `DIST err=timeout`
+- 没有运行态 GPIO 快照、没有蓝牙侧抓包、没有 `KEYS` 按键对账（等用户按键后补）
+- 没有修改 `docs/PROTOCOL.md`（发现的口径问题记在 22.2，等确认后再改）
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，
