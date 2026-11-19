@@ -74,6 +74,7 @@ target_compile_options(pm_osal PRIVATE
 # -------------------------------------------------------- STM32F1 port + board
 add_library(pm_port_stm32f1 STATIC
     src/port/stm32f1/pm_port_stm32f1.c
+    src/port/stm32f1/pm_pwm_stm32f1.c
     ${PM_PLATFORM}/board_f103c8.c
     ${PM_PLATFORM}/pm_platform.c
 )
@@ -91,9 +92,12 @@ target_link_libraries(pm_port_stm32f1 PUBLIC pm_core pm_osal pm_hal)
 # access is injected through a callback so the entry glue owns the I2C polling.
 add_library(pm_components STATIC
     src/components/oled_ch1116/oled_ch1116.c
+    src/components/pwm_dev/pwm_dev.c
 )
 target_include_directories(pm_components
     PUBLIC  ${PM_ROOT}/src/components/oled_ch1116
+            ${PM_ROOT}/src/components/pwm_dev
+            ${PM_ROOT}/include/pm
 )
 target_compile_options(pm_components PRIVATE
     ${PM_CPU_FLAGS} ${PM_WARN_FLAGS} ${PM_OPT_FLAGS})

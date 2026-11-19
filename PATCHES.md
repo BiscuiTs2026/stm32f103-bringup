@@ -1428,12 +1428,118 @@ live 页扩到 8 行、加 `MODE/NOW/LAST` 与 AHT 后台化后，`src/app/main.
 拆分的时机与条件同 §27.5：板级器件驱动全部上板验证之后再动，避免一边改功能
 一边改结构。
 
+## 30. 2026-11-19 PWM：舵机 PB8 / 无源蜂鸣器 PB9，实现全部离开 `main.c`
+
+### 30.1 改了什么
+
+结构要求是"`main.c` 只加登记项"，所以本轮新增两个文件、改三处登记：
+
+| 文件 | 角色 | 内容 |
+| --- | --- | --- |
+| `include/pm/pm_pwm.h`（新） | common 契约 | `pm_pwm_*` 原型与 `PM_PWM_SERVO_*`、`PM_PWM_BUZ_*` 常量，无厂商类型 |
+| `src/port/stm32f1/pm_pwm_stm32f1.c`（新） | BSP | TIM4 + TIM3 寄存器操作与 `TIM3_IRQHandler` |
+| `src/components/pwm_dev/pwm_dev.{h,c}`（新） | components | 命令解析与回包格式化，只依赖 `pm_pwm.h` |
+| `CMakeLists.txt` | 构建 | `pm_port_stm32f1` 加 port 文件；`pm_components` 加 `pwm_dev.c` 与 include 目录 |
+| `src/app/main.c` | glue | **+5 行，全部是登记**：`#include "pwm_dev.h"`、HELP 一行、`const char *pw;`、`else if ((pw = pwm_dev_cmd(line)) != NULL) { tx_str(c, pw); }`、`pwm_dev_init();` |
+
+- **TIM4 冲突的处理**：PB8/PB9 同属 TIM4，一个定时器给不了舵机 50 Hz 与蜂鸣器
+  数百 Hz–5 kHz 两种帧。TIM4 固定在舵机帧（PSC=71 → 1 MHz tick，ARR=19999，
+  CH3 PWM1 预装载），蜂鸣器改用 **TIM3 更新中断翻转 PB9 当普通 GPIO**：
+  TIM3 10 µs tick，中断里交替装 `high-1` / `low-1`，中断频率 = 2×音调
+  （100–5000 Hz 对应 200 Hz–10 kHz 中断）。两者互不占用对方定时器。
+- 舵机映射：`pulse = 500 + deg10*2000/1800` µs（SG90，0°=500、180°=2500），
+  设定值写入 `TIM4->CCR3` 后由硬件持续输出，没有软件定时器参与，不会回弹。
+- 蜂鸣器：`period = 100000/hz`（10 µs 刻度），`high = period*duty/100`（≥1、<period），
+  默认占空比 **20%**（HARDWARE.md §3 第 20 行对无源蜂鸣器的建议；100% 直流不出声）。
+  `pm_pwm_buzzer_hz()` 回的是**取整后的实际频率**，不是请求值。
+- 失败路径：`PWM err=usage`（缺参数/子命令未知/负数）、`PWM err=range deg=<n>`（>180）、
+  `PWM err=range hz=<n>`（<100 或 >5000）、`PWM err=range duty`（>99）。
+  `pwm_dev_init()` 记下 `pm_pwm_init()` 结果，失败时所有 `PWM` 命令回 `PWM err=init`。
+  本轮 `pm_pwm_init()` 恒返回 0，`err=init` 只有代码路径。
+- 命令表：`PWM stat`、`PWM servo <0..180>`、`PWM buz <100..5000> [duty]`、`PWM buz off`。
+  分发走既有登记方式：`cmd_execute()` 末尾 `else if ((pw = pwm_dev_cmd(line)) != NULL)`，
+  未命中仍落到 `ERR unknown=`。
+
+### 30.2 已实测（`evidence/pwm-20261119-a.log`，第 28 项）
+
+构建 `build-pwm2`：Flash **22720 B / 64 KB（34.67%）**、RAM **3632 B / 20 KB（17.73%）**
+（text 22260 / data 460 / bss 3172）；烧录 `-v -rst` 回读校验通过
+（`Download verified successfully`、`MCU Reset`）；
+`check_layering.py . --glue-max-lines 1700` = **0 ERROR / 3 WARN**，`main.c` **1663 行**。
+
+**原始回包（摘录，逐字）**
+
+```
+PWM stat servo=90.0c pulse=1500us buz=off
+PWM servo ok deg=0.0 pulse=500us
+PWM servo ok deg=45.0 pulse=1000us
+PWM servo ok deg=90.0 pulse=1500us
+PWM servo ok deg=135.0 pulse=2000us
+PWM servo ok deg=180.0 pulse=2500us
+PWM err=range deg=181
+PWM err=usage
+PWM err=range hz=50
+PWM err=range duty
+PWM buz ok freq=1000Hz duty=20%
+PWM buz off ok
+PWM buz ok freq=2000Hz duty=20%
+PWM buz ok freq=2702Hz duty=20%
+PWM stat servo=90.0c pulse=1500us buz=1000Hz/20%
+```
+
+- 舵机五档：脉宽 500/1000/1500/2000/2500 µs，与映射逐点相符；`PWM stat` 回读一致。
+- 90° 保持 10 s：+16759、+19090、+21425、+23765、+26090 ms 五次 `PWM stat`
+  **脉宽全部 1500us**，设定值全部 90.0。
+- 蜂鸣器：1000 Hz 响 3.3 s → off → 2000 Hz 响 3.3 s → off → 2700 Hz 请求实际
+  **2702 Hz**（`period=100000/2700=37` 个 10 µs 刻度，`100000/37=2702`），
+  占空比 20% 不变；`off` 后 `PWM stat` 回 `buz=off`。
+- 回归：`STAT`、`ADC`、`OLED dump`、`DIST` 均正常（`ADC pot=2125 pot_mv=1712
+  ntc=2274 ntc_mv=1833 vref=3300`、`OLED dump mode=live screen=live`、`DIST cm=69.0 us=4002`）。
+  `AHT` 在 +42033 ms 回 `AHT err=busy oled`，是 §29 已定义的"撞上 live 整屏推送"行为，
+  不是本轮改动引入。
+- `HELP` 现为 **11 行 451 B**（新增 `HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz`）。
+
+**观察结论（与上面的回包分开）**
+
+- 串口能证明的：配置值、映射、状态回读、失败路径、10 s 内脉宽不变。
+- 串口**不能**证明的：舵机是否真的转到对应角度、到位后有没有抖动/回弹、蜂鸣器
+  两种频率人耳是否能区分、响度是否合适。这些需要人看/听，本轮没有采集到目视或
+  录音证据，不写成"已验证"。
+
+### 30.3 未验证
+
+- 舵机目视角度与"到位不回弹、不抖"：只有脉宽证据；也没加负载（舵机臂空载）。
+- 蜂鸣器听感与响度：只有频率/占空比回包，没有录音或人耳确认。
+- `PWM err=init`：`pm_pwm_init()` 目前没有失败分支被触发。
+- 蜂鸣器 100–5000 Hz 只抽测了 1000/2000/2702，边界 100 Hz、5000 Hz 未跑。
+- 舵机与蜂鸣器同时工作：日志里 90° 保持期间蜂鸣器照常响，但没有专门测
+  "蜂鸣器响时舵机是否抖动"（需要目视）。
+
+### 30.4 推测
+
+- `DIST live` 在蜂鸣器开/关切换前后出现 `err=timeout` 与 4.6–7.4 cm 的短读数
+  （+29740、+30785、+31738、+32785、+34738、+35087 ms），舵机扫掠段也出现过
+  36–37 cm 的跳变。怀疑是超声接收被蜂鸣器/舵机动作干扰，或拍摄者手部进入波束；
+  本轮没有隔离实验，**没有改 DIST**，只记录现象。
+- `2702 Hz` 与请求的 2700 Hz 差 2 Hz，按 `100000/37` 反算吻合，属 10 µs 刻度
+  量化误差，不是计数错误。
+- TIM3 中断频率最高 10 kHz（5000 Hz 音调），中断里只做两次 GPIO 写与一次 ARR 写，
+  估计占用 <2% CPU；没有用 DWT 或 GPIO 翻转测过实际抖动。
+
+### 30.5 胶水层没有抬上限
+
+`--glue-max-lines` 仍是 **1700**（§29.5 设的临时值），本轮没动。
+`main.c` 1658 → **1663**，增加的 5 行全部是登记（见 §30.1 表），PWM 的实现
+零行留在胶水里；行数上涨来自新命令的接入点，不是实现。若下一项继续按此模式
+（组件文件 + 一行登记），上限可以不动；§27.5 / §29.5 的拆分义务仍然有效。
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，
   当前未使用 printf，无影响。
 - 判读规则：BLE 侧一个长回包可能显示成多个气泡，**只看总字节数，不看气泡个数**。
-  `HELP` 完整 = **403 B（10 行，COM11 实测）**。
+  `HELP` 完整 = **451 B（11 行，COM11 实测）**。
+- 舵机/蜂鸣器只有串口回包证据，**目视角度、抖动、听感均未采集**（§30.3）。
 - `DIST` 的 timeout 分支（无回波、>4 m）只做了代码路径，**没有制造出真实现场验证**。
 - 异步命令（`AHT`/`AHTS`/`DIST`）的回包可能晚于其后一条命令的回包（最多晚 60~80 ms）。
 - OLED：已验证到"初始化 + 8 页 GDDRAM 写入全部 ACK、AF/BERR 为 0"，

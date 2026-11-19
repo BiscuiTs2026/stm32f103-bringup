@@ -3,7 +3,9 @@
 面向以后接手的人或另一个 AI。本文描述的是**实际烧在板上的行为**（2026-11-18 版本），
 与 `PATCHES.md` 里的上板实测一致。改协议时必须同步改这份文件。
 
-实现位置：`src/app/main.c` 的 `cmd_feed()` / `cmd_execute()` / `cmd_flush_idle()`。
+实现位置：`src/app/main.c` 的 `cmd_feed()` / `cmd_execute()` / `cmd_flush_idle()`；
+`PWM` 分支在 `cmd_execute()` 末尾交给 `src/components/pwm_dev/pwm_dev.c` 的
+`pwm_dev_cmd()`，胶水层只做一次登记与转发。
 
 ---
 
@@ -103,7 +105,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 10 行 `HELP ...`，共 **403 B**（见下） | — | 否 |
+| `HELP` | 无 | 11 行 `HELP ...`，共 **451 B**（见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -121,6 +123,7 @@ HELP AHTS=same but read via repeated START
 HELP DIST=one shot, cm and us; live=1Hz
 HELP ADC=pot PA5 and NTC PA4, raw and mV
 HELP OLED=on/off/clear/test/show/frame/col/live/dump
+HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz
 HELP KEYS=key press counters, clears them
 ```
 
@@ -233,12 +236,44 @@ ADC1，单次软件触发，ADCCLK = PCLK2/6 = 12 MHz，采样时间 55.5 周期
 - 电位器是本轮唯一没有转动验证的通道：手边没有十字螺丝刀，只记录了静态值
   （30 次 2124–2126，极差 2 LSB）。
 
+### 4.6 PWM（PB8 舵机 / PB9 无源蜂鸣器）
+
+PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是定时器通道，
+由 TIM3 更新中断翻转 GPIO 生成，10 µs 相位分辨率。两者同属 TIM4 的引脚冲突
+已按"TIM4 只给舵机、蜂鸣器走 TIM3 中断"解决，见 `PATCHES.md` §30.1。
+
+| 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
+| --- | --- | --- | --- | --- |
+| `PWM stat` | 无 | `PWM stat servo=<deg>c pulse=<us>us buz=off` 或 `... buz=<Hz>Hz/<duty>%` | `PWM err=init` | 否 |
+| `PWM servo <0..180>` | 整数角度 | `PWM servo ok deg=90.0 pulse=1500us` | `PWM err=range deg=<n>`（>180）/ `PWM err=usage`（缺参数、负数、非数字）/ `PWM err=init` | **是**：CCR3 改脉宽 |
+| `PWM buz <100..5000> [duty]` | 频率 Hz，占空比 1..99（默认 20） | `PWM buz ok freq=1000Hz duty=20%` | `PWM err=range hz=<n>` / `PWM err=range duty`（>99）/ `PWM err=range`（duty=0）/ `PWM err=usage` / `PWM err=init` | **是**：开蜂鸣器并改频率 |
+| `PWM buz off` | 无 | `PWM buz off ok` | `PWM err=init` | **是**：停音，PB9 拉低 |
+| 其它子命令 | — | — | `PWM err=usage` | 否 |
+
+说明：
+
+- 舵机脉宽映射 `pulse = 500 + deg*2000/180`，即 0°=500 µs、90°=1500 µs、
+  180°=2500 µs；`deg=` 固定一位小数，`pulse=` 是实际写入的 µs 值。
+  设定后由硬件按同一 CCR3 持续输出，中间没有软件定时器重新装载脉宽；
+  实际角度与抖动是否合格需目视，本轮未采集（`PATCHES.md` §30.3）。
+- `PWM servo 181` 回 `PWM err=range deg=181`；`PWM servo -5` 回 `PWM err=usage`
+  ——负号不是数字，先被参数解析拒绝，所以不是 `range`。
+- 蜂鸣器 `freq=` 回的是**实际**频率：`period = 100000/hz` 取整后再反算
+  （如 2700 Hz → 37 个 10 µs 刻度 → `100000/37 = 2702 Hz`），与请求值可能差 1–2 Hz。
+  `duty=` 回的是设定占空比；默认 20%，HARDWARE.md §3 第 20 行建议无源蜂鸣器
+  不要给 100%（直流不发声）。
+- 蜂鸣器关闭后 `PWM stat` 回 `buz=off`；重新 `PWM buz <hz>` 不保留上次占空比，
+  不给第二参数时回到默认 20%。
+- `PWM err=init` 只在 `pm_pwm_init()` 失败时出现；当前实现恒成功，该分支没有
+  现场回包证据（`PATCHES.md` §30.3）。
+- 舵机角度、抖动与蜂鸣器听感**不在串口可证范围内**，回包只说明配置值与脉宽。
+
 ---
 
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **10 行 403 B**（含每条 CRLF）。
+   当前 `HELP` 是 **11 行 451 B**（含每条 CRLF）。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。
