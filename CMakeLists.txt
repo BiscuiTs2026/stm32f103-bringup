@@ -77,6 +77,7 @@ add_library(pm_port_stm32f1 STATIC
     src/port/stm32f1/pm_pwm_stm32f1.c
     src/port/stm32f1/pm_track_stm32f1.c
     src/port/stm32f1/pm_encoder_stm32f1.c
+    src/port/stm32f1/pm_relay_stm32f1.c
     ${PM_PLATFORM}/board_f103c8.c
     ${PM_PLATFORM}/pm_platform.c
 )
@@ -97,12 +98,14 @@ add_library(pm_components STATIC
     src/components/pwm_dev/pwm_dev.c
     src/components/track_dev/track_dev.c
     src/components/encoder_dev/encoder_dev.c
+    src/components/relay_dev/relay_dev.c
 )
 target_include_directories(pm_components
     PUBLIC  ${PM_ROOT}/src/components/oled_ch1116
             ${PM_ROOT}/src/components/pwm_dev
             ${PM_ROOT}/src/components/track_dev
             ${PM_ROOT}/src/components/encoder_dev
+            ${PM_ROOT}/src/components/relay_dev
             ${PM_ROOT}/include/pm
 )
 target_compile_options(pm_components PRIVATE

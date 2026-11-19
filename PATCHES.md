@@ -1726,15 +1726,94 @@ PWM dbg ... psc=0x00000047 arr=0x00004E1F ccer=0x00000100 ccr3=0x000001F4
 - `PWM sweep` 仍在命令结束时一次性回包，时间戳集中，不能证明每档实时发出（同 §30.6）。
 - 蜂鸣器 TIM3 路径本轮未改、也未回归；听感仍**未采集**。
 
+## 33. 2026-11-19 测距停用，TIM2 整颗让给电机 PWM
+
+### 33.1 做了什么
+
+- `src/app/main.c`：新增 `DIST_TIME_BASE_READY 0`；`dist_hw_init()` 不再配置 TIM2
+  （删掉 `RCC_APB1ENR |= TIM2EN` 与 `PSC/ARR/CNT/CR1` 四行），PA11/PA10 引脚与
+  EXTI 边沿逻辑原样保留；`dist_start()` 开头按该开关短路：手动 `DIST` 回
+  `DIST err=disabled`，live 自动测距静默跳过（不再每秒刷屏）。
+- `HELP` 的 DIST 行改为 `HELP DIST=disabled, TIM2 given to motor`，并新增
+  `HELP RELAY=on/off/stat, PB5 relay coil`（见 §34），HELP 变为 **14 行 585 B**（按源码字符串计）。
+- 冲突分析单独记录在 `docs/TIM2-CONFLICT.md`，含两边时基算式、互斥证明、候选方案
+  与建议给检查器的规则。
+
+### 33.2 为什么不能共存
+
+DIST 要求 TIM2 为 1 MHz 自由运行（`PSC=71`、`ARR=0xFFFF`）；电机 PWM 要求固定
+20 kHz（`PSC=0`、`ARR=3599`）。同一 timer 只有一套 `PSC/ARR`：
+
+- 按 DIST 配置 → 电机 PWM ≈ 15.26 Hz（音频段）；
+- 按电机配置 → DIST 计数每 50 µs 回绕，量程约 0.86 cm。
+
+改输入捕获通道也救不了，时基仍然共享。详见 `docs/TIM2-CONFLICT.md` §3。
+
+### 33.3 已实测（`evidence/relay-20261119-a.log`）
+
+- 构建：仅本项改动时 Flash **25032 B / 38.20%**、RAM **4816 B / 23.52%**；含 §34 继电器
+  的最终镜像 **25672 B / 39.17%**、RAM **4864 B / 23.75%**。
+- 烧录 `-v -rst` 回读校验 `Download verified successfully`，`MCU Reset`。
+- 板端（21:04:18 起，COM11，123 行）：
+  - `DIST` 连续两次都回 `DIST err=disabled`；
+  - `HELP` 14 行、按实际回包计 **585 B**，DIST 行为新文案；
+  - live 持续 5 s 期间只有 `OLED live ok`，**没有 `DIST live ...`、没有 `err=timeout`**；
+  - `PING`/`STAT`/`PWM stat`/`TRACK`/`ENC`/`RELAY stat` 全部正常回包；
+  - `PWM servo 0/90/180` → `pulse=500/1500/2500us`，确认 TIM2 让出没有误伤舵机。
+- 回归口径成立；测距就此搁置，不再追短读数、不再做隔离实验（§26 的待现场项一并停）。
+
+### 33.4 需要人确认的部分
+
+本次没有一项需要"感官"结论：DIST 停用与回归都只靠串口回包即可判定。
+继电器吸合声另见 §34.4。
+
+## 34. 2026-11-19 继电器 PB5
+
+### 34.1 接线事实（来自 HARDWARE.md 第 22 条）
+
+PB5 → R9 3 kΩ → Q3 SS8050 → U7 SRD-05VDC-SL-C 线圈，D2 FR107 续流，
+输出端为 常闭 / COM / 常开。板上自带驱动，**MCU 只出电平，不直接带线圈**。
+
+### 34.2 实现
+
+| 文件 | 内容 |
+| --- | --- |
+| `include/pm/pm_relay.h` | `pm_relay_init/set/get`，`on` = 线圈吸合（PB5 高） |
+| `src/port/stm32f1/pm_relay_stm32f1.c` | PB5 推挽输出 2 MHz，先写 ODR=0 再切模式，上电默认释放 |
+| `src/components/relay_dev/` | `RELAY on\|off\|stat`，回包含从 ODR 读回的 `pb5=` |
+| `CMakeLists.txt` | 新增端口与组件源文件、include 目录 |
+| `src/app/main.c` | 只加 3 行登记（include、HELP、init），分发在既有 `||` 链上追加一个判断 |
+
+命令回包：`RELAY on ok pb5=1`、`RELAY off ok pb5=0`、`RELAY stat pb5=<0|1>`；
+错误为 `RELAY err=usage` / `RELAY err=init`。
+
+### 34.3 串口可证的（`evidence/relay-20261119-a.log`）
+
+- `RELAY stat` → `pb5=0`；`RELAY on` → `on ok pb5=1`；再 `stat` → `pb5=1`；
+  `RELAY off` → `off ok pb5=0`。连做三轮，读回与请求一致，说明 ODR 写入生效、
+  没有别处抢占 PB5。
+- 命令分发、HELP 文案、init 登记都正常，其它命令不受影响。
+
+### 34.4 需要用户感官/仪表确认的（未验证）
+
+- **有没有"咔哒"吸合声**：串口证不了，需要人在板边听（本轮抓包时请用户听，
+  结论以用户反馈为准）。
+- **触点是否真的通断**：需要万用表量 常开/常闭 与 COM。
+- **高电平=吸合** 是按 NPN 低边驱动推断，若实物相反，`on/off` 的语义要对调。
+- PB5 可被 TIM3 部分重映射占用，但本工程 `AFIO->MAPR=0` 且 TIM3 不输出通道，
+  已按代码核对，无冲突。
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，
   当前未使用 printf，无影响。
 - 判读规则：BLE 侧一个长回包可能显示成多个气泡，**只看总字节数，不看气泡个数**。
-  `HELP` 完整 = **545 B（13 行，COM11 实测）**。
+  `HELP` 完整 = **585 B（14 行，按源码字符串计；本轮尚未上板核对）**。
 - 舵机"有动作"已目视确认（§32），但**角度精度、到位抖动/回弹、带负载表现未验证**；
   蜂鸣器**听感未采集**（§30.3、§32.4）。
-- `DIST` 的 timeout 分支（无回波、>4 m）只做了代码路径，**没有制造出真实现场验证**。
+- `DIST` 已停用（§33）：TIM2 划给电机 PWM，`DIST` 固定回 `DIST err=disabled`；
+  旧的 timeout 分支与短读数现场项一并搁置，重新启用前先定独立计时源。
+- 继电器 PB5 的电平可证（§34.3），但**吸合声、触点通断与 on/off 极性未验证**（§34.4）。
 - 异步命令（`AHT`/`AHTS`/`DIST`）的回包可能晚于其后一条命令的回包（最多晚 60~80 ms）。
 - OLED：已验证到"初始化 + 8 页 GDDRAM 写入全部 ACK、AF/BERR 为 0"，
   **屏上画面是否正常需要肉眼确认**；CH1116 的 I²C 模式不能读回状态/GDDRAM，

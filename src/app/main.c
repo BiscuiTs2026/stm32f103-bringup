@@ -22,6 +22,7 @@
 #include "pwm_dev.h"
 #include "track_dev.h"
 #include "encoder_dev.h"
+#include "relay_dev.h"
 
 #include "stm32f1xx.h"     /* bring-up only: EXTI/DWT pulse measurement */
 
@@ -1905,6 +1906,7 @@ static void cmd_execute(cmd_port_t *c, const char *line)
         tx_str(c, "HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep\r\n");
         tx_str(c, "HELP TRACK=raw level of PB14 line sensor\r\n");
         tx_str(c, "HELP ENC=count/clear, dir, a/b, button PB15\r\n");
+        tx_str(c, "HELP RELAY=on/off/stat, PB5 relay coil\r\n");
         tx_str(c, "HELP KEYS=key press counters, clears them\r\n");
     } else if (ci_equal(line, "STAT")) {
         tx_str(c, "STAT clk=");
@@ -1941,7 +1943,7 @@ static void cmd_execute(cmd_port_t *c, const char *line)
         s_key_press[0] = 0u;
         s_key_press[1] = 0u;
         s_key_last = -1;
-    } else if (((pw = pwm_dev_cmd(line)) != NULL) || ((pw = track_dev_cmd(line)) != NULL) || ((pw = encoder_dev_cmd(line)) != NULL)) {
+    } else if (((pw = pwm_dev_cmd(line)) != NULL) || ((pw = track_dev_cmd(line)) != NULL) || ((pw = encoder_dev_cmd(line)) != NULL) || ((pw = relay_dev_cmd(line)) != NULL)) {
         tx_str(c, pw);
     } else {
         const char *oa = oled_arg(line);
@@ -2089,7 +2091,7 @@ int main(void)
     adc_boot();
     oled_boot();
     pwm_dev_init();
-    track_dev_init(); encoder_dev_init();
+    track_dev_init(); encoder_dev_init(); relay_dev_init();
 
     /* Boot default: live. Armed only after oled_boot() has finished the init
      * sequence and the synchronous clear, so the first refresh cannot race the

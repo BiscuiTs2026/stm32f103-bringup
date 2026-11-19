@@ -88,6 +88,7 @@ OLED ready (128x64, 6x8 font)
   | `AHT err=busy` | AHT20 自己没测完（状态字节 bit7=1），已重试 3 次 | 上电初期、总线异常 |
   | `DIST err=busy` | 上一次手动测距还在进行 | 60 ms 内重复发 `DIST` |
   | `DIST err=busy live` | live 模式自动测距正在进行 | live 开启时手动 `DIST` 撞上 |
+  | `DIST err=disabled` | 测距已停用，没有 µs 计时源 | 每次都回（TIM2 已划给电机 PWM） |
   | `OLED err=busy pending` | 上一次 OLED 分页作业还没推完 | 98 ms 窗口内连发 OLED 命令 |
   | `OLED err=busy i2c` | AHT 正在占用 I2C1 | AHT 的 80 ms 窗口内发 OLED |
   | `OLED err=io` | I2C 写失败（AF/BERR/超时） | 见回包里的 `af/berr/to` 计数 |
@@ -105,7 +106,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 13 行 `HELP ...`，共 **545 B**（见下） | — | 否 |
+| `HELP` | 无 | 14 行 `HELP ...`，共 **585 B**（见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -120,12 +121,13 @@ HELP STAT=clk/up/tick/keys/uart counters
 HELP I2C=scan I2C1 bus, list 8-bit addresses
 HELP AHT=read AHT20, rh and t in 0.1 units
 HELP AHTS=same but read via repeated START
-HELP DIST=one shot, cm and us; live=1Hz
+HELP DIST=disabled, TIM2 given to motor
 HELP ADC=pot PA5 and NTC PA4, raw and mV
 HELP OLED=on/off/clear/test/show/frame/col/live/dump
 HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
 HELP TRACK=raw level of PB14 line sensor
 HELP ENC=count/clear, dir, a/b, button PB15
+HELP RELAY=on/off/stat, PB5 relay coil
 HELP KEYS=key press counters, clears them
 ```
 
@@ -143,11 +145,16 @@ HELP KEYS=key press counters, clears them
 - `rst=0` 表示"STOP 结束触发 + 重新 START 读"，`rst=1` 表示触发后不发 STOP 直接 repeated START 读。
 - `AHTS` 读到的是**上一次**结果（`d[0]` bit7=1 即忙），这是 AHT20 的语义，不是驱动 bug。
 
-### 4.3 HC-SR04 测距（PA11=TRIG / PA10=ECHO）
+### 4.3 HC-SR04 测距（PA11=TRIG / PA10=ECHO）——已停用
+
+> **2026-11-19 起停用**：测距的 1 µs 时间戳源是 TIM2，而 TIM2 已整颗分配给电机
+> PWM（PA0/PA1），两者共用 `PSC/ARR` 无法共存。`DIST` 现在固定回
+> `DIST err=disabled`；引脚配置与边沿逻辑保留，重新启用前必须先确定独立计时源。
+> 详见 `docs/TIM2-CONFLICT.md`。
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `DIST` | 无 | `DIST cm=75.2 us=4359` | `DIST err=timeout` / `DIST err=busy` / `DIST err=busy live` | 触发一次测距 |
+| `DIST` | 无 | 停用期间不会出现 | `DIST err=disabled`（当前固定）/ `DIST err=timeout` / `DIST err=busy` / `DIST err=busy live`（重新启用后才可能出现） | 触发一次测距 |
 
 - `cm` 保留 1 位小数（内部按 0.1 cm 整数运算），`us` 是回波宽度（1 MHz 计时）。
 - `timeout` 覆盖两种情况：60 ms 内没有回波（超过约 4 m 或没有反射面），
@@ -320,12 +327,30 @@ A/B 相，EXTI8/EXTI9 双边沿 + 软件四倍频（x4）；PB15 是编码器按
   没有现场回包证据。
 - 串口只能证明电平与计数；轮子是否打滑、转向是否与计数符号一致，不在串口可证范围内。
 
+### 4.8 继电器（PB5）
+
+PB5 → R9 3 kΩ → Q3 SS8050 → U7 SRD-05VDC-SL-C 线圈，D2 FR107 续流；板上自带驱动，
+MCU 只出电平。**假设高电平吸合**（NPN 低边驱动），复位后 PB5 默认低、线圈释放；
+该极性尚未上板实测，串口只能证明引脚电平，吸合声与触点通断需人工确认。
+
+| 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
+| --- | --- | --- | --- | --- |
+| `RELAY on` | 无 | `RELAY on ok pb5=1` | `RELAY err=init` | **是**：PB5 置高 |
+| `RELAY off` | 无 | `RELAY off ok pb5=0` | `RELAY err=init` | **是**：PB5 置低 |
+| `RELAY` / `RELAY stat` | 无 | `RELAY stat pb5=<0\|1>` | `RELAY err=init` | 否（只读） |
+| 其它子命令 | — | — | `RELAY err=usage` | 否 |
+
+- `pb5=` 是**从输出寄存器读回**的实际电平，不是请求值；`on` 之后若读到 0，
+  说明写引脚失败或被别处改写。
+- PB5 在 F103C8 上可被部分重映射成 TIM3_CH2，但本工程 `AFIO->MAPR=0`、
+  TIM3 只用作蜂鸣器时基不输出通道，且 PB5 配置为普通推挽输出，不冲突。
+
 ---
 
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **13 行 545 B**（含每条 CRLF）。
+   当前 `HELP` 是 **14 行 585 B**（含每条 CRLF）。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。

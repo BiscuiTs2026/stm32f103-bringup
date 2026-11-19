@@ -1,13 +1,13 @@
 # 上板抓包证据登记表
 
 本目录是 `2026-11-18/board-bringup/work` 这一轮上板验证留下的串口抓包归档。
-共 34 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
+共 35 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
 根目录原件保留（`PATCHES.md` 里的路径引用仍然有效），但根目录副本被 `.gitignore` 忽略，
 只有本目录的副本进版本库；第 10–23 个（`retest-20261119*.log`、`dist-probe-20261119-*.log`、
 `autolive-20261119*.log`、`adc-20261119-*.log`）是 2026-11-19 复测与排查时**直接写在本目录**的，
 没有根目录副本；第 24–29 项是 2026-11-19 晚的 OLED 排版、PWM 与慢扫抓包；第 30 项是
 输入侧（循迹 PB14 / 编码器 PA8·PA9·PB15）抓包；第 31–32 项是舵机不动的
-寄存器取证（修复前）与修复后复测。
+寄存器取证（修复前）与修复后复测；第 33 项是测距停用 + 继电器 PB5 的板端验证。
 
 ## 怎么读这些日志
 
@@ -455,3 +455,16 @@
 | 不能证明什么 | 舵机角度精度、到位抖动/回弹、带负载表现；`PWM test` 未运行；蜂鸣器本轮未回归 |
 | 局限 | `PWM sweep` 回包在结束时一次性发出，时间戳集中；用户目视只确认"有动作" |
 | PATCHES 引用 | §32.3、§32.4 |
+
+## 33. relay-20261119-a.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 123 行，约 24 s；固件 Flash 25672 B / RAM 4864 B（测距停用 + 继电器，烧录 `-v -rst` 校验通过） |
+| 采样窗口 | 2026-11-19 21:04:18 起，COM11 115200 |
+| 当时在做什么 | 一次抓完：`HELP` → `DIST` → `PING` → `STAT` → `PWM stat` → `TRACK` → `ENC` → `RELAY stat` → 三轮 `RELAY on/off` → `PWM servo 0/90/180` → `OLED live on` → 5 s 静默观察 → `OLED live off` → `DIST` |
+| 关键内容 | `HELP` 14 行 **585 B**，DIST 行为 `HELP DIST=disabled, TIM2 given to motor`；`DIST` 两次都回 `DIST err=disabled`；`PONG`、`STAT clk=72000000 ...`、`PWM stat servo=90.0c pulse=1500us`、`TRACK raw=1`、`ENC count=0 dir=idle a=1 b=1 btn=1` 均正常；`RELAY stat pb5=0` → `on ok pb5=1` → `stat pb5=1` → `off ok pb5=0`，三轮一致；`PWM servo 0/90/180` → `pulse=500/1500/2500us`；live 的 5 s 窗口内只有 `OLED live ok`，**没有一条 `DIST live` 或 `err=timeout`** |
+| 能证明什么 | 测距已停用且自动测距静默；RELAY 写 PB5 后能读回相同电平；TIM2 让出后 PWM 舵机与其余命令未受影响；HELP 文案已生效 |
+| 不能证明什么 | 继电器是否真的吸合/释放（"咔哒"声与触点通断需人耳/万用表）；PB5 高电平是否等于吸合（极性未实测）；舵机角度精度 |
+| 局限 | `OLED live on` 命中一次 I2C 忙窗口，回 `OLED err=busy i2c`，但 live 状态此前已开启并持续到 `live off`；不影响 DIST 静默结论 |
+| PATCHES 引用 | §33、§34 |
