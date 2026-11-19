@@ -1,0 +1,38 @@
+﻿[      6ms] ===== capture start 2026-11-19 22:48:42.080 port=COM11 plan=aht =====
+[    488ms] hb
+[    515ms] >> OLED off
+[    526ms] OLED off ok display=off live=paused af=0 berr=0 to=0
+[   1501ms] hb
+[   2013ms] >> AHT
+[   2108ms] AHT ok rh=44.7 t=21.2 raw=18 72 A9 35 B3 8B rst=0
+[   2481ms] hb
+[   3475ms] hb
+[   4004ms] >> AHT
+[   4096ms] AHT ok rh=44.8 t=21.2 raw=18 72 D5 05 B3 8D rst=0
+[   4485ms] hb
+[   5474ms] hb
+[   6003ms] >> AHT
+[   6094ms] AHT ok rh=44.8 t=21.2 raw=18 72 D6 D5 B3 98 rst=0
+[   6483ms] hb
+[   7476ms] hb
+[   8004ms] >> AHTS
+[   8097ms] AHT ok rh=44.8 t=21.2 raw=18 72 C0 45 B2 FA rst=1
+[   8484ms] hb
+[   9481ms] hb
+[  10009ms] >> AHTS
+[  10104ms] AHT ok rh=44.8 t=21.2 raw=18 72 C0 F5 B3 6C rst=1
+[  10475ms] hb
+[  11484ms] hb
+[  12014ms] >> AHTS
+[  12107ms] AHT ok rh=44.8 t=21.2 raw=18 72 B5 A5 B3 4C rst=1
+[  12480ms] hb
+[  13476ms] hb
+[  14008ms] >> AHT
+[  14039ms] >> AHT
+[  14055ms] AHT err=busy pending
+[  14102ms] AHT ok rh=44.7 t=21.2 raw=18 72 A6 45 B3 C6 rst=0
+[  14475ms] hb
+[  15206ms] >> STAT
+[  15221ms] STAT clk=72000000 up=191837 tick=1 key1=0 key2=0 uart_rx=314 uart_tx=10522
+[  15484ms] hb
+[  16011ms] ===== capture end =====

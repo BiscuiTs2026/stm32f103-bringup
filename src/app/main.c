@@ -23,6 +23,7 @@
 #include "pm_platform.h"
 #include "board_f103c8.h"
 #include "oled_ch1116.h"
+#include "aht20_dev.h"
 #include "pwm_dev.h"
 #include "track_dev.h"
 #include "encoder_dev.h"
@@ -116,6 +117,18 @@ static cmd_port_t *s_oled_req;         /* NULL = no job running */
 static void oled_now_row_flash(void);  /* repaint the NOW row for a short job */
 
 static void cmd_feed(cmd_port_t *c, const uint8_t *d, size_t n);
+
+/* The AHT20 job lives in src/components/aht20_dev; these two hooks are the
+ * only things it needs from the entry layer. */
+static int aht_ui_busy(void)
+{
+    return (s_oled_req != NULL) ? 1 : 0;
+}
+
+static const aht20_hooks_t s_aht_hooks = {
+    .ui_busy    = aht_ui_busy,
+    .ui_now_row = oled_now_row_flash,
+};
 
 static void on_uart_event(pm_uart_t *u, const pm_evt_t *evt, void *ctx)
 {
@@ -220,190 +233,6 @@ static void cmd_i2c(cmd_port_t *c)
         pm_cmd_out_tx_hex_byte(c, found[i]);
     }
     pm_cmd_out_tx_str(c, "\r\n");
-}
-
-/* ------------------------------------------------ AHT20 temperature/humidity
- * Standard flow from the AHT20 datasheet: trigger 0xAC/0x33/0x00, wait ~80 ms,
- * then read 6 bytes. The read is issued as a repeated START while the bus is
- * still owned by this master, which is the path that mock tests never touched.
- * Conversion (datasheet 6.2):
- *   RH% = raw_h / 2^20 * 100
- *   T C = raw_t / 2^20 * 200 - 50
- * Reported as tenths so no float support is needed. */
-
-/* The 80 ms conversion window runs from the main loop, not inside the command
- * handler: a command must never block the heartbeat or the other port, and it
- * must always produce exactly one reply. */
-#define AHT_WAIT_MS 80u
-#define AHT_TRIES   3u
-
-typedef struct {
-    cmd_port_t *c;          /* where the reply goes */
-    uint32_t    t0;
-    uint8_t     active;
-    uint8_t     repeated;
-    uint8_t     attempt;
-} aht_job_t;
-
-static aht_job_t s_aht;
-
-/* Background sample for the live page: triggered every AHT_BG_PERIOD_MS with
- * no reply port. Only a successful read replaces the cache, so the page shows
- * the last good value (or "--" before the first one) and never 0. */
-#define AHT_BG_PERIOD_MS 2000u
-
-static int32_t  s_aht_rh10;
-static int32_t  s_aht_t10;
-static uint8_t  s_aht_have;
-static uint32_t s_aht_next = AHT_BG_PERIOD_MS;
-
-static void aht_reply_raw(cmd_port_t *c, const uint8_t *d)
-{
-    size_t i;
-
-    pm_cmd_out_tx_str(c, " raw=");
-    for (i = 0u; i < 6u; i++) {
-        if (i != 0u) {
-            pm_cmd_out_tx_str(c, " ");
-        }
-        pm_cmd_out_tx_hex_byte(c, d[i]);
-    }
-}
-
-static void aht_reply_err(cmd_port_t *c, const uint8_t *d, const char *why)
-{
-    if (c == NULL) {
-        return;                        /* background sample: no port, no reply */
-    }
-    pm_cmd_out_last_two("AHT err=", why);
-    pm_cmd_out_tx_str(c, "AHT err=");
-    pm_cmd_out_tx_str(c, why);
-    aht_reply_raw(c, d);
-    pm_cmd_out_tx_str(c, "\r\n");
-}
-
-static void aht_reply_ok(cmd_port_t *c, const uint8_t *d, int repeated)
-{
-    uint32_t raw_h = ((uint32_t)d[1] << 12) | ((uint32_t)d[2] << 4) | ((uint32_t)d[3] >> 4);
-    uint32_t raw_t = (((uint32_t)d[3] & 0x0Fu) << 16) | ((uint32_t)d[4] << 8) | (uint32_t)d[5];
-    uint32_t rh10  = (raw_h * 1000u) / 1048576u;
-    int32_t  t10   = (int32_t)((raw_t * 2000u) / 1048576u) - 500;
-
-    if (c == NULL) {
-        s_aht_rh10 = (int32_t)rh10;
-        s_aht_t10  = t10;
-        s_aht_have = 1u;
-        return;
-    }
-    {
-        char  lb[16];
-        char *lp = lb;
-
-        lp = pm_cmd_sput_s(lp, "AHT ok ", 7u);
-        lp = pm_cmd_sput_f1(lp, (int32_t)rh10);
-        *lp = '\0';
-        pm_cmd_out_last_set(lb);
-    }
-    pm_cmd_out_tx_str(c, "AHT ok rh=");
-    pm_cmd_out_tx_fixed1(c, (int32_t)rh10);
-    pm_cmd_out_tx_str(c, " t=");
-    pm_cmd_out_tx_fixed1(c, t10);
-    aht_reply_raw(c, d);
-    pm_cmd_out_tx_str(c, " rst=");
-    pm_cmd_out_tx_u32(c, (uint32_t)repeated);
-    pm_cmd_out_tx_str(c, "\r\n");
-}
-
-static void aht_start(cmd_port_t *c, int repeated)
-{
-    static const uint8_t zero[6] = { 0u, 0u, 0u, 0u, 0u, 0u };
-
-    if (s_aht.active != 0u) {
-        pm_cmd_out_tx_str(c, "AHT err=busy pending\r\n");
-        return;
-    }
-    /* pm_i2c1_ops()->aht_trigger() re-initialises I2C1 when the peripheral is
-     * off; doing that between two pages of an OLED push wedged the panel
-     * (err=io run). */
-    if (s_oled_req != NULL) {
-        pm_cmd_out_tx_str(c, "AHT err=busy oled\r\n");
-        return;
-    }
-    if (pm_i2c1_ops()->aht_trigger() == 0) {
-        aht_reply_err(c, zero, "io");
-        return;
-    }
-    s_aht.c        = c;
-    s_aht.repeated = (uint8_t)repeated;
-    s_aht.attempt  = 0u;
-    s_aht.t0       = pm_osal_now_ms();
-    s_aht.active   = 1u;
-    /* 80 ms is too short for a 500 ms refresh to catch; paint the NOW row once
-     * (one page, ~12 ms) while the sensor waits, well before the read. */
-    oled_now_row_flash();
-}
-
-static void aht_service(uint32_t now)
-{
-    uint8_t    d[6] = { 0u, 0u, 0u, 0u, 0u, 0u };
-    int        read_ok;
-    const char *why;
-
-    if (s_aht.active == 0u) {
-        return;
-    }
-    if ((uint32_t)(now - s_aht.t0) < AHT_WAIT_MS) {
-        return;
-    }
-
-    read_ok = pm_i2c1_ops()->aht_read(d, 6u, (int)s_aht.repeated);
-
-    if ((read_ok != 0) && ((d[0] & 0x80u) == 0u)) {
-        s_aht.active = 0u;
-        aht_reply_ok(s_aht.c, d, (int)s_aht.repeated);
-        return;
-    }
-    /* Keep the reason that matches the data actually observed. */
-    why = ((read_ok != 0) && ((d[0] & 0x80u) != 0u)) ? "busy" : "io";
-
-    s_aht.attempt++;
-    if (s_aht.attempt >= AHT_TRIES) {
-        s_aht.active = 0u;
-        aht_reply_err(s_aht.c, d, why);
-        return;
-    }
-    if (pm_i2c1_ops()->aht_trigger() == 0) {
-        s_aht.active = 0u;
-        aht_reply_err(s_aht.c, d, why);
-        return;
-    }
-    s_aht.t0 = now;
-}
-
-/* Keeps the live page's RH/T fresh without blocking the 500 ms refresh: one
- * trigger every 2 s, the result is picked up by aht_service() 80 ms later. */
-static void aht_bg_tick(uint32_t now)
-{
-    if ((int32_t)(now - s_aht_next) < 0) {
-        return;
-    }
-    s_aht_next = now + AHT_BG_PERIOD_MS;
-    if (s_aht.active != 0u) {
-        return;                        /* a manual AHT/AHTS owns the sensor */
-    }
-    /* The OLED push is a long multi-page I2C sequence; re-initialising the bus
-     * in the middle of it wedged the panel (seen as a run of err=io). */
-    if (s_oled_req != NULL) {
-        return;
-    }
-    if (pm_i2c1_ops()->aht_trigger() == 0) {
-        return;
-    }
-    s_aht.c        = NULL;
-    s_aht.repeated = 0u;
-    s_aht.attempt  = 0u;
-    s_aht.t0       = now;
-    s_aht.active   = 1u;
 }
 
 /* ------------------------------------------------------------ ADC1, PA4/PA5
@@ -803,7 +632,7 @@ static const char *now_job(void)
     if (s_oled_req != NULL) {
         return "OLED PUSH";
     }
-    if (s_aht.active != 0u) {
+    if (aht20_busy() != 0) {
         return "AHT READ";
     }
     if (s_dist.active != 0u) {
@@ -844,6 +673,9 @@ static void oled_stage_live(void)
     char    *p;
     uint32_t now = pm_osal_now_ms();
     pm_i2c1_stats_t st;
+    int32_t  rh10 = 0;
+    int32_t  t10  = 0;
+    int      have = aht20_reading(&rh10, &t10);
 
     /* Row 0: MODE (8) + UP (8). */
     p = pm_cmd_sput_s(b, "MODE=", 5u);
@@ -876,9 +708,9 @@ static void oled_stage_live(void)
     oled_ch1116_stage_line(&s_oled, 2u, b);
 
     p = pm_cmd_sput_s(b, "RH=", 3u);
-    p = (s_aht_have != 0u) ? pm_cmd_sput_f1(p, s_aht_rh10) : pm_cmd_sput_s(p, "--.-", 4u);
+    p = (have != 0) ? pm_cmd_sput_f1(p, rh10) : pm_cmd_sput_s(p, "--.-", 4u);
     p = pm_cmd_sput_s(p, " T=", 3u);
-    p = (s_aht_have != 0u) ? pm_cmd_sput_f1(p, s_aht_t10) : pm_cmd_sput_s(p, "--.-", 4u);
+    p = (have != 0) ? pm_cmd_sput_f1(p, t10) : pm_cmd_sput_s(p, "--.-", 4u);
     *p++ = 'C';
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 3u, b);
@@ -1079,7 +911,7 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
         return;
     }
     /* AHTS keeps bus ownership across its 80 ms window; do not cut in. */
-    if (s_aht.active != 0u) {
+    if (aht20_busy() != 0) {
         pm_cmd_out_tx_str(c, "OLED err=busy i2c\r\n");
         return;
     }
@@ -1265,7 +1097,7 @@ static void oled_live_tick(uint32_t now)
     if ((int32_t)(now - s_oled_live_next) < 0) {
         return;
     }
-    if (s_aht.active != 0u) {
+    if (aht20_busy() != 0) {
         return;                        /* do not interleave with the AHT window */
     }
     s_oled_live_next = now + OLED_LIVE_PERIOD_MS;
@@ -1339,13 +1171,13 @@ static void run_i2c(cmd_port_t *c, const char *line)
 static void run_aht(cmd_port_t *c, const char *line)
 {
     PM_UNUSED(line);
-    aht_start(c, 0);
+    aht20_start(c, 0);
 }
 
 static void run_ahts(cmd_port_t *c, const char *line)
 {
     PM_UNUSED(line);
-    aht_start(c, 1);
+    aht20_start(c, 1);
 }
 
 static void run_dist(cmd_port_t *c, const char *line)
@@ -1574,6 +1406,7 @@ int main(void)
     dist_hw_init();
     adc_boot();
     oled_boot();
+    aht20_init(&s_aht_hooks);
     pwm_dev_init();
     track_dev_init(); encoder_dev_init(); relay_dev_init(); motor_dev_init();
 
@@ -1600,8 +1433,8 @@ int main(void)
         t = pm_osal_now_ms();
         cmd_flush_idle(&s_debug, t);
         cmd_flush_idle(&s_ble, t);
-        aht_bg_tick(t);
-        aht_service(t);
+        aht20_bg_tick(t);
+        aht20_service(t);
         dist_service(t);
         dist_live_tick(t);
         oled_service();

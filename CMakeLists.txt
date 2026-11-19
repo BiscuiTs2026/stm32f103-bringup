@@ -99,6 +99,7 @@ target_link_libraries(pm_port_stm32f1 PUBLIC pm_core pm_osal pm_hal)
 # access is injected through a callback so the entry glue owns the I2C polling.
 add_library(pm_components STATIC
     src/components/oled_ch1116/oled_ch1116.c
+    src/components/aht20_dev/aht20_dev.c
     src/components/pm_cmd/pm_cmd_out.c
     src/components/pwm_dev/pwm_dev.c
     src/components/track_dev/track_dev.c
@@ -108,6 +109,7 @@ add_library(pm_components STATIC
 )
 target_include_directories(pm_components
     PUBLIC  ${PM_ROOT}/src/components/oled_ch1116
+            ${PM_ROOT}/src/components/aht20_dev
             ${PM_ROOT}/src/components/pwm_dev
             ${PM_ROOT}/src/components/track_dev
             ${PM_ROOT}/src/components/encoder_dev

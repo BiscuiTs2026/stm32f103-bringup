@@ -1,7 +1,7 @@
 # 上板抓包证据登记表
 
 本目录是 `2026-11-18/board-bringup/work` 这一轮上板验证留下的串口抓包归档。
-共 62 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
+共 65 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
 根目录原件保留（`PATCHES.md` 里的路径引用仍然有效），但根目录副本被 `.gitignore` 忽略，
 只有本目录的副本进版本库；第 10–23 个（`retest-20261119*.log`、`dist-probe-20261119-*.log`、
 `autolive-20261119*.log`、`adc-20261119-*.log`）是 2026-11-19 复测与排查时**直接写在本目录**的，
@@ -13,7 +13,9 @@
 第 39–45 项是拆分 S2（输出层搬家）的拆前/拆后回归、编译、单测、分层扫描、
 夹带判据，以及**未取到**的蓝牙镜像证据记录；第 46–51 项是拆分 S3（命令注册表）的
 拆前/拆后回归、编译、单测、分层扫描与夹带判据；第 52–59 项是拆分 S4（I2C1/OLED 总线
-下沉 bsp）的拆前/拆后回归、编译、主机单测、分层扫描、60 s live 窗口、OLED 忙态重试与烧录校验。
+下沉 bsp）的拆前/拆后回归、编译、主机单测、分层扫描、60 s live 窗口、OLED 忙态重试与烧录校验；
+第 60–65 项是拆分 S5（AHT20 作业下沉组件）的拆前/拆后回归、编译、分层扫描、AHT 定点用例与
+60 s live 窗口（含 RH/T 行变化与忙态两例）；第 66 项是同一固件的烧录回读校验。
 
 ## 怎么读这些日志
 
@@ -800,3 +802,91 @@
 | 不能证明什么 | 主机用例不覆盖 I2C/OLED 总线（依赖真实寄存器），那部分由第 53/56/57 项覆盖 |
 | 局限 | 主机侧无 I2C 模拟，`pm_i2c1_stm32f1.c` 不参与主机构建 |
 | PATCHES 引用 | 未引用（S4 拆分证据） |
+
+## 60. split-s5-before.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 339 行；COM11 @115200，97 s 窗口（22:43:43 起）；板内固件 S4（提交 `ec0ca3f`，未重烧） |
+| 采样窗口 | 1.5 s `PING` / 2.5 s `HELP` / 3.5 s `STAT` / 4.5 s `I2C`；5.5/7.0/8.5 s `AHT`；10.0/11.5/13.0 s `AHTS`；14.55 s 与 14.58 s 连发两条 `AHT`；16.0–23.2 s 七条 `OLED`；24.4 s `OLED live on`；45/47.5/50 s `AHT`；86 s `OLED live off`；87.5–95.5 s 其余命令 |
+| 当时在做什么 | S5 拆前基线：AHT20 作业仍在 `main.c`，总线已走 `pm_i2c1_ops()`（S4 状态） |
+| 关键内容 | `HELP` 15 行；`AHT ok` ×3 `rst=0`（rh=44.0/44.0/43.9，t=21.2）、`AHTS ok` ×3 `rst=1`；14.55 s 那条被接受、14.58 s 那条回 `AHT err=busy pending` 后首条 `AHT ok`；live 中段 `AHT` ×3 全 `ok`；`OLED on/off/clear/test/frame/dump/col 2/live on/live off` 回包齐全；`I2C found=0x70,0x7A`；live 帧 159 条 `ms=98`；`STAT ... uart_tx=70936` |
+| 能证明什么 | 拆前基线的命令回包、AHT/AHTS 字段与数值范围、忙态语义 |
+| 不能证明什么 | 不证明 S5 后行为——只作对比用；板子已运行约 13 min，`uart_tx` 绝对值不可与拆后直接相减 |
+| 局限 | 窗口内没有人造 I2C 故障；`busy oled` 未在此窗口出现（AHT 时相避开推页） |
+| PATCHES 引用 | 未引用（S5 拆分证据） |
+
+## 61. split-s5-after.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 339 行；COM11 @115200，97 s 窗口（22:45:51 起）；板内固件 S5（`build-split-s5`，回读校验通过） |
+| 采样窗口 | 与第 60 项同一时序脚本 |
+| 当时在做什么 | S5 拆后整体回归：AHT 作业在图 `src/components/aht20_dev/`，`main.c` 只留注册表薄适配与 `aht20_*` 调用 |
+| 关键内容 | `HELP` 15 行与第 60 项**逐字节相同**（`Compare-Object` 无差异）；`I2C found=0x70,0x7A` 相同；`OLED on/off/clear/test/frame/dump/col 2/live on/live off` 回包格式、`af=0 berr=0 to=0`、`ms=97/98` 与拆前一致；live 帧 158 条全 `ms=98`；14 条命令各一条回包；无 `err=io`；`STAT ... uart_tx=9624`（本次复位后累计） |
+| 能证明什么 | 拆后整机回归与拆前同格式、同节拍；命令表、OLED 路径、HELP 文案未被搬迁影响 |
+| 不能证明什么 | 本窗口的 7 条 `AHT/AHTS`（5.5–14.55 s，1.5 s 等间隔）全部回 `err=busy oled`——它们与开机后一直运行的 500 ms live 推页**同相**，每条都落在约 100 ms 的推页窗口内；这是采样时相问题，不是 AHT 功能缺失，定点用例见第 64/65 项 |
+| 局限 | 等间隔命令与固定周期推页会产生相位锁定，AHT 用例不能放在 1.5 s 网格上；`uart_tx` 与第 60 项起点不同，不做绝对差值比较 |
+| PATCHES 引用 | 未引用（S5 拆分证据） |
+
+## 62. split-s5-build.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 66 行；`build-split-s5`，Ninja + arm-none-eabi-gcc 14.3.1+st.2 |
+| 当时在做什么 | S5 全量构建（新增 `src/components/aht20_dev/aht20_dev.c`，`PM_ROOT/src/components/aht20_dev` 加入 `pm_components` 头路径） |
+| 关键内容 | 编译器告警 **0 条**；warning 共 5 条，全部是既有链接期项（newlib nosys 的 `_close`/`_lseek`/`_read`/`_write` 桩 + RWX LOAD segment），与 `split-s4-build.log` 集合逐条相同；Flash 27860 B / RAM 4984 B（S4 为 27700 / 4976，+160 B 代码、+8 B RAM）；`.data 460 B / .bss 4532 B`；主机单测同步复跑 **164 checks, 0 failure(s)** |
+| 能证明什么 | 组件化没有引入编译告警；新增 8 B RAM 是 hooks 表与状态迁出后的净增，量级符合预期 |
+| 不能证明什么 | 不证明运行行为（见第 61/64/65 项） |
+| 局限 | 固件未开全 `-Werror`，告警靠人工核对 |
+| PATCHES 引用 | 未引用（S5 拆分证据） |
+
+## 63. split-s5-layering.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 15 行；`tools/check_layering.py` 3.3.1 默认参数（锁 `CHECKER.lock`，源提交 `7facd2b`） |
+| 当时在做什么 | S5 拆后全工程扫描 |
+| 关键内容 | **0 ERROR / 11 WARN**，仍是同一组 11 条：胶水层 1220 → **1095** 行 1 条、`main.c:253/255` `GPIO_PIN_4`/`GPIOA`（`adc_boot`）2 条、`main.c:461` `dist_start` 寄存器 1 条、`main.c:496` `dist` 忙等 1 条、`main.c:765` `oled_screen_name` 分支 1 条、`main.c:807` `oled_start_screen` 分支 1 条、`main.c:853` `cmd_oled` 123 行 1 条、`pm_port_stm32f1.c:352/362/374` `*_hw_*` 3 条；`aht20_dev` 相关命中 **0 条** |
+| 能证明什么 | S5 没有新增命中、没有清掉任何存量命中；组件层调用 `pm_i2c1_ops()` 与 OSAL 时间未触发规则 |
+| 不能证明什么 | 不证明行为等价（见第 61/64/65 项） |
+| 局限 | 判据是启发式静态检查；行数只记录不设目标（实测 1095，预计 1000 上下） |
+| PATCHES 引用 | 未引用（S5 拆分证据） |
+
+## 64. split-s5-aht.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 38 行；COM11 @115200，16 s 窗口（22:48:42 起）；板内固件 S5 |
+| 采样窗口 | 0.5 s `OLED off`（停 live，避免推页相位）；2/4/6 s `AHT`；8/10/12 s `AHTS`；14.00 s 与 14.03 s 连发两条 `AHT`；15.2 s `STAT` |
+| 当时在做什么 | S5 定点验收：两种读模式各 3 次 + 80 ms 窗口内连发 |
+| 关键内容 | `AHT ok` ×3 `rst=0`（rh=44.7/44.8/44.8，t=21.2，`raw=18 72 …`）；`AHTS ok` ×3 `rst=1`（同样 `raw=18 72 …`）；两种模式字段名/顺序/单位相同，唯一差别是 `rst=`；14.03 s 那条在首条 80 ms 窗口内，回 `AHT err=busy pending`，首条随后 `AHT ok`；`STAT clk=72000000 up=191837 tick=1`；无 `err=io` |
+| 能证明什么 | 组件化后 AHT/AHTS 读值路径在板上正常；`busy pending` 的拦截语义未变；RH/T 落在 0..1000 / -400..800 内 |
+| 不能证明什么 | 不覆盖推页期间的 `busy oled`（见第 65 项）；不证明 `busy pending` 的精确 80 ms 边界（只证明 30 ms 内连发会被拦） |
+| 局限 | 单次采样，未做多轮统计；`AHTS` 的线序已按 S4 新线序（触发即 STOP，读为普通 START），与拆前不同，差异已登记 `TECH_DEBT.md` D21 |
+| PATCHES 引用 | 未引用（S5 拆分证据） |
+
+## 65. split-s5-live.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 259 行；COM11 @115200，65.5 s 窗口（22:49:06 起）；板内固件 S5 |
+| 采样窗口 | 0.5 s `OLED off`、1.5 s `OLED live on`；2.1 s 间隔 `AHT` ×6（4.1–15.1 s）；20/40/60 s `OLED dump`；62 s `OLED live off`；63 s `STAT`；64 s `OLED dump` |
+| 当时在做什么 | S5 长窗口验收：60 s live 的 RH/T 行变化、推页期间 `busy oled`、错误计数 |
+| 关键内容 | live 帧 **121 条全部 `ms=98`**；`OLED dump` 的 `L3` 依次 `RH=44.7 T=21.2C` → `RH=45.1` → `RH=44.9` → `RH=45.8` → `RH=45.9 T=21.3C`（变化 ≥2 次，全程无 `--.-`）；`L6=I2C af= 0 berr= 0`、`L7=LIVE ms= 98`；AHT 结果：`ok` ×4（44.7/44.7/44.8/45.0）、10.7 s 回 `AHT err=busy oled`（正逢推页）、15.1 s 回 `AHT err=busy pending`（与 2 s 后台采样窗口重叠）；全程无 `err=io` |
+| 能证明什么 | 组件化后 60 s live 的 RH/T 行由后台采样持续刷新；推页期间手动 AHT 被 `busy oled` 拦住；后台采样与手动命令共用同一条 80 ms 窗口，冲突时回 `busy pending`；`af/berr/to` 全程 0 |
+| 不能证明什么 | 不证明区间内每帧的 RH/T 都在变（只证明 dump 可读到的 4 个时刻）；不覆盖总线错误下的自愈 |
+| 局限 | `busy pending` 那条是后台采样占窗所致，不是 80 ms 连发；行内容靠 `OLED dump`（文本回读），未做面板拍照 |
+| PATCHES 引用 | 未引用（S5 拆分证据） |
+
+## 66. split-s5-flash.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 20 行；`STM32_Programmer_CLI -c port=SWD mode=UR -w build-split-s5/pm_f103_demo.hex -v -rst` |
+| 当时在做什么 | 把 S5 固件写入目标板并开回读校验，末尾复位 |
+| 关键内容 | `File download complete`、`Time elapsed during verifying operation: 00:00:00.172`、`Download verified successfully`、`MCU Reset` / `Software reset is performed` |
+| 能证明什么 | 板上运行的正是 `evidence/split-s5-*.log` 对应那一版 hex；校验通过 |
+| 不能证明什么 | 不证明功能正确（由第 61/64/65 项证明）；不证明电压/接线状态 |
+| 局限 | 只校验 Flash 回读，不覆盖选项字节 |
+| PATCHES 引用 | 未引用（S5 拆分证据） |
