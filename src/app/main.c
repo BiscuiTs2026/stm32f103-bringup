@@ -16,6 +16,7 @@
 #include "pm_osal.h"
 #include "pm_gpio.h"
 #include "pm_uart.h"
+#include "pm_cmd.h"
 #include "pm_platform.h"
 #include "board_f103c8.h"
 #include "oled_ch1116.h"
@@ -125,10 +126,6 @@ static char s_last[16] = "boot";
 static cmd_port_t *s_oled_req;         /* NULL = no job running */
 static void oled_now_row_flash(void);  /* repaint the NOW row for a short job */
 
-static char *sput_u32(char *p, uint32_t v);
-static char *sput_s(char *p, const char *s, uint8_t width);
-static char *sput_f1(char *p, int32_t v10);
-
 static void last_set(const char *s)
 {
     size_t n = 0u;
@@ -148,7 +145,7 @@ static void last_num(const char *pre, uint32_t v, const char *suf)
     while (*pre != '\0') {
         *p++ = *pre++;
     }
-    p = sput_u32(p, v);
+    p = pm_cmd_sput_u32(p, v);
     while (*suf != '\0') {
         *p++ = *suf++;
     }
@@ -346,25 +343,6 @@ static void tx_hex_byte(cmd_port_t *c, uint8_t b)
     out[1] = hex[b & 0x0Fu];
     out[2] = '\0';
     tx_str(c, out);
-}
-
-static int ci_equal(const char *a, const char *b)
-{
-    while ((*a != '\0') && (*b != '\0')) {
-        char ca = *a++;
-        char cb = *b++;
-
-        if ((ca >= 'a') && (ca <= 'z')) {
-            ca = (char)(ca - 'a' + 'A');
-        }
-        if ((cb >= 'a') && (cb <= 'z')) {
-            cb = (char)(cb - 'a' + 'A');
-        }
-        if (ca != cb) {
-            return 0;
-        }
-    }
-    return (*a == '\0') && (*b == '\0');
 }
 
 /* -------------------------------------------------------------- I2C1 scan
@@ -666,8 +644,8 @@ static void aht_reply_ok(cmd_port_t *c, const uint8_t *d, int repeated)
         char  lb[16];
         char *lp = lb;
 
-        lp = sput_s(lp, "AHT ok ", 7u);
-        lp = sput_f1(lp, (int32_t)rh10);
+        lp = pm_cmd_sput_s(lp, "AHT ok ", 7u);
+        lp = pm_cmd_sput_f1(lp, (int32_t)rh10);
         *lp = '\0';
         last_set(lb);
     }
@@ -954,7 +932,7 @@ static void dist_last_ok(uint32_t cm10)
     while (*pre != '\0') {
         *p++ = *pre++;
     }
-    p = sput_u32(p, cm10 / 10u);
+    p = pm_cmd_sput_u32(p, cm10 / 10u);
     *p++ = '.';
     *p++ = (char)('0' + (cm10 % 10u));
     *p = '\0';
@@ -1232,139 +1210,7 @@ static void oled_err_reply(cmd_port_t *c, const char *why)
     tx_str(c, "\r\n");
 }
 
-/* 1 when line starts with pfx (case-insensitive); *rest points just past it. */
-static int ci_starts(const char *line, const char *pfx, const char **rest)
-{
-    const char *p = line;
-
-    while (*pfx != '\0') {
-        char a = *p;
-        char b = *pfx;
-
-        if ((a >= 'a') && (a <= 'z')) {
-            a = (char)(a - 'a' + 'A');
-        }
-        if ((b >= 'a') && (b <= 'z')) {
-            b = (char)(b - 'a' + 'A');
-        }
-        if (a != b) {
-            return 0;
-        }
-        p++;
-        pfx++;
-    }
-    *rest = p;
-    return 1;
-}
-
-/* Strict decimal: optional spaces, digits, optional spaces, end. */
-static int parse_u32(const char *s, uint32_t *out)
-{
-    uint32_t v   = 0u;
-    int      any = 0;
-
-    while (*s == ' ') {
-        s++;
-    }
-    while ((*s >= '0') && (*s <= '9')) {
-        v = (v * 10u) + (uint32_t)(*s - '0');
-        any = 1;
-        s++;
-    }
-    if (any == 0) {
-        return 0;
-    }
-    while (*s == ' ') {
-        s++;
-    }
-    if (*s != '\0') {
-        return 0;
-    }
-    *out = v;
-    return 1;
-}
-
-static char *sput_u32(char *p, uint32_t v)
-{
-    char   tmp[11];
-    size_t n = 0u;
-
-    do {
-        tmp[n] = (char)('0' + (v % 10u));
-        v /= 10u;
-        n++;
-    } while (v != 0u);
-    while (n != 0u) {
-        n--;
-        *p++ = tmp[n];
-    }
-    return p;
-}
-
-/* Fixed-width text helpers: every field keeps its columns, so a value that
- * grows a digit never shifts the rest of the row. */
-static char *sput_s(char *p, const char *s, uint8_t width)
-{
-    uint8_t n = 0u;
-
-    while ((s[n] != '\0') && (n < width)) {
-        *p++ = s[n];
-        n++;
-    }
-    while (n < width) {
-        *p++ = ' ';
-        n++;
-    }
-    return p;
-}
-
-static char *sput_pad(char *p, uint32_t v, uint8_t width)
-{
-    char     tmp[11];
-    uint8_t  n = 0u;
-
-    do {
-        tmp[n] = (char)('0' + (v % 10u));
-        v /= 10u;
-        n++;
-    } while (v != 0u);
-    while (n < width) {
-        *p++ = ' ';
-        width--;
-    }
-    while (n != 0u) {
-        n--;
-        *p++ = tmp[n];
-    }
-    return p;
-}
-
-/* One decimal, always 4 columns: "47.3", " 9.5", "-5.0". */
-static char *sput_f1(char *p, int32_t v10)
-{
-    if (v10 < 0) {
-        if (v10 < -99) {
-            v10 = -99;
-        }
-        *p++ = '-';
-        *p++ = (char)('0' + ((-v10) / 10));
-        *p++ = '.';
-        *p++ = (char)('0' + ((-v10) % 10));
-        return p;
-    }
-    if (v10 > 999) {
-        v10 = 999;
-    }
-    if (v10 >= 100) {
-        *p++ = (char)('0' + (v10 / 100));
-    } else {
-        *p++ = ' ';
-    }
-    *p++ = (char)('0' + ((v10 % 100) / 10));
-    *p++ = '.';
-    *p++ = (char)('0' + (v10 % 10));
-    return p;
-}
+/* Stateless parse/format helpers now live in src/core/pm_cmd.c. */
 
 /* The background job that is running right now, for the NOW row. */
 static const char *now_job(void)
@@ -1400,9 +1246,9 @@ static const char *oled_mode_name(uint32_t now)
 static void oled_stage_now_row(void)
 {
     char  b[OLED_CH1116_LINE_CHARS + 1u];
-    char *p = sput_s(b, "NOW : ", 6u);
+    char *p = pm_cmd_sput_s(b, "NOW : ", 6u);
 
-    p = sput_s(p, now_job(), 15u);
+    p = pm_cmd_sput_s(p, now_job(), 15u);
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 1u, b);
 }
@@ -1414,70 +1260,70 @@ static void oled_stage_live(void)
     uint32_t now = pm_osal_now_ms();
 
     /* Row 0: MODE (8) + UP (8). */
-    p = sput_s(b, "MODE=", 5u);
+    p = pm_cmd_sput_s(b, "MODE=", 5u);
     if (s_oled_live == 0u) {
-        p = sput_s(p, "OFF", 8u);
+        p = pm_cmd_sput_s(p, "OFF", 8u);
     } else if ((s_oled_hold_until != 0u) &&
                ((int32_t)(s_oled_hold_until - now) > 0)) {
         char     m[9];
         char    *q = m;
 
-        q = sput_s(q, "STAT", 4u);
-        q = sput_pad(q, ((s_oled_hold_until - now) + 999u) / 1000u, 2u);
+        q = pm_cmd_sput_s(q, "STAT", 4u);
+        q = pm_cmd_sput_pad(q, ((s_oled_hold_until - now) + 999u) / 1000u, 2u);
         *q++ = 'S';
         *q = '\0';
-        p = sput_s(p, m, 8u);
+        p = pm_cmd_sput_s(p, m, 8u);
     } else {
-        p = sput_s(p, "LIVE", 8u);
+        p = pm_cmd_sput_s(p, "LIVE", 8u);
     }
-    p = sput_s(p, "UP=", 3u);
-    p = sput_pad(p, now / 1000u, 4u);
+    p = pm_cmd_sput_s(p, "UP=", 3u);
+    p = pm_cmd_sput_pad(p, now / 1000u, 4u);
     *p++ = 'S';
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 0u, b);
 
     oled_stage_now_row();
 
-    p = sput_s(b, "LAST: ", 6u);
-    p = sput_s(p, s_last, 15u);
+    p = pm_cmd_sput_s(b, "LAST: ", 6u);
+    p = pm_cmd_sput_s(p, s_last, 15u);
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 2u, b);
 
-    p = sput_s(b, "RH=", 3u);
-    p = (s_aht_have != 0u) ? sput_f1(p, s_aht_rh10) : sput_s(p, "--.-", 4u);
-    p = sput_s(p, " T=", 3u);
-    p = (s_aht_have != 0u) ? sput_f1(p, s_aht_t10) : sput_s(p, "--.-", 4u);
+    p = pm_cmd_sput_s(b, "RH=", 3u);
+    p = (s_aht_have != 0u) ? pm_cmd_sput_f1(p, s_aht_rh10) : pm_cmd_sput_s(p, "--.-", 4u);
+    p = pm_cmd_sput_s(p, " T=", 3u);
+    p = (s_aht_have != 0u) ? pm_cmd_sput_f1(p, s_aht_t10) : pm_cmd_sput_s(p, "--.-", 4u);
     *p++ = 'C';
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 3u, b);
 
     adc_cache_read();
-    p = sput_s(b, "NTC=", 4u);
-    p = (s_live_adc_ok != 0u) ? sput_pad(p, s_live_ntc, 4u)
-                              : sput_s(p, "----", 4u);
-    p = sput_s(p, " POT=", 5u);
-    p = (s_live_adc_ok != 0u) ? sput_pad(p, s_live_pot, 4u)
-                              : sput_s(p, "----", 4u);
+    p = pm_cmd_sput_s(b, "NTC=", 4u);
+    p = (s_live_adc_ok != 0u) ? pm_cmd_sput_pad(p, s_live_ntc, 4u)
+                              : pm_cmd_sput_s(p, "----", 4u);
+    p = pm_cmd_sput_s(p, " POT=", 5u);
+    p = (s_live_adc_ok != 0u) ? pm_cmd_sput_pad(p, s_live_pot, 4u)
+                              : pm_cmd_sput_s(p, "----", 4u);
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 4u, b);
 
-    p = sput_s(b, "K1=", 3u);
-    p = sput_pad(p, s_key_press[0], 5u);
-    p = sput_s(p, " K2=", 4u);
-    p = sput_pad(p, s_key_press[1], 5u);
+    p = pm_cmd_sput_s(b, "K1=", 3u);
+    p = pm_cmd_sput_pad(p, s_key_press[0], 5u);
+    p = pm_cmd_sput_s(p, " K2=", 4u);
+    p = pm_cmd_sput_pad(p, s_key_press[1], 5u);
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 5u, b);
 
-    p = sput_s(b, "I2C af=", 7u);
-    p = sput_pad(p, s_oled_af, 2u);
-    p = sput_s(p, " berr=", 6u);
-    p = sput_pad(p, s_oled_berr, 2u);
+    p = pm_cmd_sput_s(b, "I2C af=", 7u);
+    p = pm_cmd_sput_pad(p, s_oled_af, 2u);
+    p = pm_cmd_sput_s(p, " berr=", 6u);
+    p = pm_cmd_sput_pad(p, s_oled_berr, 2u);
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 6u, b);
 
-    p = sput_s(b, "LIVE ms=", 8u);
-    p = (s_oled_last_ms != 0u) ? sput_pad(p, s_oled_last_ms, 3u)
-                               : sput_s(p, "---", 3u);
+    p = pm_cmd_sput_s(b, "LIVE ms=", 8u);
+    p = (s_oled_last_ms != 0u) ? pm_cmd_sput_pad(p, s_oled_last_ms, 3u)
+                               : pm_cmd_sput_s(p, "---", 3u);
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 7u, b);
 }
@@ -1595,11 +1441,11 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
      * both run in the main loop, so this always lands on a page boundary and no
      * I2C frame is cut in half. */
     if (s_oled_live_job != 0u) {
-        int takeover = ci_equal(arg, "FRAME") || ci_equal(arg, "TEST") ||
-                       ci_equal(arg, "CLEAR") || ci_equal(arg, "SHOW") ||
-                       ci_equal(arg, "ON") || ci_equal(arg, "OFF") ||
-                       ci_starts(arg, "LIVE ", &rest) ||
-                       ci_starts(arg, "COL", &rest);
+        int takeover = pm_cmd_ci_equal(arg, "FRAME") || pm_cmd_ci_equal(arg, "TEST") ||
+                       pm_cmd_ci_equal(arg, "CLEAR") || pm_cmd_ci_equal(arg, "SHOW") ||
+                       pm_cmd_ci_equal(arg, "ON") || pm_cmd_ci_equal(arg, "OFF") ||
+                       pm_cmd_ci_starts(arg, "LIVE ", &rest) ||
+                       pm_cmd_ci_starts(arg, "COL", &rest);
 
         if (takeover != 0) {
             oled_ch1116_abort(&s_oled);
@@ -1612,7 +1458,7 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
     /* Text dump of the page: no I2C, so it is allowed even mid-push and is the
      * only way to read MODE/STATIC/OFF back while the panel is blank or shows
      * a static pattern. */
-    if (ci_equal(arg, "DUMP")) {
+    if (pm_cmd_ci_equal(arg, "DUMP")) {
         uint32_t now = pm_osal_now_ms();
         uint8_t  pg;
 
@@ -1651,7 +1497,7 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
         return;
     }
 
-    if (ci_equal(arg, "ON")) {
+    if (pm_cmd_ci_equal(arg, "ON")) {
         if (oled_ch1116_display(&s_oled, 1) != 0) {
             oled_err_reply(c, "io");
             return;
@@ -1663,7 +1509,7 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
         tx_str(c, "\r\n");
         return;
     }
-    if (ci_equal(arg, "OFF")) {
+    if (pm_cmd_ci_equal(arg, "OFF")) {
         if (oled_ch1116_display(&s_oled, 0) != 0) {
             oled_err_reply(c, "io");
             return;
@@ -1678,22 +1524,22 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
     }
 
     /* `OLED live on|off`; a bare `OLED live` is a usage error. */
-    if (ci_equal(arg, "LIVE")) {
+    if (pm_cmd_ci_equal(arg, "LIVE")) {
         tx_str(c, "OLED err=usage\r\n");
         return;
     }
-    if (ci_starts(arg, "LIVE ", &rest)) {
+    if (pm_cmd_ci_starts(arg, "LIVE ", &rest)) {
         while (*rest == ' ') {
             rest++;
         }
-        if (ci_equal(rest, "ON")) {
+        if (pm_cmd_ci_equal(rest, "ON")) {
             oled_live_arm(c, pm_osal_now_ms());
             tx_str(c, "OLED live=on period=");
             tx_u32(c, OLED_LIVE_PERIOD_MS);
             tx_str(c, "ms\r\n");
             return;
         }
-        if (ci_equal(rest, "OFF")) {
+        if (pm_cmd_ci_equal(rest, "OFF")) {
             s_oled_live = 0u;
             tx_str(c, "OLED live=off\r\n");
             return;
@@ -1704,10 +1550,10 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
 
     /* Diagnostic for the 132-column RAM / 128-column glass offset. Repaints the
      * last screen so the A/B needs no extra `frame` command. */
-    if (ci_starts(arg, "COL", &rest)) {
+    if (pm_cmd_ci_starts(arg, "COL", &rest)) {
         uint32_t v;
 
-        if ((parse_u32(rest, &v) == 0) || (v > 4u)) {
+        if ((pm_cmd_parse_u32(rest, &v) == 0) || (v > 4u)) {
             tx_str(c, "OLED err=usage col=0..4\r\n");
             return;
         }
@@ -1735,13 +1581,13 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
         return;
     }
 
-    if (ci_equal(arg, "CLEAR")) {
+    if (pm_cmd_ci_equal(arg, "CLEAR")) {
         s = OLED_SCREEN_CLEAR;
-    } else if (ci_equal(arg, "TEST")) {
+    } else if (pm_cmd_ci_equal(arg, "TEST")) {
         s = OLED_SCREEN_TEST;
-    } else if (ci_equal(arg, "FRAME")) {
+    } else if (pm_cmd_ci_equal(arg, "FRAME")) {
         s = OLED_SCREEN_FRAME;
-    } else if (ci_equal(arg, "SHOW")) {
+    } else if (pm_cmd_ci_equal(arg, "SHOW")) {
         s = OLED_SCREEN_SHOW;
     } else {
         tx_str(c, "OLED err=usage\r\n");
@@ -1892,9 +1738,9 @@ static void cmd_execute(cmd_port_t *c, const char *line)
 {
     const char *pw;
 
-    if (ci_equal(line, "PING")) {
+    if (pm_cmd_ci_equal(line, "PING")) {
         tx_str(c, "PONG\r\n");
-    } else if (ci_equal(line, "HELP")) {
+    } else if (pm_cmd_ci_equal(line, "HELP")) {
         tx_str(c, "HELP HELP=list commands\r\n");
         tx_str(c, "HELP PING=reply PONG\r\n");
         tx_str(c, "HELP STAT=clk/up/tick/keys/uart counters\r\n");
@@ -1910,7 +1756,7 @@ static void cmd_execute(cmd_port_t *c, const char *line)
         tx_str(c, "HELP RELAY=on/off/stat, PB5 relay coil\r\n");
         tx_str(c, "HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM\r\n");
         tx_str(c, "HELP KEYS=key press counters, clears them\r\n");
-    } else if (ci_equal(line, "STAT")) {
+    } else if (pm_cmd_ci_equal(line, "STAT")) {
         tx_str(c, "STAT clk=");
         tx_u32(c, pm_platform_core_clock());
         tx_str(c, " up=");
@@ -1924,17 +1770,17 @@ static void cmd_execute(cmd_port_t *c, const char *line)
         tx_str(c, " uart_tx=");
         tx_u32(c, s_tx_total);
         tx_str(c, "\r\n");
-    } else if (ci_equal(line, "I2C")) {
+    } else if (pm_cmd_ci_equal(line, "I2C")) {
         cmd_i2c(c);
-    } else if (ci_equal(line, "AHT")) {
+    } else if (pm_cmd_ci_equal(line, "AHT")) {
         aht_start(c, 0);
-    } else if (ci_equal(line, "AHTS")) {
+    } else if (pm_cmd_ci_equal(line, "AHTS")) {
         aht_start(c, 1);
-    } else if (ci_equal(line, "DIST")) {
+    } else if (pm_cmd_ci_equal(line, "DIST")) {
         dist_start(c, 0u);
-    } else if (ci_equal(line, "ADC")) {
+    } else if (pm_cmd_ci_equal(line, "ADC")) {
         cmd_adc(c);
-    } else if (ci_equal(line, "KEYS")) {
+    } else if (pm_cmd_ci_equal(line, "KEYS")) {
         tx_str(c, "KEYS k1=");
         tx_u32(c, s_key_press[0]);
         tx_str(c, " k2=");

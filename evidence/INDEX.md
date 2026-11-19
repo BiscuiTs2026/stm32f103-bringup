@@ -1,14 +1,15 @@
 # 上板抓包证据登记表
 
 本目录是 `2026-11-18/board-bringup/work` 这一轮上板验证留下的串口抓包归档。
-共 36 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
+共 40 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
 根目录原件保留（`PATCHES.md` 里的路径引用仍然有效），但根目录副本被 `.gitignore` 忽略，
 只有本目录的副本进版本库；第 10–23 个（`retest-20261119*.log`、`dist-probe-20261119-*.log`、
 `autolive-20261119*.log`、`adc-20261119-*.log`）是 2026-11-19 复测与排查时**直接写在本目录**的，
 没有根目录副本；第 24–29 项是 2026-11-19 晚的 OLED 排版、PWM 与慢扫抓包；第 30 项是
 输入侧（循迹 PB14 / 编码器 PA8·PA9·PB15）抓包；第 31–32 项是舵机不动的
 寄存器取证（修复前）与修复后复测；第 33 项是测距停用 + 继电器 PB5 的板端验证；
-第 34 项是电机 PA0/PA1（TIM2_CH1/CH2）的寄存器与回包验证。
+第 34 项是电机 PA0/PA1（TIM2_CH1/CH2）的寄存器与回包验证；第 35–38 项是
+`main.c` 拆分 S1（纯计算搬家）的拆前/拆后上板回归、编译输出与主机单测输出。
 
 ## 怎么读这些日志
 
@@ -482,3 +483,55 @@
 | 不能证明什么 | 电机是否真转、`fwd/rev` 对应轴的哪个方向、转速是否随占空比变化（需用户看/听）；电机未接时以上只能记"未接" |
 | 局限 | 抓包期间 `TRACK raw=0`（盖黑或遮挡状态），与上一轮 `raw=1` 不同，仅说明回包正常，未重新做循迹判定 |
 | PATCHES 引用 | §35 |
+
+## 35. split-before.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 96 行 / 4,011 B；文件头 `===== capture start 2026-11-19 21:18:31.768 port=COM11 =====`，覆盖 `[4 – 14000+ ms]` |
+| 采样窗口 | 约 14 s；固件为拆分前基线（电机版，Flash 27168 B / RAM 4968 B） |
+| 当时在做什么 | 拆分前的对照组：按固定顺序发 12 条命令，中间留 1 s 静默，采集原始回包 |
+| 关键内容 | 命令序列 `PING` → `HELP` → `STAT` → `OLED dump` → `DIST` → `ADC` → `I2C` → `PWM stat` → `TRACK` → `ENC` → `RELAY stat` → `KEYS`；`HELP` 15 行 638 B、`DIST err=disabled`、`OLED dump` 为 live 页十六进制 dump |
+| 能证明什么 | 拆分前的行为基线；与第 36 项同一脚本、同一命令序列对照 |
+| 不能证明什么 | 单独不能证明任何拆分结论，必须与 `split-after.log` 成对读 |
+| 局限 | 每轮 `OLED live ok` 的 `ms=`、`STAT` 的 `up=`、`ADC` 的 `pot_mv/ntc_mv`、`ENC count` 等运行期数值天然逐次不同，对比时需先屏蔽 |
+| PATCHES 引用 | 未引用（S1 拆分证据） |
+
+## 36. split-after.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 96 行 / 4,005 B；文件头 `===== capture start 2026-11-19 21:34:06.951 port=COM11 =====` |
+| 采样窗口 | 约 14 s；固件为 S1 拆分后（Flash **27204 B** / RAM **4968 B**，烧录 `-v -rst`，`Download verified successfully` + `MCU Reset`） |
+| 当时在做什么 | 烧 S1 固件后，用与 `split-before.log` 完全相同的脚本和命令序列复抓 |
+| 关键内容 | 命令序列与拆前逐条对应；`HELP` 仍 15 行 638 B；`DIST err=disabled` 不变 |
+| 能证明什么 | ① `PING`/`HELP` 共 18 行与拆前**逐字符一致**（diff = 0）；② 全部 46 行在屏蔽运行期数值（`up=`、uart 计数、`RH/T`、`NTC/POT`、`K1/K2`、`count`、`ms`、`raw`、`pot_mv`/`ntc_mv`）后 diff = 0；③ 唯一原始差异是模拟量读数，属采样噪声 |
+| 不能证明什么 | 时序级别（中断延迟、100 ms 空闲冲刷边界）没有逐周期对比；只覆盖这 12 条命令 |
+| 局限 | 见第 35 项；对比脚本在 `%TEMP%\bringup-tools\` 下，未进仓 |
+| PATCHES 引用 | 未引用（S1 拆分证据，供复核） |
+
+## 37. split-s1-build.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 75 行 / 8,811 B；`=== configure 2026-11-19 21:33:53 ===` 起 |
+| 采样窗口 | S1 工作区 `build-split-s1`，CMake 4.4.0 + Ninja 1.13.2 + arm-none-eabi-gcc 14.3.1 |
+| 当时在做什么 | 加入 `src/core/pm_cmd.c` 与 `include/pm/pm_cmd.h` 后的完整 configure + build 输出 |
+| 关键内容 | 编译阶段 **0 条编译器警告**；5 处 `warning:` 全部来自链接期（`_write`/`_read` 等 nano/nosys 桩、`pm_f103_demo has a LOAD segment with RWX permissions`）；`FLASH 27204 B / 41.51%`、`RAM 4968 B / 24.26%` |
+| 能证明什么 | S1 编译通过、无新增编译警告；体积相对拆前 +36 B（函数边界与对齐，非行为变化） |
+| 不能证明什么 | 静态分析结论；`check_layering` 结果另见汇报（0 ERROR / 3 WARN） |
+| 局限 | 链接期 5 条警告是既有已知项，不是本轮引入 |
+| PATCHES 引用 | 未引用（S1 拆分证据） |
+
+## 38. split-s1-host.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 2 行 / 31 B（末行 `140 checks, 0 failure(s)`） |
+| 采样窗口 | 主机侧 MSVC 构建 `tests/host`，同一份 `src/core/*.c` |
+| 当时在做什么 | 跑 `test_cmd()`（新增）+ 既有 ringbuf/evtq/gpio/uart 用例 |
+| 关键内容 | **140 checks, 0 failure(s)**；其中 `test_cmd()` 覆盖 `pm_cmd_ci_equal`/`ci_starts`/`parse_u32`/`sput_u32`/`sput_s`/`sput_pad`/`sput_f1`，含溢出向量 `"4294967296"`（回绕为 0，锁定既有行为）与 `sput_pad(1234,4)`、`(0,1)` 边界 |
+| 能证明什么 | 搬出的七个纯函数在主机侧行为与拆前一致，且边界情形被钉住 |
+| 不能证明什么 | 不覆盖硬件相关路径（中断、DMA、寄存器读写） |
+| 局限 | 单测只编译 `src/core/`，不链接端口层 |
+| PATCHES 引用 | 未引用（S1 拆分证据） |

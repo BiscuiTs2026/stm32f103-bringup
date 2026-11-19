@@ -12,6 +12,7 @@
 #include "pm_event.h"
 #include "pm_gpio.h"
 #include "pm_uart.h"
+#include "pm_cmd.h"
 #include "pm_port_mock.h"
 
 void host_time_advance(uint32_t ms);
@@ -321,6 +322,79 @@ static void test_uart_timeout(void)
     CHECK(written == 0u);
 }
 
+static void test_cmd(void)
+{
+    const char *rest = NULL;
+    uint32_t v = 0u;
+    char buf[16];
+
+    CHECK(pm_cmd_ci_equal("HELP", "help") == 1);
+    CHECK(pm_cmd_ci_equal("oled", "OLED") == 1);
+    CHECK(pm_cmd_ci_equal("HELP", "HEL") == 0);
+    CHECK(pm_cmd_ci_equal("HELP ", "HELP") == 0);
+    CHECK(pm_cmd_ci_equal("", "") == 1);
+
+    CHECK(pm_cmd_ci_starts("OLED col 3", "oled ", &rest) == 1);
+    CHECK(strcmp(rest, "col 3") == 0);
+    CHECK(pm_cmd_ci_starts("OLED", "oled ", &rest) == 0);
+    CHECK(pm_cmd_ci_starts("PING", "ping", &rest) == 1);
+    CHECK(*rest == '\0');
+
+    CHECK((pm_cmd_parse_u32(" 42 ", &v) == 1) && (v == 42u));
+    CHECK((pm_cmd_parse_u32("0", &v) == 1) && (v == 0u));
+    CHECK(pm_cmd_parse_u32("", &v) == 0);
+    CHECK(pm_cmd_parse_u32("   ", &v) == 0);
+    CHECK(pm_cmd_parse_u32("4 2", &v) == 0);
+    CHECK(pm_cmd_parse_u32("12a", &v) == 0);
+    CHECK(pm_cmd_parse_u32("-1", &v) == 0);
+    /* Golden vector for the carried-over behaviour: no overflow check, so
+     * 2^32 wraps to 0. Pinned here, not changed in S1. */
+    CHECK((pm_cmd_parse_u32("4294967296", &v) == 1) && (v == 0u));
+
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_u32(buf, 0u) == &buf[1]);
+    CHECK(buf[0] == '0');
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_u32(buf, 4294967295u) == &buf[10]);
+    CHECK(memcmp(buf, "4294967295", 10) == 0);
+
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_s(buf, "ab", 4u) == &buf[4]);
+    CHECK(memcmp(buf, "ab  ", 4) == 0);
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_s(buf, "abcdef", 3u) == &buf[3]);
+    CHECK(memcmp(buf, "abc", 3) == 0);
+
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_pad(buf, 7u, 4u) == &buf[4]);
+    CHECK(memcmp(buf, "   7", 4) == 0);
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_pad(buf, 1234u, 2u) == &buf[4]);
+    CHECK(memcmp(buf, "1234", 4) == 0);
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_pad(buf, 1234u, 4u) == &buf[4]);   /* exactly full */
+    CHECK(memcmp(buf, "1234", 4) == 0);
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_pad(buf, 0u, 1u) == &buf[1]);      /* width == 1 */
+    CHECK(buf[0] == '0');
+
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_f1(buf, 473) == &buf[4]);
+    CHECK(memcmp(buf, "47.3", 4) == 0);
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_f1(buf, 95) == &buf[4]);
+    CHECK(memcmp(buf, " 9.5", 4) == 0);
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_f1(buf, -50) == &buf[4]);
+    CHECK(memcmp(buf, "-5.0", 4) == 0);
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_f1(buf, -500) == &buf[4]);
+    CHECK(memcmp(buf, "-9.9", 4) == 0);
+    memset(buf, '.', sizeof(buf));
+    CHECK(pm_cmd_sput_f1(buf, 999) == &buf[4]);
+    CHECK(memcmp(buf, "99.9", 4) == 0);
+}
+
 int main(void)
 {
     test_ringbuf();
@@ -330,6 +404,7 @@ int main(void)
     test_uart_tx();
     test_uart_rx();
     test_uart_timeout();
+    test_cmd();
 
     printf("\n%d checks, %d failure(s)\n", s_checks, s_failures);
     return (s_failures == 0) ? 0 : 1;

@@ -51,6 +51,7 @@ add_library(pm_core STATIC
     src/core/pm_ringbuf.c
     src/core/pm_gpio.c
     src/core/pm_uart.c
+    src/core/pm_cmd.c
 )
 target_include_directories(pm_core PUBLIC ${PM_ROOT}/include/pm ${PM_ROOT}/include)
 target_compile_options(pm_core PRIVATE

@@ -18,6 +18,7 @@ add_executable(pm_host_tests
     ../../src/core/pm_ringbuf.c
     ../../src/core/pm_gpio.c
     ../../src/core/pm_uart.c
+    ../../src/core/pm_cmd.c
 )
 
 target_include_directories(pm_host_tests PRIVATE
