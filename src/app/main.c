@@ -26,6 +26,7 @@
 #include "board_f103c8.h"
 #include "oled_ch1116.h"
 #include "aht20_dev.h"
+#include "keypad_dev.h"
 #include "pwm_dev.h"
 #include "track_dev.h"
 #include "encoder_dev.h"
@@ -35,8 +36,6 @@
 #include "stm32f1xx.h"     /* bring-up only: EXTI/DWT pulse measurement */
 
 #include <string.h>
-
-#define KEY_DEBOUNCE_MS 20u
 
 static pm_uart_t s_uart;
 static uint8_t   s_rx_storage[256];
@@ -49,15 +48,6 @@ static const pm_gpio_cfg_t s_led_cfg = {
     .pull          = PM_GPIO_PULL_NONE,
     .speed         = PM_GPIO_SPEED_LOW,
     .initial_level = PM_GPIO_LEVEL_LOW,
-};
-
-/* Keys are active-low. KEY2 has no external pull-up on this board, so the
- * internal pull-up is mandatory for both. */
-static const pm_gpio_cfg_t s_key_cfg = {
-    .dir           = PM_GPIO_DIR_IN,
-    .pull          = PM_GPIO_PULL_UP,
-    .speed         = PM_GPIO_SPEED_LOW,
-    .initial_level = PM_GPIO_LEVEL_HIGH,
 };
 
 static const pm_uart_cfg_t s_uart_cfg = {
@@ -89,28 +79,16 @@ static const pm_uart_cfg_t s_bt_cfg = {
     .tx_size    = (uint16_t)sizeof(s_bt_tx_storage),
 };
 
-typedef struct {
-    pm_gpio_pin_t pin;
-    pm_gpio_pin_t led;
-    const char   *name;
-    uint8_t       stable;      /* 1 = pressed */
-    uint8_t       raw;
-    uint32_t      raw_since;
-} key_state_t;
-
-static key_state_t s_keys[] = {
-    { .pin = { .id = BOARD_GPIO_KEY1 }, .led = { .id = BOARD_GPIO_LED_GREEN }, .name = "KEY1" },
-    { .pin = { .id = BOARD_GPIO_KEY2 }, .led = { .id = BOARD_GPIO_LED_RED   }, .name = "KEY2" },
+/* Pin mapping for the keypad component; the board header stays here. */
+static const keypad_map_t s_key_map[] = {
+    { .key = { .id = BOARD_GPIO_KEY1 }, .led = { .id = BOARD_GPIO_LED_GREEN }, .name = "KEY1" },
+    { .key = { .id = BOARD_GPIO_KEY2 }, .led = { .id = BOARD_GPIO_LED_RED   }, .name = "KEY2" },
 };
-
-#define KEY_COUNT ((size_t)(sizeof(s_keys) / sizeof(s_keys[0])))
 
 /* Command channel state; the parser itself lives further down. */
 static cmd_port_t s_debug = { .port = &s_uart };
 static cmd_port_t s_ble   = { .port = &s_bt };
 
-static uint32_t s_key_press[KEY_COUNT];
-static int      s_key_last = -1;
 static uint32_t s_rx_total;
 
 /* Declared here because aht_bg_tick() runs before the OLED block: the
@@ -156,39 +134,6 @@ static void uart_service(void)
 
     while (pm_uart_poll(&s_uart, NULL, on_uart_event, NULL)) {
         /* drain one event per call */
-    }
-}
-
-static void key_service(uint32_t now)
-{
-    size_t i;
-
-    for (i = 0u; i < KEY_COUNT; i++) {
-        key_state_t *k = &s_keys[i];
-        pm_gpio_level_t level = PM_GPIO_LEVEL_HIGH;
-        uint8_t pressed;
-
-        if (pm_gpio_read(k->pin, &level) != PM_OK) {
-            continue;
-        }
-        pressed = (level == PM_GPIO_LEVEL_LOW) ? 1u : 0u;
-
-        if (pressed != k->raw) {
-            k->raw = pressed;
-            k->raw_since = now;
-        } else if ((pressed != k->stable) &&
-                   ((uint32_t)(now - k->raw_since) >= KEY_DEBOUNCE_MS)) {
-            k->stable = pressed;
-            if (pressed != 0u) {
-                s_key_press[i]++;
-                s_key_last = (int)i;
-            }
-            (void)pm_gpio_write(k->led,
-                                (pressed != 0u) ? PM_GPIO_LEVEL_HIGH
-                                                : PM_GPIO_LEVEL_LOW);
-            pm_cmd_out_uart_write_str(k->name);
-            pm_cmd_out_uart_write_str((pressed != 0u) ? " pressed\r\n" : " released\r\n");
-        }
     }
 }
 
@@ -575,6 +520,8 @@ static void oled_stage_live(void)
     uint16_t ntc  = 0u;
     uint16_t pot  = 0u;
     int      adc_ok;
+    uint32_t k1   = 0u;
+    uint32_t k2   = 0u;
 
     /* Row 0: MODE (8) + UP (8). */
     p = pm_cmd_sput_s(b, "MODE=", 5u);
@@ -630,10 +577,11 @@ static void oled_stage_live(void)
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 4u, b);
 
+    keypad_dev_counts(&k1, &k2);
     p = pm_cmd_sput_s(b, "K1=", 3u);
-    p = pm_cmd_sput_pad(p, s_key_press[0], 5u);
+    p = pm_cmd_sput_pad(p, k1, 5u);
     p = pm_cmd_sput_s(p, " K2=", 4u);
-    p = pm_cmd_sput_pad(p, s_key_press[1], 5u);
+    p = pm_cmd_sput_pad(p, k2, 5u);
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 5u, b);
 
@@ -1065,7 +1013,7 @@ static const char *oled_arg(const char *line)
 static void cmd_help(cmd_port_t *c, const char *line);
 static void cmd_ping(cmd_port_t *c, const char *line);
 static void cmd_stat(cmd_port_t *c, const char *line);
-static void cmd_keys(cmd_port_t *c, const char *line);
+static void run_keys(cmd_port_t *c, const char *line);
 
 static void run_i2c(cmd_port_t *c, const char *line)
 {
@@ -1117,7 +1065,7 @@ static const pm_cmd_entry_t s_cmds[] = {
     { "ENC",   "ENC=count/clear, dir, a/b, button PB15",          PM_CMD_TRY,    NULL, encoder_dev_cmd, NULL, NULL },
     { "RELAY", "RELAY=on/off/stat, PB5 relay coil",               PM_CMD_TRY,    NULL, relay_dev_cmd,   NULL, NULL },
     { "MOTOR", "MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM",  PM_CMD_TRY,    NULL, motor_dev_cmd,   NULL, NULL },
-    { "KEYS",  "KEYS=key press counters, clears them",            PM_CMD_EXACT,  cmd_keys,  NULL, NULL, NULL },
+    { "KEYS",  "KEYS=key press counters, clears them",            PM_CMD_EXACT,  run_keys,  NULL, NULL, NULL },
 };
 
 static void cmd_help(cmd_port_t *c, const char *line)
@@ -1142,15 +1090,19 @@ static void cmd_ping(cmd_port_t *c, const char *line)
 
 static void cmd_stat(cmd_port_t *c, const char *line)
 {
+    uint32_t k1;
+    uint32_t k2;
+
     PM_UNUSED(line);
+    keypad_dev_counts(&k1, &k2);
     pm_cmd_out_tx_str(c, "STAT clk=");
     pm_cmd_out_tx_u32(c, pm_platform_core_clock());
     pm_cmd_out_tx_str(c, " up=");
     pm_cmd_out_tx_u32(c, pm_osal_now_ms());
     pm_cmd_out_tx_str(c, " tick=1 key1=");
-    pm_cmd_out_tx_u32(c, s_key_press[0]);
+    pm_cmd_out_tx_u32(c, k1);
     pm_cmd_out_tx_str(c, " key2=");
-    pm_cmd_out_tx_u32(c, s_key_press[1]);
+    pm_cmd_out_tx_u32(c, k2);
     pm_cmd_out_tx_str(c, " uart_rx=");
     pm_cmd_out_tx_u32(c, s_rx_total);
     pm_cmd_out_tx_str(c, " uart_tx=");
@@ -1158,19 +1110,10 @@ static void cmd_stat(cmd_port_t *c, const char *line)
     pm_cmd_out_tx_str(c, "\r\n");
 }
 
-static void cmd_keys(cmd_port_t *c, const char *line)
+static void run_keys(cmd_port_t *c, const char *line)
 {
     PM_UNUSED(line);
-    pm_cmd_out_tx_str(c, "KEYS k1=");
-    pm_cmd_out_tx_u32(c, s_key_press[0]);
-    pm_cmd_out_tx_str(c, " k2=");
-    pm_cmd_out_tx_u32(c, s_key_press[1]);
-    pm_cmd_out_tx_str(c, " last=");
-    pm_cmd_out_tx_str(c, (s_key_last == 0) ? "k1" : (s_key_last == 1) ? "k2" : "none");
-    pm_cmd_out_tx_str(c, "\r\n");
-    s_key_press[0] = 0u;
-    s_key_press[1] = 0u;
-    s_key_last = -1;
+    keypad_dev_cmd(c);
 }
 
 static void cmd_execute(cmd_port_t *c, const char *line)
@@ -1280,7 +1223,6 @@ static void bt_service(void)
 int main(void)
 {
     pm_gpio_pin_t led_blue = { .id = BOARD_GPIO_LED_BLUE };
-    size_t i;
     uint32_t next_led_ms;
     uint32_t next_hb_ms;
 
@@ -1290,13 +1232,8 @@ int main(void)
     if (pm_gpio_configure(led_blue, &s_led_cfg) != PM_OK) {
         error_loop();
     }
-    for (i = 0u; i < KEY_COUNT; i++) {
-        if (pm_gpio_configure(s_keys[i].pin, &s_key_cfg) != PM_OK) {
-            error_loop();
-        }
-        if (pm_gpio_configure(s_keys[i].led, &s_led_cfg) != PM_OK) {
-            error_loop();
-        }
+    if (keypad_dev_init(s_key_map, sizeof(s_key_map) / sizeof(s_key_map[0])) != 0) {
+        error_loop();
     }
     if (pm_uart_init(&s_uart, &s_uart_cfg) != PM_OK) {
         error_loop();
@@ -1328,7 +1265,7 @@ int main(void)
         uint32_t t;
 
         uart_service();
-        key_service(now);
+        keypad_dev_service(now);
         bt_service();
 
         /* Fresh timestamp: cmd_feed() stamps last_ms and aht_start() stamps t0

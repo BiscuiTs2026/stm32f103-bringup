@@ -1,0 +1,95 @@
+﻿[      4ms] ===== capture start 2026-11-19 23:13:18.158 port=COM11 =====
+[   1172ms] ===== reset issued =====
+[   1200ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1201ms] board-bringup
+[   1202ms] core clock = 72000000 Hz
+[   1203ms] USART2 115200 8N1, command channel ready
+[   1203ms] BT USART3 9600 8N1, command channel ready
+[   1204ms] ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit
+[   1205ms] OLED CH1116 addr=7A init ok, col=2, clearing
+[   1205ms] OLED ready (128x64, 6x8 font)
+[   1206ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1465ms] hb
+[   1556ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2062ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2472ms] hb
+[   2561ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3055ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3471ms] hb
+[   3562ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4062ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4487ms] hb
+[   4563ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5013ms] >> KEYS
+[   5042ms] KEYS k1=0 k2=0 last=none
+[   5074ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5482ms] hb
+[   5556ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6075ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6484ms] hb
+[   6508ms] >> KEYS
+[   6525ms] KEYS k1=0 k2=0 last=none
+[   6558ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7067ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7486ms] hb
+[   7559ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8017ms] >> STAT
+[   8041ms] STAT clk=72000000 up=7673 tick=1 key1=0 key2=0 uart_rx=18 uart_tx=992
+[   8058ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8467ms] hb
+[   8556ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9066ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9482ms] hb
+[   9558ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10006ms] >> HELP
+[  10023ms] HELP HELP=list commands
+[  10024ms] HELP PING=reply PONG
+[  10025ms] HELP STAT=clk/up/tick/keys/uart counters
+[  10040ms] HELP I2C=scan I2C1 bus, list 8-bit addresses
+[  10041ms] HELP AHT=read AHT20, rh and t in 0.1 units
+[  10042ms] HELP AHTS=same but read via repeated START
+[  10042ms] HELP DIST=disabled, TIM2 given to motor
+[  10043ms] HELP ADC=pot PA5 and NTC PA4, raw and mV
+[  10055ms] HELP OLED=on/off/clear/test/show/frame/col/live/dump
+[  10056ms] HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
+[  10057ms] HELP TRACK=raw level of PB14 line sensor
+[  10058ms] HELP ENC=count/clear, dir, a/b, button PB15
+[  10072ms] HELP RELAY=on/off/stat, PB5 relay coil
+[  10073ms] HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM
+[  10074ms] HELP KEYS=key press counters, clears them
+[  10088ms] OLED live ok ms=129 col=2 af=0 berr=0 to=0
+[  10475ms] hb
+[  10555ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11058ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11457ms] hb
+[  11515ms] >> DIST
+[  11532ms] DIST err=disabled
+[  11556ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12063ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12467ms] hb
+[  12565ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  13003ms] >> OLED dump
+[  13018ms] OLED dump mode=live screen=live
+[  13020ms] OLED L0=MODE=LIVE    UP=  12S
+[  13037ms] OLED L1=NOW : IDLE           
+[  13038ms] OLED L2=LAST: boot           
+[  13038ms] OLED L3=RH=51.1 T=21.8C
+[  13039ms] OLED L4=NTC=2257 POT=2125
+[  13039ms] OLED L5=K1=    0 K2=    0
+[  13040ms] OLED L6=I2C af= 0 berr= 0
+[  13040ms] OLED L7=LIVE ms= 98
+[  13076ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  13466ms] hb
+[  13565ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14062ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14470ms] hb
+[  14519ms] >> STAT
+[  14542ms] STAT clk=72000000 up=14173 tick=1 key1=0 key2=0 uart_rx=47 uart_tx=2562
+[  14566ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15055ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15466ms] hb
+[  15556ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16053ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16466ms] hb
+[  16555ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  17010ms] ===== capture end =====

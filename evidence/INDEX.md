@@ -1004,3 +1004,63 @@
 | 局限 | 3 条 ERROR 风险的 `adc_dev.*` 原型用 `arch-allow` 行内豁免；这是绕开误报，不是可复用的常规手段，豁免理由与触发条件见下一行 |
 | 检查器误报（3.3.2 素材） | 触发条件：`src/components/adc_dev/adc_dev.h` 的三个原型 `adc_dev_cmd()`、`adc_dev_to_mv()`、`adc_dev_read_now()` 被 SPL 调用启发式当成厂商库调用（`adc_<小写字母>` 前缀命中 `adc_*` 规则），报 `越层调用厂商库` 3 条 ERROR；`adc_dev.c` 内的同名定义因按文件内 local_funcs 跳过而未报。现状：三个声明行各加 `// arch-allow: plain C prototype, not an SPL call`。建议：检查器侧区分"声明行 + 本仓组件自有前缀"，或在 3.3.2 把该启发式改为只在 bsp/架构违规上下文中生效；不要让 `arch-allow` 成为组件命名的常规补丁 |
 | PATCHES 引用 | 未引用（S7 拆分证据） |
+
+## 76. split-s8-before.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 13 行；S7 收尾时 `split-s7-layering.log` 的副本，对应 `d3b8cf2` 代码树 |
+| 当时在做什么 | S8 开工前基线确认 |
+| 关键内容 | `0 ERROR / 9 WARN`；`main.c` 口径 1011；9 条为行数、`dist_start` 寄存器、`dist` 忙等、`oled_screen_name`、`oled_start_screen`、`cmd_oled`、三条端口钩子 |
+| 能证明什么 | S8 之前的对照基线 |
+| 不能证明什么 | 不是新跑的扫描，是同一树的历史输出复制（`d3b8cf2` 的 `split-s7-layering.log`） |
+| 局限 | 复制而非重跑 |
+| PATCHES 引用 | 未引用（S8 拆分证据） |
+
+## 77. split-s8-build.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 69 行；`cmake --build build-split-s8`（GCC 14.3.1 / Ninja，`-Os -g3`） |
+| 当时在做什么 | S8 搬完按键后的完整编译 |
+| 关键内容 | 全部目标成功；新增 `pm_components.dir/.../keypad_dev.c.obj`；无编译器 warning；`FLASH 27976 B / RAM 5024 B` |
+| 能证明什么 | S8 可编译、零新增告警、组件确实进目标 |
+| 不能证明什么 | 不证明行为正确 |
+| 局限 | 仅比对 warning 文本有无新增 |
+| PATCHES 引用 | 未引用（S8 拆分证据） |
+
+## 78. split-s8-layering.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 14 行；`python tools/check_layering.py .`（3.3.1，锁一致），S8 改动后 |
+| 当时在做什么 | 核对 WARN 数量 |
+| 关键内容 | `0 ERROR / 10 WARN`；`main.c` 963；新增 `main.c:83 胶水层定义板级资源表：s_key_map`；原 9 条逐条不变 |
+| 能证明什么 | 除 `s_key_map` 一条外无其它回归；触发条件为 glue 里 `static const T name[] = {…}` 且表体含 ≥2 个 `BOARD_*`/`GPIO_PIN_x`/`GPIOx`（`tools/check_layering.py:1048`） |
+| 不能证明什么 | 不证明该条已在 S8b 消除（见 S8b 的 layering 日志） |
+| 局限 | 过渡态 10 条是派发方允许的，S8b 必须回到 9 条 |
+| PATCHES 引用 | 未引用（S8 拆分证据） |
+
+## 79. split-s8-flash.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 58 行；`STM32_Programmer_CLI -c port=SWD mode=UR -w build-split-s8/pm_f103_demo.hex -v -rst` |
+| 当时在做什么 | S8 固件写入并回读校验 |
+| 关键内容 | `Download verified successfully`、复位成功 |
+| 能证明什么 | 第 80 项抓包对应这版 hex |
+| 不能证明什么 | 不证明功能正确 |
+| 局限 | 只校验 Flash 回读 |
+| PATCHES 引用 | 未引用（S8 拆分证据） |
+
+## 80. split-s8-after.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 95 行；COM11 @115200，17 s 窗口；S8 固件；**只覆盖非按键项** |
+| 采样窗口 | 复位抓横幅；5 s `KEYS`、6.5 s `KEYS`、8 s `STAT`、10 s `HELP`、11.5 s `DIST`、13 s `OLED dump`、14.5 s `STAT` |
+| 关键内容 | 横幅 `board-bringup` / `core clock = 72000000 Hz` / ADC 横幅各 1 次；`KEYS k1=0 k2=0 last=none` 两次（回包后清零路径通）；`STAT key1=0 key2=0`；`HELP` 恰好 15 行；`DIST err=disabled` 单行；`OLED L5=K1=    0 K2=    0`（5 位定宽，与 `KEYS` 同值）；`STAT uart_rx 18→47`、`uart_tx 992→2562`（含 1 Hz 心跳，不可用于单次按键字节差） |
+| 能证明什么 | 按键组件初始化、`KEYS` 回包与清零、`STAT` 计数来源、OLED 第 5 行格式、HELP/DIST 未变 |
+| 不能证明什么 | **不含真实按键**：`KEY1 pressed/released` 文本、LED、`uart_tx +14/+15`、长按 3 s、快点 20 次均未验证；`K1=    1` 只在 0 值上验证了宽度 |
+| 局限 | 需人手按键；待 `split-s8-keys.log` 补 |
+| PATCHES 引用 | 未引用（S8 拆分证据） |
