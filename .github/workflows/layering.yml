@@ -17,8 +17,9 @@ jobs:
         run: python3 tools/check_layering.py --version --lock tools/CHECKER.lock
 
       # 第二步：扫描。ERROR 必须为 0；WARN 只打印，不判失败。
-      # --glue-max-lines 1280 是棘轮：src/app/main.c 当前 1277 行代码，
-      # 是"功能还没回灌成 pm_* 契约"的已知状态（见 PATCHES.md §20）。
+      # --glue-max-lines 是棘轮：src/app/main.c 原来 1277 行、上限 1280（见 PATCHES.md §20）。
+      # 2026-11-19 为板级 bring-up 的 ADC/PWM/GPIO 命令处理临时抬到 1500，
+      # 原因与"收尾后必须拆出 main.c、再把上限压回当时行数"写在 PATCHES.md §27.5。
       # 放宽必须改这一行，让它留在 diff 里被看见。
       - name: Four-layer static check
-        run: python3 tools/check_layering.py . --glue-max-lines 1280
+        run: python3 tools/check_layering.py . --glue-max-lines 1500

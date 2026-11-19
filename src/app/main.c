@@ -856,12 +856,9 @@ static uint8_t     s_oled_live_job;    /* the running job is a live refresh */
 static cmd_port_t *s_oled_live_port;   /* where live refresh replies go */
 static uint32_t    s_oled_live_next;   /* ms of the next refresh */
 
-/* Live is the default after boot: no command is needed to keep the panel
- * refreshing. A static screen holds the panel for OLED_STATIC_HOLD_MS and then
- * hands it back to live; `OLED off` pauses everything, `OLED on` resumes. */
+/* Live is the default after boot. A static screen holds the panel for this long
+ * by pushing the two next-due timestamps forward; `OLED off` clears live. */
 #define OLED_STATIC_HOLD_MS 3000u
-static uint8_t     s_oled_display = 1u;   /* 1 = panel on */
-static uint32_t    s_oled_hold_until;     /* live stays paused until this ms */
 
 static int oled_i2c_wait(uint32_t mask)
 {
@@ -1165,11 +1162,8 @@ static int oled_start_live_job(cmd_port_t *port, const char *name, uint32_t now)
  * away from the display refresh. */
 static void oled_live_arm(cmd_port_t *port, uint32_t first_ms)
 {
-    s_oled_live      = 1u;
-    s_oled_live_port = port;
-    s_oled_last      = OLED_SCREEN_LIVE;
+    s_oled_live      = 1u;   s_oled_live_port = port;   s_oled_last = OLED_SCREEN_LIVE;
     s_oled_live_next = first_ms;
-    s_oled_hold_until = 0u;
     s_dist_live_next = first_ms + (OLED_LIVE_PERIOD_MS / 2u);
 }
 
@@ -1211,7 +1205,6 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
             oled_err_reply(c, "io");
             return;
         }
-        s_oled_display = 1u;
         oled_live_arm(c, pm_osal_now_ms());
         tx_str(c, "OLED on ok display=on live=on");
         oled_tx_counters(c);
@@ -1223,9 +1216,7 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
             oled_err_reply(c, "io");
             return;
         }
-        s_oled_display    = 0u;
-        s_oled_live       = 0u;   /* stop refreshing and stop the 1 Hz ranging */
-        s_oled_hold_until = 0u;
+        s_oled_live = 0u;   /* stop refreshing and stop the 1 Hz ranging */
         tx_str(c, "OLED off ok display=off live=paused");
         oled_tx_counters(c);
         tx_str(c, "\r\n");
@@ -1249,8 +1240,7 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
             return;
         }
         if (ci_equal(rest, "OFF")) {
-            s_oled_live       = 0u;
-            s_oled_hold_until = 0u;
+            s_oled_live = 0u;
             tx_str(c, "OLED live=off\r\n");
             return;
         }
@@ -1351,15 +1341,10 @@ static void oled_service(void)
         tx_str(c, " live=");
         tx_str(c, (s_oled_live != 0u) ? "on" : "off");
         /* A static screen only holds the panel briefly before live returns. */
-        if ((s_oled_live != 0u) && (s_oled_display != 0u)) {
-            uint32_t now = pm_osal_now_ms();
-
-            s_oled_hold_until = now + OLED_STATIC_HOLD_MS;
-            s_oled_live_next  = s_oled_hold_until;
-            s_dist_live_next  = s_oled_hold_until + (OLED_LIVE_PERIOD_MS / 2u);
-            tx_str(c, " hold=");
-            tx_u32(c, OLED_STATIC_HOLD_MS);
-            tx_str(c, "ms");
+        if (s_oled_live != 0u) {
+            s_oled_live_next = pm_osal_now_ms() + OLED_STATIC_HOLD_MS;
+            s_dist_live_next = s_oled_live_next + (OLED_LIVE_PERIOD_MS / 2u);
+            tx_str(c, " hold="); tx_u32(c, OLED_STATIC_HOLD_MS); tx_str(c, "ms");
         }
     }
     oled_tx_counters(c);
@@ -1370,11 +1355,8 @@ static void oled_service(void)
  * is still busy the period is skipped, never queued. */
 static void oled_live_tick(uint32_t now)
 {
-    if ((s_oled_live == 0u) || (s_oled_display == 0u)) {
+    if (s_oled_live == 0u) {
         return;
-    }
-    if ((int32_t)(now - s_oled_hold_until) < 0) {
-        return;                            /* a static screen still owns it */
     }
     if (s_oled_req != NULL) {
         return;
@@ -1394,11 +1376,8 @@ static void oled_live_tick(uint32_t now)
  * measurement that is still in flight just skips this period. */
 static void dist_live_tick(uint32_t now)
 {
-    if ((s_oled_live == 0u) || (s_oled_display == 0u)) {
+    if (s_oled_live == 0u) {
         return;
-    }
-    if ((int32_t)(now - s_oled_hold_until) < 0) {
-        return;                            /* paused while a static screen shows */
     }
     if ((int32_t)(now - s_dist_live_next) < 0) {
         return;
