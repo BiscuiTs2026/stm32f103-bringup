@@ -1,0 +1,67 @@
+﻿[1/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal.c.obj
+[2/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_cortex.c.obj
+[3/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_adc.c.obj
+[4/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_adc_ex.c.obj
+[5/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_dma.c.obj
+[6/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_flash.c.obj
+[7/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_flash_ex.c.obj
+[8/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_gpio.c.obj
+[9/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_gpio_ex.c.obj
+[10/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_pwr.c.obj
+[11/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_rcc.c.obj
+[12/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_rcc_ex.c.obj
+[13/49] Building C object CMakeFiles/pm_core.dir/src/core/pm_err.c.obj
+[14/49] Building C object CMakeFiles/pm_core.dir/src/core/pm_event.c.obj
+[15/49] Building C object CMakeFiles/pm_core.dir/src/core/pm_ringbuf.c.obj
+[16/49] Building C object CMakeFiles/pm_core.dir/src/core/pm_gpio.c.obj
+[17/49] Building C object CMakeFiles/pm_core.dir/src/core/pm_uart.c.obj
+[18/49] Building C object CMakeFiles/pm_core.dir/src/core/pm_cmd.c.obj
+[19/49] Building C object CMakeFiles/pm_core.dir/src/core/pm_cmd_table.c.obj
+[20/49] Building C object CMakeFiles/pm_osal.dir/src/osal/pm_osal_port_cm3.c.obj
+[21/49] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_track_stm32f1.c.obj
+[22/49] Building ASM object CMakeFiles/pm_f103_demo.dir/platform/stm32f103/startup_stm32f103xb.s.obj
+[23/49] Building C object CMakeFiles/pm_components.dir/src/components/aht20_dev/aht20_dev.c.obj
+[24/49] Building C object CMakeFiles/pm_components.dir/src/components/oled_ch1116/oled_ch1116.c.obj
+[25/49] Building C object CMakeFiles/pm_components.dir/src/components/track_dev/track_dev.c.obj
+[26/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_uart.c.obj
+[27/49] Building C object CMakeFiles/pm_hal.dir/third_party/stm32f1xx_hal/src/stm32f1xx_hal_spi.c.obj
+[28/49] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_encoder_stm32f1.c.obj
+[29/49] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_relay_stm32f1.c.obj
+[30/49] Building C object CMakeFiles/pm_components.dir/src/components/encoder_dev/encoder_dev.c.obj
+[31/49] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_pwm_stm32f1.c.obj
+[32/49] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_port_stm32f1.c.obj
+[33/49] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_motor_stm32f1.c.obj
+[34/49] Building C object CMakeFiles/pm_components.dir/src/components/relay_dev/relay_dev.c.obj
+[35/49] Building C object CMakeFiles/pm_components.dir/src/components/pm_cmd/pm_cmd_out.c.obj
+[36/49] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_adc1_stm32f1.c.obj
+[37/49] Building C object CMakeFiles/pm_port_stm32f1.dir/platform/stm32f103/board_f103c8.c.obj
+[38/49] Building C object CMakeFiles/pm_components.dir/src/components/pwm_dev/pwm_dev.c.obj
+[39/49] Building C object CMakeFiles/pm_port_stm32f1.dir/platform/stm32f103/pm_platform.c.obj
+[40/49] Building C object CMakeFiles/pm_components.dir/src/components/motor_dev/motor_dev.c.obj
+[41/49] Linking C static library libpm_core.a
+[42/49] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_i2c1_stm32f1.c.obj
+[43/49] Linking C static library libpm_osal.a
+[44/49] Linking C static library libpm_hal.a
+[45/49] Building C object CMakeFiles/pm_f103_demo.dir/third_party/cmsis/device/source/system_stm32f1xx.c.obj
+[46/49] Linking C static library libpm_components.a
+[47/49] Linking C static library libpm_port_stm32f1.a
+[48/49] Building C object CMakeFiles/pm_f103_demo.dir/src/app/main.c.obj
+[49/49] Linking C executable pm_f103_demo; Generating .bin/.hex and reporting size
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-closer.o): in function `_close_r':
+(.text._close_r+0xc): warning: _close is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-closer.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-lseekr.o): in function `_lseek_r':
+(.text._lseek_r+0x10): warning: _lseek is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-lseekr.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-readr.o): in function `_read_r':
+(.text._read_r+0x10): warning: _read is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-readr.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-writer.o): in function `_write_r':
+(.text._write_r+0x10): warning: _write is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-writer.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: warning: pm_f103_demo has a LOAD segment with RWX permissions
+Memory region         Used Size  Region Size  %age Used
+           FLASH:       27868 B        64 KB     42.52%
+             RAM:        4992 B        20 KB     24.38%
+   text	   data	    bss	    dec	    hex	filename
+  27408	    460	   4540	  32408	   7e98	D:/All the work/TRAEwork/AI-STM32F1-1/2026-11-18/board-bringup/work/build-split-s7/pm_f103_demo

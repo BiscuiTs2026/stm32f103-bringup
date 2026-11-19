@@ -890,3 +890,63 @@
 | 不能证明什么 | 不证明功能正确（由第 61/64/65 项证明）；不证明电压/接线状态 |
 | 局限 | 只校验 Flash 回读，不覆盖选项字节 |
 | PATCHES 引用 | 未引用（S5 拆分证据） |
+
+## 67. split-s7-before.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 15 行；`python tools/check_layering.py .`（3.3.1，默认参数），HEAD `fe5be33` |
+| 当时在做什么 | S7 开工前基线：确认 11 条 WARN 的原文与行号 |
+| 关键内容 | `0 ERROR / 11 WARN`；`main.c` 口径 1095 行；两条待清除项：`main.c:253 GPIO_PIN_4`、`main.c:255 GPIOA` |
+| 能证明什么 | S7 的对照基线就是这 11 条；后续少 2 条以外任何变化都算回归 |
+| 不能证明什么 | 不证明这 11 条之外没有别的问题（检查器只覆盖其规则集） |
+| 局限 | 单次扫描，未做多版本对照 |
+| PATCHES 引用 | 未引用（S7 拆分证据） |
+
+## 68. split-s7-build.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 67 行；`cmake --build build-split-s7`（GCC 14.3.1 / Ninja，`-Os -g3`） |
+| 当时在做什么 | S7a 搬完 bsp 后的完整编译 |
+| 关键内容 | 49 个目标全部 `Building`/`Linking` 成功；新增 `pm_port_stm32f1.dir/.../pm_adc1_stm32f1.c.obj`；无编译器 warning；仅链接期 `_close/_lseek/_read/_write not implemented` 与 `RWX LOAD segment` 两条既有提示；`FLASH 27868 B / RAM 4992 B` |
+| 能证明什么 | S7a 改动可编译、无新增告警、新 bsp 文件确实进了目标 |
+| 不能证明什么 | 不证明行为正确（由第 71 项证明） |
+| 局限 | 未开 `-Werror`，只比对有无新增 warning 文本 |
+| PATCHES 引用 | 未引用（S7 拆分证据） |
+
+## 69. split-s7-layering.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 13 行；`python tools/check_layering.py .`，S7a 改动后 |
+| 当时在做什么 | 核对检查器从 11 WARN 降到 9 WARN，且少的正是 `adc_boot` 的两条 |
+| 关键内容 | `0 ERROR / 9 WARN`；`GPIO_PIN_4`/`GPIOA` 两条消失；`main.c` 口径 1095 → 1060；其余 6 条 `main.c` 与 3 条 `pm_port_stm32f1.c` 逐条保留（`dist_start`、忙等、`oled_screen_name`、`oled_start_screen`、`cmd_oled`、三条 `*_hw_*`） |
+| 能证明什么 | 减少数量与位置恰为预期两条；无新增条目、无误伤 |
+| 不能证明什么 | 不证明 9 条之外无违规（规则集边界） |
+| 局限 | 使用 3.3.1 默认参数，未叠加 `--glue-max-lines` |
+| PATCHES 引用 | 未引用（S7 拆分证据） |
+
+## 70. split-s7a-flash.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 58 行；`STM32_Programmer_CLI -c port=SWD mode=UR -w build-split-s7/pm_f103_demo.hex -v -rst` |
+| 当时在做什么 | S7a 固件写入目标板并开回读校验 |
+| 关键内容 | `Download verified successfully`、`MCU Reset` / `Software reset is performed`；ST-Link SN `37FF71064E5734366E911343`，3.28 V |
+| 能证明什么 | 第 71 项抓包对应的正是这版 hex，且回读校验通过 |
+| 不能证明什么 | 不证明功能正确；不覆盖选项字节 |
+| 局限 | 只校验 Flash 回读 |
+| PATCHES 引用 | 未引用（S7 拆分证据） |
+
+## 71. split-s7a-after.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 170 行；COM11 @115200，36 s 窗口（22:59:09 起）；板内固件 S7a |
+| 采样窗口 | 探针复位后抓上电横幅；6–10 s `ADC` ×5；12 s `HELP`；14 s `DIST`；16 s `STAT`；20 s `OLED live on`；21.5/24 s `OLED dump`；34 s `STAT` |
+| 关键内容 | 横幅 `ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit` 恰好 1 次；5 条 `ADC` 全部 5 字段齐全，`pot_mv=1712/1712/1713/1712/1720`、`ntc_mv=1831/1829/1831/1832/1832` 与 `raw*3300/4095` 整数除逐条相等；无 `ADC err=`；`HELP` 15 行；`DIST err=disabled` 单行；`OLED L4=NTC=2272 POT=2125`（与最近 ADC raw 差 1/9 LSB）与 `NTC=2273 POT=2126`（差 0/8）；`STAT uart_rx 43→84`、`uart_tx 2604→4830` 递增 |
+| 能证明什么 | S7a 之后 ADC 初始化/单次采样接口在板上工作，字段与换算未变；OLED 第 4 行仍定宽且与命令采样一致 |
+| 不能证明什么 | 不证明 `ADC err=init/timeout` 分支（本板未制造故障）；不证明组件化后的命令路径（S7b） |
+| 局限 | `L4` 与 `ADC` 非同一时刻采样，只能按 ≤32 LSB 判据比对；未做面板拍照 |
+| PATCHES 引用 | 未引用（S7 拆分证据） |

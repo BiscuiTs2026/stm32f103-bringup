@@ -20,6 +20,7 @@
 #include "pm_cmd_out.h"
 #include "pm_cmd_table.h"
 #include "pm_i2c1.h"
+#include "pm_adc1.h"
 #include "pm_platform.h"
 #include "board_f103c8.h"
 #include "oled_ch1116.h"
@@ -235,65 +236,21 @@ static void cmd_i2c(cmd_port_t *c)
     pm_cmd_out_tx_str(c, "\r\n");
 }
 
-/* ------------------------------------------------------------ ADC1, PA4/PA5
- * HARDWARE.md §3: PA4 = NTC (ADC1_IN4, beta 3950, 10 k divider),
- * PA5 = potentiometer (ADC1_IN5, 3.3 V/GND divider). Polling single-shot on
- * purpose, same bring-up style as the I2C1 scan above; there is no async ADC
- * model in this repository yet. ADCCLK = PCLK2 / 6 = 12 MHz (limit 14 MHz). */
-
-static ADC_HandleTypeDef s_adc1;
-static uint8_t           s_adc_ok;
-
+/* ADC1 init lives in src/port/stm32f1/pm_adc1_stm32f1.c; the banner texts
+ * stay here so the entry layer keeps its power-up output. */
 static void adc_boot(void)
 {
-    GPIO_InitTypeDef g = { 0 };
+    int rc = pm_adc1_init();
 
-    __HAL_RCC_ADC1_CLK_ENABLE();
-    __HAL_RCC_ADC_CONFIG(RCC_ADCPCLK2_DIV6);
-    g.Pin  = GPIO_PIN_4 | GPIO_PIN_5;
-    g.Mode = GPIO_MODE_ANALOG;
-    HAL_GPIO_Init(GPIOA, &g);
-
-    s_adc1.Instance = ADC1;
-    s_adc1.Init.ScanConvMode          = ADC_SCAN_DISABLE;
-    s_adc1.Init.ContinuousConvMode    = DISABLE;
-    s_adc1.Init.DiscontinuousConvMode = DISABLE;
-    s_adc1.Init.ExternalTrigConv      = ADC_SOFTWARE_START;
-    s_adc1.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-    s_adc1.Init.NbrOfConversion       = 1;
-    if (HAL_ADC_Init(&s_adc1) != HAL_OK) {
+    if (rc == 1) {
         pm_cmd_out_uart_write_str("ADC1 init FAILED\r\n");
         return;
     }
-    if (HAL_ADCEx_Calibration_Start(&s_adc1) != HAL_OK) {
+    if (rc == 2) {
         pm_cmd_out_uart_write_str("ADC1 calibration FAILED\r\n");
         return;
     }
-    s_adc_ok = 1u;
     pm_cmd_out_uart_write_str("ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit\r\n");
-}
-
-/* One software-triggered conversion; 0 on any HAL failure. */
-static int adc_sample(uint32_t channel, uint16_t *raw)
-{
-    ADC_ChannelConfTypeDef ch = { 0 };
-
-    ch.Channel      = channel;
-    ch.Rank         = ADC_REGULAR_RANK_1;
-    ch.SamplingTime = ADC_SAMPLETIME_55CYCLES_5;
-    if (HAL_ADC_ConfigChannel(&s_adc1, &ch) != HAL_OK) {
-        return 0;
-    }
-    if (HAL_ADC_Start(&s_adc1) != HAL_OK) {
-        return 0;
-    }
-    if (HAL_ADC_PollForConversion(&s_adc1, 5u) != HAL_OK) {
-        (void)HAL_ADC_Stop(&s_adc1);
-        return 0;
-    }
-    *raw = (uint16_t)HAL_ADC_GetValue(&s_adc1);
-    (void)HAL_ADC_Stop(&s_adc1);
-    return 1;
 }
 
 /* Same rounding as pm_adc_to_mv() in the model repo: raw * 3300 / 4095. */
@@ -315,10 +272,10 @@ static void adc_cache_read(void)
     uint16_t ntc;
 
     s_live_adc_ok = 0u;
-    if (adc_sample(ADC_CHANNEL_5, &pot) == 0) {
+    if (pm_adc1_sample(PM_ADC1_PA5_POT, &pot) == 0) {
         return;
     }
-    if (adc_sample(ADC_CHANNEL_4, &ntc) == 0) {
+    if (pm_adc1_sample(PM_ADC1_PA4_NTC, &ntc) == 0) {
         return;
     }
     s_live_pot    = pot;
@@ -331,17 +288,17 @@ static void cmd_adc(cmd_port_t *c)
     uint16_t pot = 0u;
     uint16_t ntc = 0u;
 
-    if (s_adc_ok == 0u) {
+    if (pm_adc1_ready() == 0) {
         pm_cmd_out_last_set("ADC err=init");
         pm_cmd_out_tx_str(c, "ADC err=init\r\n");
         return;
     }
-    if (adc_sample(ADC_CHANNEL_5, &pot) == 0) {
+    if (pm_adc1_sample(PM_ADC1_PA5_POT, &pot) == 0) {
         pm_cmd_out_last_set("ADC err=tout pa5");
         pm_cmd_out_tx_str(c, "ADC err=timeout ch=pa5\r\n");
         return;
     }
-    if (adc_sample(ADC_CHANNEL_4, &ntc) == 0) {
+    if (pm_adc1_sample(PM_ADC1_PA4_NTC, &ntc) == 0) {
         pm_cmd_out_last_set("ADC err=tout pa4");
         pm_cmd_out_tx_str(c, "ADC err=timeout ch=pa4\r\n");
         return;
