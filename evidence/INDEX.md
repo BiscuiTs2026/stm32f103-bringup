@@ -47,6 +47,7 @@
 | 25 | `oled-page-20261119-b.log` | 679 行 / 约 79 s | 互斥修复后复抓：`mode=live screen=live`、`LIVE ms=98`、60 s 浸泡 `af/berr/to` 全 0；`NOW` 在短作业期间仍显示 IDLE（500 ms 节拍抓不到 20/80 ms 作业，见第 26 项） | §29.2 |
 | 26 | `oled-page-20261119-c.log` | 692 行 / 约 80 s | 当前固件：`NOW : DIST MEAS` 5/5、`NOW : AHT READ` 2/2、`LAST: DIST ok 99.0/79.3/99.3`、`LAST: AHT ok 44.9/44.8`、`HELP` 10 行 / 403 B、`off`/`on` 往返；全程无 `err=io` | §29.2 |
 | 27 | `oled-page-20261119-d.log` | 119 行 / 约 22 s | 静态接管专项：`OLED frame ok ... hold=3000ms` → `mode=static left=3s screen=frame` → 3.5 s 后 `mode=live screen=live` | §29.2 |
+| 28 | `pwm-20261119-a.log` | 279 行 / 约 43 s | 舵机五档脉宽 500/1000/1500/2000/2500us、10 s 保持不变；蜂鸣器 1000/2000/2702Hz @20%；六条错误路径全部有回包；回归 `STAT/ADC/OLED dump/DIST` 正常 | §30.2 |
 
 ---
 
