@@ -21,6 +21,7 @@
 #include "pm_cmd_table.h"
 #include "pm_i2c1.h"
 #include "pm_adc1.h"
+#include "adc_dev.h"
 #include "pm_platform.h"
 #include "board_f103c8.h"
 #include "oled_ch1116.h"
@@ -251,68 +252,6 @@ static void adc_boot(void)
         return;
     }
     pm_cmd_out_uart_write_str("ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit\r\n");
-}
-
-/* Same rounding as pm_adc_to_mv() in the model repo: raw * 3300 / 4095. */
-static uint32_t adc_to_mv(uint16_t raw)
-{
-    return ((uint32_t)raw * 3300u + 2047u) / 4095u;
-}
-
-/* Per-frame read for the live page. Both channels are behind a 55.5-cycle
- * sample, so this costs well under 1 ms; a failed read blanks the row instead
- * of showing a stale or zero value. */
-static uint16_t s_live_pot;
-static uint16_t s_live_ntc;
-static uint8_t  s_live_adc_ok;
-
-static void adc_cache_read(void)
-{
-    uint16_t pot;
-    uint16_t ntc;
-
-    s_live_adc_ok = 0u;
-    if (pm_adc1_sample(PM_ADC1_PA5_POT, &pot) == 0) {
-        return;
-    }
-    if (pm_adc1_sample(PM_ADC1_PA4_NTC, &ntc) == 0) {
-        return;
-    }
-    s_live_pot    = pot;
-    s_live_ntc    = ntc;
-    s_live_adc_ok = 1u;
-}
-
-static void cmd_adc(cmd_port_t *c)
-{
-    uint16_t pot = 0u;
-    uint16_t ntc = 0u;
-
-    if (pm_adc1_ready() == 0) {
-        pm_cmd_out_last_set("ADC err=init");
-        pm_cmd_out_tx_str(c, "ADC err=init\r\n");
-        return;
-    }
-    if (pm_adc1_sample(PM_ADC1_PA5_POT, &pot) == 0) {
-        pm_cmd_out_last_set("ADC err=tout pa5");
-        pm_cmd_out_tx_str(c, "ADC err=timeout ch=pa5\r\n");
-        return;
-    }
-    if (pm_adc1_sample(PM_ADC1_PA4_NTC, &ntc) == 0) {
-        pm_cmd_out_last_set("ADC err=tout pa4");
-        pm_cmd_out_tx_str(c, "ADC err=timeout ch=pa4\r\n");
-        return;
-    }
-    pm_cmd_out_last_num("ADC ok ", adc_to_mv(pot), "mV");
-    pm_cmd_out_tx_str(c, "ADC pot=");
-    pm_cmd_out_tx_u32(c, pot);
-    pm_cmd_out_tx_str(c, " pot_mv=");
-    pm_cmd_out_tx_u32(c, adc_to_mv(pot));
-    pm_cmd_out_tx_str(c, " ntc=");
-    pm_cmd_out_tx_u32(c, ntc);
-    pm_cmd_out_tx_str(c, " ntc_mv=");
-    pm_cmd_out_tx_u32(c, adc_to_mv(ntc));
-    pm_cmd_out_tx_str(c, " vref=3300\r\n");
 }
 
 /* ---------------------------------------------- HC-SR04 distance, PA11/PA10
@@ -633,6 +572,9 @@ static void oled_stage_live(void)
     int32_t  rh10 = 0;
     int32_t  t10  = 0;
     int      have = aht20_reading(&rh10, &t10);
+    uint16_t ntc  = 0u;
+    uint16_t pot  = 0u;
+    int      adc_ok;
 
     /* Row 0: MODE (8) + UP (8). */
     p = pm_cmd_sput_s(b, "MODE=", 5u);
@@ -672,13 +614,19 @@ static void oled_stage_live(void)
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 3u, b);
 
-    adc_cache_read();
+    adc_ok = adc_dev_read_now(&ntc, &pot);
     p = pm_cmd_sput_s(b, "NTC=", 4u);
-    p = (s_live_adc_ok != 0u) ? pm_cmd_sput_pad(p, s_live_ntc, 4u)
-                              : pm_cmd_sput_s(p, "----", 4u);
+    if (adc_ok != 0) {
+        p = pm_cmd_sput_pad(p, ntc, 4u);
+    } else {
+        p = pm_cmd_sput_s(p, "----", 4u);
+    }
     p = pm_cmd_sput_s(p, " POT=", 5u);
-    p = (s_live_adc_ok != 0u) ? pm_cmd_sput_pad(p, s_live_pot, 4u)
-                              : pm_cmd_sput_s(p, "----", 4u);
+    if (adc_ok != 0) {
+        p = pm_cmd_sput_pad(p, pot, 4u);
+    } else {
+        p = pm_cmd_sput_s(p, "----", 4u);
+    }
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 4u, b);
 
@@ -1146,7 +1094,7 @@ static void run_dist(cmd_port_t *c, const char *line)
 static void run_adc(cmd_port_t *c, const char *line)
 {
     PM_UNUSED(line);
-    cmd_adc(c);
+    adc_dev_cmd(c);
 }
 
 static void run_oled(cmd_port_t *c, const char *arg)

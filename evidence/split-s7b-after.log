@@ -1,0 +1,169 @@
+﻿[      4ms] ===== capture start 2026-11-19 23:02:56.927 port=COM11 =====
+[   1175ms] ===== reset issued =====
+[   1200ms] board-bringup
+[   1201ms] core clock = 72000000 Hz
+[   1202ms] USART2 115200 8N1, command channel ready
+[   1203ms] BT USART3 9600 8N1, command channel ready
+[   1204ms] ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit
+[   1205ms] OLED CH1116 addr=7A init ok, col=2, clearing
+[   1206ms] OLED ready (128x64, 6x8 font)
+[   1206ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1468ms] hb
+[   1559ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2053ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2466ms] hb
+[   2558ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3047ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3475ms] hb
+[   3564ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4054ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4469ms] hb
+[   4549ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5055ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5460ms] hb
+[   5555ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6017ms] >> ADC
+[   6038ms] ADC pot=2125 pot_mv=1712 ntc=2268 ntc_mv=1828 vref=3300
+[   6054ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6456ms] hb
+[   6568ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7005ms] >> ADC
+[   7020ms] ADC pot=2125 pot_mv=1712 ntc=2273 ntc_mv=1832 vref=3300
+[   7061ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7462ms] hb
+[   7560ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8006ms] >> ADC
+[   8030ms] ADC pot=2126 pot_mv=1713 ntc=2266 ntc_mv=1826 vref=3300
+[   8054ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8473ms] hb
+[   8547ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9014ms] >> ADC
+[   9030ms] ADC pot=2125 pot_mv=1712 ntc=2267 ntc_mv=1827 vref=3300
+[   9054ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9471ms] hb
+[   9558ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10017ms] >> ADC
+[  10033ms] ADC pot=2124 pot_mv=1712 ntc=2267 ntc_mv=1827 vref=3300
+[  10055ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10466ms] hb
+[  10548ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11055ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11464ms] hb
+[  11548ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12016ms] >> HELP
+[  12048ms] HELP HELP=list commands
+[  12048ms] HELP PING=reply PONG
+[  12049ms] HELP STAT=clk/up/tick/keys/uart counters
+[  12050ms] HELP I2C=scan I2C1 bus, list 8-bit addresses
+[  12051ms] HELP AHT=read AHT20, rh and t in 0.1 units
+[  12052ms] HELP AHTS=same but read via repeated START
+[  12053ms] HELP DIST=disabled, TIM2 given to motor
+[  12053ms] HELP ADC=pot PA5 and NTC PA4, raw and mV
+[  12054ms] HELP OLED=on/off/clear/test/show/frame/col/live/dump
+[  12069ms] HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
+[  12070ms] HELP TRACK=raw level of PB14 line sensor
+[  12070ms] HELP ENC=count/clear, dir, a/b, button PB15
+[  12071ms] HELP RELAY=on/off/stat, PB5 relay coil
+[  12090ms] HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM
+[  12091ms] HELP KEYS=key press counters, clears them
+[  12092ms] OLED live ok ms=142 col=2 af=0 berr=0 to=0
+[  12461ms] hb
+[  12567ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  13058ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  13471ms] hb
+[  13553ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14005ms] >> DIST
+[  14013ms] DIST err=disabled
+[  14061ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14473ms] hb
+[  14562ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15059ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15464ms] hb
+[  15559ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16014ms] >> STAT
+[  16030ms] STAT clk=72000000 up=15673 tick=1 key1=0 key2=0 uart_rx=43 uart_tx=2604
+[  16053ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16462ms] hb
+[  16547ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  17060ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  17466ms] hb
+[  17555ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  18048ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  18460ms] hb
+[  18558ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  19066ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  19465ms] hb
+[  19547ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  20021ms] >> OLED live on
+[  20039ms] OLED live=on period=500ms
+[  20145ms] OLED live ok ms=99 col=2 af=0 berr=0 to=0
+[  20454ms] hb
+[  20634ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  21137ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  21448ms] hb
+[  21504ms] >> OLED dump
+[  21512ms] OLED dump mode=live screen=live
+[  21513ms] OLED L0=MODE=LIVE    UP=  20S
+[  21522ms] OLED L1=NOW : IDLE           
+[  21523ms] OLED L2=LAST: ADC ok 1712mV  
+[  21524ms] OLED L3=RH=48.7 T=21.6C
+[  21525ms] OLED L4=NTC=2267 POT=2125
+[  21554ms] OLED L5=K1=    0 K2=    0
+[  21555ms] OLED L6=I2C af= 0 berr= 0
+[  21556ms] OLED L7=LIVE ms= 98
+[  21637ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  22139ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  22449ms] hb
+[  22645ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  23138ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  23448ms] hb
+[  23643ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  24012ms] >> OLED dump
+[  24029ms] OLED dump mode=live screen=live
+[  24029ms] OLED L0=MODE=LIVE    UP=  23S
+[  24030ms] OLED L1=NOW : IDLE           
+[  24031ms] OLED L2=LAST: OLED dump      
+[  24031ms] OLED L3=RH=48.6 T=21.6C
+[  24032ms] OLED L4=NTC=2264 POT=2125
+[  24045ms] OLED L5=K1=    0 K2=    0
+[  24046ms] OLED L6=I2C af= 0 berr= 0
+[  24047ms] OLED L7=LIVE ms= 98
+[  24134ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  24445ms] hb
+[  24633ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  25133ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  25461ms] hb
+[  25634ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  26133ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  26453ms] hb
+[  26640ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  27131ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  27455ms] hb
+[  27637ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  28137ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  28458ms] hb
+[  28638ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  29133ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  29448ms] hb
+[  29634ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  30137ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  30445ms] hb
+[  30635ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  31143ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  31451ms] hb
+[  31646ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  32143ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  32452ms] hb
+[  32639ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  33133ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  33446ms] hb
+[  33634ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  34008ms] >> STAT
+[  34033ms] STAT clk=72000000 up=33665 tick=1 key1=0 key2=0 uart_rx=84 uart_tx=4830
+[  34146ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  34458ms] hb
+[  34638ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  35131ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  35449ms] hb
+[  35645ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  36007ms] ===== capture end =====

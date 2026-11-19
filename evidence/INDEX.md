@@ -907,7 +907,7 @@
 
 | 项 | 内容 |
 | --- | --- |
-| 规模 | 67 行；`cmake --build build-split-s7`（GCC 14.3.1 / Ninja，`-Os -g3`） |
+| 规模 | 103 行；`cmake --build build-split-s7`（GCC 14.3.1 / Ninja，`-Os -g3`）；前 67 行为 S7a 全量构建，其后为 S7b 增量构建 |
 | 当时在做什么 | S7a 搬完 bsp 后的完整编译 |
 | 关键内容 | 49 个目标全部 `Building`/`Linking` 成功；新增 `pm_port_stm32f1.dir/.../pm_adc1_stm32f1.c.obj`；无编译器 warning；仅链接期 `_close/_lseek/_read/_write not implemented` 与 `RWX LOAD segment` 两条既有提示；`FLASH 27868 B / RAM 4992 B` |
 | 能证明什么 | S7a 改动可编译、无新增告警、新 bsp 文件确实进了目标 |
@@ -919,7 +919,7 @@
 
 | 项 | 内容 |
 | --- | --- |
-| 规模 | 13 行；`python tools/check_layering.py .`，S7a 改动后 |
+| 规模 | 13 行；`python tools/check_layering.py .`，S7a 改动后（S7b 收尾时该文件被最终结果覆盖，S7a 当时输出另存 `split-s7a-layering.log`，内容同本条目所述） |
 | 当时在做什么 | 核对检查器从 11 WARN 降到 9 WARN，且少的正是 `adc_boot` 的两条 |
 | 关键内容 | `0 ERROR / 9 WARN`；`GPIO_PIN_4`/`GPIOA` 两条消失；`main.c` 口径 1095 → 1060；其余 6 条 `main.c` 与 3 条 `pm_port_stm32f1.c` 逐条保留（`dist_start`、忙等、`oled_screen_name`、`oled_start_screen`、`cmd_oled`、三条 `*_hw_*`） |
 | 能证明什么 | 减少数量与位置恰为预期两条；无新增条目、无误伤 |
@@ -945,8 +945,59 @@
 | --- | --- |
 | 规模 | 170 行；COM11 @115200，36 s 窗口（22:59:09 起）；板内固件 S7a |
 | 采样窗口 | 探针复位后抓上电横幅；6–10 s `ADC` ×5；12 s `HELP`；14 s `DIST`；16 s `STAT`；20 s `OLED live on`；21.5/24 s `OLED dump`；34 s `STAT` |
-| 关键内容 | 横幅 `ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit` 恰好 1 次；5 条 `ADC` 全部 5 字段齐全，`pot_mv=1712/1712/1713/1712/1720`、`ntc_mv=1831/1829/1831/1832/1832` 与 `raw*3300/4095` 整数除逐条相等；无 `ADC err=`；`HELP` 15 行；`DIST err=disabled` 单行；`OLED L4=NTC=2272 POT=2125`（与最近 ADC raw 差 1/9 LSB）与 `NTC=2273 POT=2126`（差 0/8）；`STAT uart_rx 43→84`、`uart_tx 2604→4830` 递增 |
+| 关键内容 | 横幅 `ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit` 恰好 1 次；5 条 `ADC` 全部 5 字段齐全，`pot_mv=1712/1712/1713/1712/1720`、`ntc_mv=1831/1829/1831/1832/1832` 与 `(raw*3300+2047)/4095` 逐条相等；**与截断式 `raw*3300/4095` 相比有 5 条差 1**（ntc 2272/2272/2273/2273 的 floor 为 1830/1830/1831/1831；pot 2134 的 floor 为 1719），即板上是"先加 2047 再整数除"的既有取整方式，未在 S7 改动；无 `ADC err=`；`HELP` 15 行；`DIST err=disabled` 单行；`OLED L4=NTC=2272 POT=2125`（与最近 ADC raw 差 1/9 LSB）与 `NTC=2273 POT=2126`（差 0/8）；`STAT uart_rx 43→84`、`uart_tx 2604→4830` 递增 |
 | 能证明什么 | S7a 之后 ADC 初始化/单次采样接口在板上工作，字段与换算未变；OLED 第 4 行仍定宽且与命令采样一致 |
 | 不能证明什么 | 不证明 `ADC err=init/timeout` 分支（本板未制造故障）；不证明组件化后的命令路径（S7b） |
 | 局限 | `L4` 与 `ADC` 非同一时刻采样，只能按 ≤32 LSB 判据比对；未做面板拍照 |
+| 接口增项 | `pm_adc1_ready()` **计划接口清单未列**，因 `ADC err=init` 分支需要（`s_adc_ok` 已随句柄进 bsp，不暴露就无法区分 init 失败）而增；S10 清账时复核计划书是否回填 |
+| PATCHES 引用 | 未引用（S7 拆分证据） |
+
+## 72. split-s7a-layering.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 13 行；S7a 当时 `split-s7-layering.log` 的存档副本 |
+| 当时在做什么 | 保留 S7a 检查器原始输出，避免 S7b 覆盖后无法回溯 |
+| 关键内容 | 与第 69 项相同：`0 ERROR / 9 WARN`，`main.c` 1060 行 |
+| 能证明什么 | S7a 的独立证据可用 |
+| 不能证明什么 | 不覆盖 S7b 结果（见第 74 项） |
+| 局限 | 由 git 历史导出，编码按 UTF-8 重写 |
+| PATCHES 引用 | 未引用（S7 拆分证据） |
+
+## 73. split-s7b-flash.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 58 行；`STM32_Programmer_CLI -c port=SWD mode=UR -w build-split-s7/pm_f103_demo.hex -v -rst` |
+| 当时在做什么 | S7b 固件写入并回读校验 |
+| 关键内容 | 第 52 行 `Download verified successfully`；复位成功；hex SHA256 `8D41590141A8735759DFC5202AEF52A1483AA658685D17722DEA53E3EFA3345D` |
+| 能证明什么 | 第 74 项抓包对应这版 hex，回读一致 |
+| 不能证明什么 | 不证明功能正确 |
+| 局限 | 只校验 Flash 回读 |
+| PATCHES 引用 | 未引用（S7 拆分证据） |
+
+## 74. split-s7b-after.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 169 行；COM11 @115200，36 s 窗口；板内固件 S7b（即计划的 `split-s7-adc.log` 内容） |
+| 采样窗口 | 与第 71 项相同：复位抓横幅、`ADC` ×5、`HELP`、`DIST`、`STAT` ×2、`OLED live on`、`OLED dump` ×2 |
+| 关键内容 | 横幅 1 次；`ADC pot=2125 pot_mv=1712 ntc=2268 ntc_mv=1828`、`2125/1712/2273/1832`、`2126/1713/2266/1826`、`2124/1712/2267/1827`、`2124/1712/2267/1827`，5 条与 `(raw*3300+2047)/4095` 全等；与截断式相比 2268→1828、2273→1832 两条差 1（其余相同）；`ADC err=` 0 条；`HELP` 15 行；`DIST err=disabled`；`L4` 两次 `NTC=2267 POT=2125`、`NTC=2264 POT=2125`，与最近 ADC raw（ntc 2267 / pot 2124）差 0/1 与 3/1；`STAT uart_rx 43→84`、`uart_tx 2604→4830` |
+| 能证明什么 | S7b 之后命令路径改由 `adc_dev` 组件执行，字段/换算/行宽与 S7a 一致；换算取整方式未变 |
+| 不能证明什么 | 不证明 `ADC err=init/timeout` 分支；不证明 30 s 以上长稳 |
+| 局限 | `L4` 与 `ADC` 非同一时刻采样，只按 ≤32 LSB 判据比对 |
+| 换算判据说明 | 计划/任务书写 `pot_mv == pot*3300/4095`（截断）；实测固件是 `(raw*3300+2047)/4095`（四舍五入），后者为拆分前既有实现且属"禁止顺手"不得改的取整方式；本条目按实测公式核，截断式差异已列在关键内容 |
+| 夹带判据 | `git diff --numstat` 与 `--ignore-all-space` 均为 `16/68`（`main.c`）；为消除仅缩进变化的两行，页面分支由三目改为 if/else，重建后 hex 哈希不变（同第 73 项） |
+| PATCHES 引用 | 未引用（S7 拆分证据） |
+
+## 75. split-s7-layering.log（最终）
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 13 行；`python tools/check_layering.py .`，S7b 改动后（3.3.1 默认参数） |
+| 当时在做什么 | 核对 S7 两笔之后的最终状态 |
+| 关键内容 | `0 ERROR / 9 WARN`；`main.c` 口径 1011 行；9 条为 `main.c` 的 `dist_start` 寄存器读、`dist_start` 忙等、`oled_screen_name`、`oled_start_screen`、`cmd_oled` 与 `pm_port_stm32f1.c:352/362/374` 三条 `*_hw_*`；与 S7a 相比条目逐条相同、无新增 |
+| 能证明什么 | S7 两笔后仍是 9 条，未多未少（相对 S7a） |
+| 不能证明什么 | 不证明这 9 条之外无问题 |
+| 局限 | 3 条 ERROR 风险的 `adc_dev.*` 原型用 `arch-allow` 行内豁免（`pm_adc1_*` 不受影响）；豁免理由见 `adc_dev.h` 注释 |
 | PATCHES 引用 | 未引用（S7 拆分证据） |

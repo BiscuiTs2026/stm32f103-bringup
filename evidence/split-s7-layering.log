@@ -1,9 +1,9 @@
-﻿[WARN ] src/app/main.c:1 入口胶水层 1060 行代码（上限 200），业务逻辑应下沉到组件层
-[WARN ] src/app/main.c:418 胶水层实现外设驱动：函数 dist_start 有 4 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
-[WARN ] src/app/main.c:453 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
-[WARN ] src/app/main.c:722 胶水层函数 oled_screen_name 有 5 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
-[WARN ] src/app/main.c:764 胶水层函数 oled_start_screen 有 4 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
-[WARN ] src/app/main.c:810 胶水层函数 cmd_oled 有 123 行代码（上限 80）；拆出组件或改成表驱动
+﻿[WARN ] src/app/main.c:1 入口胶水层 1011 行代码（上限 200），业务逻辑应下沉到组件层
+[WARN ] src/app/main.c:357 胶水层实现外设驱动：函数 dist_start 有 4 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:392 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
+[WARN ] src/app/main.c:664 胶水层函数 oled_screen_name 有 5 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
+[WARN ] src/app/main.c:706 胶水层函数 oled_start_screen 有 4 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
+[WARN ] src/app/main.c:752 胶水层函数 cmd_oled 有 123 行代码（上限 80）；拆出组件或改成表驱动
 [WARN ] src/port/stm32f1/pm_port_stm32f1.c:352 端口层调用组件 ISR 钩子：pm_uart_hw_rx_byte（按 *_hw_* 命名识别，确认仅中断上下文使用）
 [WARN ] src/port/stm32f1/pm_port_stm32f1.c:362 端口层调用组件 ISR 钩子：pm_uart_hw_tx_complete（按 *_hw_* 命名识别，确认仅中断上下文使用）
 [WARN ] src/port/stm32f1/pm_port_stm32f1.c:374 端口层调用组件 ISR 钩子：pm_uart_hw_error（按 *_hw_* 命名识别，确认仅中断上下文使用）
