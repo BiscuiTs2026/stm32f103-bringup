@@ -1,0 +1,16 @@
+﻿[      4ms] ===== S9c frame test start port=COM11 =====
+[   1036ms] RX STAT clk=72000000 up=90644 tick=1 key1=0 key2=0 uart_rx=338 uart_tx=7996
+[   1153ms] PING-no-terminator elapsed=102ms text=hb<CRLF><CRLF>PONG<CRLF><CRLF>
+[   1338ms] AHT-no-terminator elapsed=185ms text=AHT ok rh=59.1 t=21.5 raw=18 97 71 45 B9 1B rst=0<CRLF><CRLF>
+[   1628ms] AHT-with-terminator elapsed=86ms text=AHT ok rh=59.1 t=21.5 raw=18 97 7F E5 B9 58 rst=0<CRLF><CRLF>
+[   1846ms] send 40-byte line len=40
+[   2352ms] RX PWM servo ok deg=90.0 pulse=1500us
+[   2352ms] RX hb
+[   2353ms] send 60-byte line len=60
+[   2873ms] RX ERR unknown=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+[   2886ms] echoed-unknown-length=47
+[   3301ms] RX STAT clk=72000000 up=92910 tick=1 key1=0 key2=0 uart_rx=460 uart_tx=8283
+[   3301ms] RX hb
+[   3711ms] RX OLED live=on period=500ms
+[   3711ms] RX OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3711ms] ===== end =====

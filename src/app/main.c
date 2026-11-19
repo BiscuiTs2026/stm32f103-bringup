@@ -19,6 +19,7 @@
 #include "pm_cmd.h"
 #include "pm_cmd_out.h"
 #include "pm_cmd_table.h"
+#include "pm_cmd_console.h"
 #include "pm_i2c1.h"
 #include "pm_adc1.h"
 #include "adc_dev.h"
@@ -38,12 +39,6 @@
 
 #include <string.h>
 
-static pm_uart_t s_uart;
-static uint8_t   s_rx_storage[256];
-static uint8_t   s_tx_storage[512];
-
-static uint32_t s_uart_errors;
-
 static const pm_gpio_cfg_t s_led_cfg = {
     .dir           = PM_GPIO_DIR_OUT,
     .pull          = PM_GPIO_PULL_NONE,
@@ -51,42 +46,9 @@ static const pm_gpio_cfg_t s_led_cfg = {
     .initial_level = PM_GPIO_LEVEL_LOW,
 };
 
-static const pm_uart_cfg_t s_uart_cfg = {
-    .hw_id      = BOARD_UART_DEBUG,
-    .baudrate   = 115200u,
-    .parity     = PM_UART_PARITY_NONE,
-    .stop_bits  = PM_UART_STOP_1,
-    .data_bits  = 8u,
-    .rx_storage = s_rx_storage,
-    .rx_size    = (uint16_t)sizeof(s_rx_storage),
-    .tx_storage = s_tx_storage,
-    .tx_size    = (uint16_t)sizeof(s_tx_storage),
-};
-
-/* Bluetooth module on USART3 (PB10/PB11): 9600 8N1, shared command parser. */
-static pm_uart_t s_bt;
-static uint8_t   s_bt_rx_storage[128];
-static uint8_t   s_bt_tx_storage[512];
-
-static const pm_uart_cfg_t s_bt_cfg = {
-    .hw_id      = BOARD_UART_BT,
-    .baudrate   = 9600u,            /* DX-BT24 factory default */
-    .parity     = PM_UART_PARITY_NONE,
-    .stop_bits  = PM_UART_STOP_1,
-    .data_bits  = 8u,
-    .rx_storage = s_bt_rx_storage,
-    .rx_size    = (uint16_t)sizeof(s_bt_rx_storage),
-    .tx_storage = s_bt_tx_storage,
-    .tx_size    = (uint16_t)sizeof(s_bt_tx_storage),
-};
-
-/* Command channel state; the parser itself lives further down. */
-static cmd_port_t s_debug = { .port = &s_uart };
-static cmd_port_t s_ble   = { .port = &s_bt };
-
-static uint32_t s_rx_total;
-
-static void cmd_feed(cmd_port_t *c, const uint8_t *d, size_t n);
+/* Console transport (UARTs, framing) lives in src/components/pm_cmd; the entry
+ * layer keeps the command table and installs its executor here. */
+static pm_cmd_console_t s_console;
 
 /* The AHT20 job lives in src/components/aht20_dev; these two hooks are the
  * only things it needs from the entry layer. */
@@ -94,33 +56,6 @@ static const aht20_hooks_t s_aht_hooks = {
     .ui_busy    = oled_ui_busy,
     .ui_now_row = oled_ui_now_row,
 };
-
-static void on_uart_event(pm_uart_t *u, const pm_evt_t *evt, void *ctx)
-{
-    PM_UNUSED(u);
-    PM_UNUSED(ctx);
-
-    if (evt->id == PM_EVT_UART_ERROR) {
-        s_uart_errors++;
-    }
-}
-
-static void uart_service(void)
-{
-    uint8_t buf[32];
-    size_t  got = 0u;
-
-    while (pm_uart_read(&s_uart, buf, sizeof(buf), &got) == PM_OK) {
-        if (got == 0u) {
-            break;
-        }
-        cmd_feed(&s_debug, buf, got);
-    }
-
-    while (pm_uart_poll(&s_uart, NULL, on_uart_event, NULL)) {
-        /* drain one event per call */
-    }
-}
 
 static void error_loop(void)
 {
@@ -505,7 +440,7 @@ static void cmd_stat(cmd_port_t *c, const char *line)
     pm_cmd_out_tx_str(c, " key2=");
     pm_cmd_out_tx_u32(c, k2);
     pm_cmd_out_tx_str(c, " uart_rx=");
-    pm_cmd_out_tx_u32(c, s_rx_total);
+    pm_cmd_out_tx_u32(c, pm_cmd_console_rx_total());
     pm_cmd_out_tx_str(c, " uart_tx=");
     pm_cmd_out_tx_u32(c, pm_cmd_out_tx_total());
     pm_cmd_out_tx_str(c, "\r\n");
@@ -520,76 +455,6 @@ static void run_keys(cmd_port_t *c, const char *line)
 static void cmd_execute(cmd_port_t *c, const char *line)
 {
     pm_cmd_dispatch(s_cmds, sizeof(s_cmds) / sizeof(s_cmds[0]), c, line);
-}
-
-static void cmd_feed(cmd_port_t *c, const uint8_t *d, size_t n)
-{
-    size_t i;
-
-    s_rx_total += (uint32_t)n;
-    c->last_ms = pm_osal_now_ms();
-    for (i = 0u; i < n; i++) {
-        uint8_t b = d[i];
-
-        if ((b == (uint8_t)'\r') || (b == (uint8_t)'\n')) {
-            if (c->len != 0u) {
-                c->line[c->len] = '\0';
-                cmd_execute(c, c->line);
-                c->len = 0u;
-            }
-            continue;
-        }
-        if ((b >= 0x20u) && (b < 0x7Fu)) {
-            if (c->len < (CMD_LINE_MAX - 1u)) {
-                c->line[c->len] = (char)b;
-                c->len++;
-            }
-        }
-    }
-}
-
-/* A browser/Web Bluetooth client may send "AHT" without any CR/LF (the page's
- * line ending is configurable, and DX-BT24 forwards BLE packets verbatim).
- * Requiring a terminator left the token sitting in the buffer and produced no
- * reply at all. Any line that stops growing for CMD_IDLE_MS is executed. */
-#define CMD_IDLE_MS 100u
-
-static void cmd_flush_idle(cmd_port_t *c, uint32_t now)
-{
-    if ((c->len == 0u) || ((uint32_t)(now - c->last_ms) < CMD_IDLE_MS)) {
-        return;
-    }
-    c->line[c->len] = '\0';
-    c->len = 0u;
-    cmd_execute(c, c->line);
-}
-
-static void bt_init(void)
-{
-    if (pm_uart_init(&s_bt, &s_bt_cfg) == PM_OK) {
-        pm_cmd_out_uart_write_str("BT USART3 9600 8N1, command channel ready\r\n");
-    } else {
-        pm_cmd_out_uart_write_str("BT USART3 init FAILED\r\n");
-    }
-}
-
-static void bt_service(void)
-{
-    uint8_t buf[32];
-    size_t  n = 0u;
-
-    while (pm_uart_read(&s_bt, buf, sizeof(buf), &n) == PM_OK) {
-        if (n == 0u) {
-            break;
-        }
-        /* Mirror what the BLE side sent so a COM11 capture shows both paths. */
-        pm_cmd_out_uart_write_str("BT rx n=");
-        pm_cmd_out_uart_write_u32((uint32_t)n);
-        pm_cmd_out_uart_write_str("B:");
-        pm_cmd_out_uart_write_hex(buf, n);
-        pm_cmd_out_uart_write_str("\r\n");
-        cmd_feed(&s_ble, buf, n);
-    }
 }
 
 int main(void)
@@ -610,19 +475,20 @@ int main(void)
     if ((key_map == NULL) || (keypad_dev_init(key_map, key_count) != 0)) {
         error_loop();
     }
-    if (pm_uart_init(&s_uart, &s_uart_cfg) != PM_OK) {
+    s_console.execute = cmd_execute;
+    if (pm_cmd_console_init(&s_console, BOARD_UART_DEBUG, BOARD_UART_BT) != 0) {
         error_loop();
     }
-    pm_cmd_out_init(&s_uart, &s_bt);
+    pm_cmd_out_init(s_console.debug_uart, s_console.bt_uart);
 
     pm_cmd_out_uart_write_str("\r\nboard-bringup\r\ncore clock = ");
     pm_cmd_out_uart_write_u32(pm_platform_core_clock());
     pm_cmd_out_uart_write_str(" Hz\r\nUSART2 115200 8N1, command channel ready\r\n");
 
-    bt_init();
+    pm_cmd_console_init_bt();
     dist_hw_init();
     adc_boot();
-    oled_ui_boot(&s_oled_hooks, &s_debug);
+    oled_ui_boot(&s_oled_hooks, s_console.debug_port);
     aht20_init(&s_aht_hooks);
     pwm_dev_init();
     track_dev_init(); encoder_dev_init(); relay_dev_init(); motor_dev_init();
@@ -634,17 +500,16 @@ int main(void)
         uint32_t now = pm_osal_now_ms();
         uint32_t t;
 
-        uart_service();
+        pm_cmd_console_service_debug();
         keypad_dev_service(now);
-        bt_service();
+        pm_cmd_console_service_bt();
 
-        /* Fresh timestamp: cmd_feed() stamps last_ms and aht_start() stamps t0
-         * *after* `now` was sampled. Comparing against the stale `now` makes
-         * (now - last_ms) wrap to a huge value, which fired the idle flush and
-         * the AHT window immediately. */
+        /* Fresh timestamp: the console feed stamps last_ms and aht_start()
+         * stamps t0 *after* `now` was sampled. Comparing against the stale
+         * `now` makes (now - last_ms) wrap to a huge value, which fired the
+         * idle flush and the AHT window immediately. */
         t = pm_osal_now_ms();
-        cmd_flush_idle(&s_debug, t);
-        cmd_flush_idle(&s_ble, t);
+        pm_cmd_console_flush_idle(t);
         aht20_bg_tick(t);
         aht20_service(t);
         dist_service(t);

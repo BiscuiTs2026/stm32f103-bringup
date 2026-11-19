@@ -1,0 +1,13 @@
+﻿# S9c diff numstat (working tree, before commit)
+## git diff --numstat
+2	0	CMakeLists.txt
+33	17	evidence/MANUAL-CHECKS.md
+17	152	src/app/main.c
+## git diff -w --numstat
+2	0	CMakeLists.txt
+33	17	evidence/MANUAL-CHECKS.md
+17	152	src/app/main.c
+## new files (line count)
+src/components/pm_cmd/pm_cmd_console.h 47
+src/components/pm_cmd/pm_cmd_console.c 190
+## main.c physical lines: 528 (checker 361, see split-s9c-layering.log)

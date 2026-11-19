@@ -1,0 +1,10 @@
+﻿[WARN ] src/app/main.c:1 入口胶水层 361 行代码（上限 200），业务逻辑应下沉到组件层
+[WARN ] src/app/main.c:217 胶水层实现外设驱动：函数 dist_start 有 4 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:252 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:352 端口层调用组件 ISR 钩子：pm_uart_hw_rx_byte（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:362 端口层调用组件 ISR 钩子：pm_uart_hw_tx_complete（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:374 端口层调用组件 ISR 钩子：pm_uart_hw_error（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[NOTE ] 已按角色清单 .arch-roles 判定层归属
+[NOTE ] 忽略路径：third_party/, build-*/
+
+合计 0 ERROR / 6 WARN（扫描目录：D:\All the work\TRAEwork\AI-STM32F1-1\2026-11-18\board-bringup\work）

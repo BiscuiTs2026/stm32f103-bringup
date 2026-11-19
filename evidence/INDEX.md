@@ -1193,3 +1193,39 @@
 | 不能证明什么 | 不覆盖新文件内容审查（行数已单列） |
 | 局限 | 只统计行数，不看语义 |
 | PATCHES 引用 | 未引用（S9b 拆分证据） |
+
+## 92. S9c 控制台搬迁（split-s9c-build / split-s9c-layering / split-s9c-flash / split-s9c-oled）
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 新增 `src/components/pm_cmd/pm_cmd_console.h` 47 行、`pm_cmd_console.c` 190 行；`main.c` 物理 663→528 行，检查器口径 470→361；`CMakeLists.txt` +2 |
+| 关键内容 | 搬走两路 UART 实例与环（256/512、128/512）及 cfg（115200/9600 8N1）、`s_debug`/`s_ble`、`s_uart_errors`/`on_uart_event`、`uart_service`、`bt_service`、`cmd_feed`（`CMD_IDLE_MS 100u`、idle flush、BT 镜像）、`s_rx_total`（导出 accessor）；`main.c` 只留 `s_console`、init、`pm_cmd_out_init`、循环改名 |
+| 接口偏差 | ① `pm_cmd_console_t` 增 `execute` 函数指针（不装就叫不了 glue 的 `cmd_execute`，必然反向依赖）；② `pm_cmd_console_init_bt()` 必须与 `init` 分开（`bt_init` 横幅走 `pm_cmd_out`，合并会打乱"调试口 init → `pm_cmd_out_init` → 横幅 → 蓝牙 init"） |
+| 扫描 | **0 ERROR / 6 WARN**：胶水 361 行（按 2026-11-20 裁决保留，不再要求消失；≤200 闸门挪到 S6 之后）、`dist_start` 寄存器、TRIG 忙等、三条端口钩子 |
+| 上板 | 烧录 `-v` verified；横幅顺序与 S9b 一致、HELP 15 行、9 个 OLED 子命令各 1 条、4 次 dump 各 8 行；`PING` 不带头尾 **102 ms** 回 `PONG`；`AHT` 不带头尾 185 ms = **99 ms 冲刷 + 86 ms 读**（带头尾对照 86 ms）；40 字节 `PWM SERVO 90`+28 空格执行；60 字节行回显 **47** 字节、超出静默丢弃；`STAT uart_rx` **338→460，差 122**（PING 4 + AHT 3 + AHT\r\n 5 + 42 + 62 + STAT 自身 6）；FLASH 28424 B / RAM 5128 B |
+| 能证明什么 | 分段、镜像文本、idle flush、`uart_rx` 计数搬迁后行为不变；硬判据 0 ERROR / 6 WARN 达成 |
+| 不能证明什么 | BT 侧 `BT rx` 镜像（本机无 BLE 对端，**M7 PENDING，未验证**）；屏上观感（M9）；main.c 口径 361 仍高于 200（按裁决挂 S6） |
+| 局限 | 时间戳为 PC 侧 Stopwatch，抓包轮询有 ±2 ms 抖动；`AHT` 总时长 185 ms 含传感器读，不能按 120 ms 卡 |
+| PATCHES 引用 | 未引用（S9c 拆分证据） |
+
+## 93. split-s9c-frames.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 26 行；COM11 原始收发，含三条计时与两条行长测试 |
+| 关键内容 | `PING` 无终止符 **102 ms**；`AHT` 无终止符 **185 ms**，`AHT\r\n` 对照 **86 ms** → 冲刷 **99 ms**；40 字节 `PWM SERVO 90`+28 空格 → `PWM servo ok deg=90.0 pulse=1500us`；60 个 `X` → `ERR unknown=` 回显 **47** 字符；`STAT uart_rx` **338→460（差 122）**；结尾 `OLED live on` 恢复 |
+| 能证明什么 | `CMD_IDLE_MS 100u` 与 48 字节行缓冲在搬迁后仍生效；收发计数与预期逐字节相符 |
+| 不能证明什么 | `BT rx n=4B:` 镜像格式与位置（无 BLE 对端，见 M7） |
+| 局限 | 无终止符 AHT 的总时长包含 86 ms 传感器读，判据只能看冲刷差值 |
+| PATCHES 引用 | 未引用（S9c 拆分证据） |
+
+## 94. split-s9c-diff-numstat.txt
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 13 行；S9c 工作树 `--numstat` 与 `-w --numstat` 对照，附两个新文件行数 |
+| 关键内容 | 两口径逐条相同：`CMakeLists.txt 2/0`、`MANUAL-CHECKS.md 33/17`、`main.c 17/152`；新增 `pm_cmd_console.h` 47 行、`pm_cmd_console.c` 190 行 |
+| 能证明什么 | S9c 无空白夹带 |
+| 不能证明什么 | 不覆盖新文件内容审查（行数单列） |
+| 局限 | 只统计行数，不看语义 |
+| PATCHES 引用 | 未引用（S9c 拆分证据） |

@@ -31,7 +31,7 @@
 | M4 | 电机转向与转速 | 目视 | `docs/PROTOCOL.md` §4.9 | PENDING | — |
 | M5 | 蜂鸣器听感 | 耳听 | `docs/PROTOCOL.md` §4.6 | PENDING | — |
 | M6 | 电位器响应（十字螺丝刀） | 手转 + 看数 | `docs/PROTOCOL.md` §4.5、SPLIT-PLAN S7 判据 | PENDING | — |
-| M7 | 蓝牙镜像专项（S2 欠账） | 手机 Web Bluetooth | SPLIT-PLAN §5.4、§8.3 核账 S2 行 | PENDING | — |
+| M7 | 蓝牙双向镜像（S2 欠账 + S9c 控制台搬迁） | 手机 BLE 发字节 | SPLIT-PLAN §5.4、§8.3 核账 S2 行、§3 S9c | PENDING | — |
 | M8 | 编码器按键与手感 | 手转 / 手按 | `docs/PROTOCOL.md` §4.7 | PENDING | — |
 | M9 | OLED 面板图案与对齐 | 目视 | SPLIT-PLAN §3 S9、`HARDWARE.md` 第 9 条 | PENDING | — |
 
@@ -163,22 +163,38 @@ OLED L5=K1=    1 K2=    0
 
 ---
 
-## M7 蓝牙镜像专项（S2 欠账，需人点一次）
+## M7 蓝牙双向镜像（S2 欠账 + S9c 控制台搬迁，需人拿手机点一次）
 
-前置：手机 Chrome（Web Bluetooth），工程内测试页面；板子 USART3 9600 8N1。
-若手边没有可用页面，可先只做 USART2 侧 `BT tx` 镜像行确认，并把蓝牙侧记 `BLOCKED`。
+覆盖两处出处，一次测完：
+- S2：蓝牙侧回复在调试口的 `BT tx` 镜像等价（SPLIT-PLAN §5.4、§8.3 核账表 S2 行）；
+- S9c：控制台搬到 `pm_cmd_console` 后，`BT rx` 镜像仍在该口回包之前（SPLIT-PLAN §3 S9c）。
 
-1. 手机连接蓝牙串口设备，打开串口收发页面。
-2. 从手机发 `HELP`。
-3. 期望：
-   - 手机端收到 **15 行、共 638 B**（含每行 CRLF）；
-   - 同时 COM11 侧出现镜像行 `BT tx n=<字节数>B: <十六进制>`，字节数与手机端一致；
-   - 手机端行序 `HELP/PING/STAT/I2C/AHT/AHTS/DIST/ADC/OLED/PWM/TRACK/ENC/RELAY/KEYS`。
-4. 从手机发 `AHT` → 手机端收 51 B；COM11 侧对应 `BT tx n=51B: ...`。
-5. 两侧日志都保存（`manual-bt-phone.log` / `manual-bt-uart2.log`）。
+前置：手机装任意 BLE 串口 App（或 Chrome Web Bluetooth 页面），板子 USART3 9600 8N1；
+COM11 开抓包（115200）。蓝牙侧固件是 `build-split-s9`（S9c 提交）。
 
-判据：两侧字节数与文本一致，镜像行仍在。
-出处：SPLIT-PLAN §5.4、§8.3 核账表 S2 行（"蓝牙侧镜像无运行期证据"）。
+1. 手机连 DX-BT24，打开收发页面；COM11 开始抓包。
+2. 手机发 **4 字节 `PING`**（不带 CR/LF）。
+3. 期望 COM11 先出现
+   `BT rx n=4B: 50 49 4E 47`
+   紧接着出现
+   `BT tx n=6B: 50 4F 4E 47 0D 0A`（即 `PONG\r\n` 的镜像）。
+   顺序必须是 `BT rx` 在前、同一次命令的 `BT tx` 在后；手机端同时收到 `PONG`。
+4. 手机发 `HELP`：手机端收 15 行、共 638 B；COM11 出现对应的 `BT tx` 镜像行，
+   字节数与手机端一致。
+5. 可选加测：手机发 `AHT`（不带 CR/LF）→ 100±20 ms 内手机端回包；
+   COM11 先出现 `BT rx n=3B: 41 48 54`。
+
+判据：
+- `BT rx` 行存在，`n=` 与 hex 内容同手机实际发送一致；
+- 该行严格位于同一次命令的 `BT tx` 回包镜像之前（S9c 判据）；
+- `HELP` 的 `BT tx` 字节数与手机端一致（S2 判据）。
+
+证据：手机侧日志存 `manual-bt-phone.log`，COM11 侧存 `manual-bt-uart2.log`；
+无日志不得只凭记忆判 PASS。
+出处：SPLIT-PLAN §5.4、§8.3 核账表 S2 行、§3 S9c。
+
+**当前状态：PENDING。** 2026-11-20 S9c 上板时本机无 BLE 对端（只有经典蓝牙 SPP 口），
+该项未验证；S9c 其余板端项已通过，见 `split-s9c-frames.log`。
 
 ---
 

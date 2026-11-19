@@ -107,6 +107,7 @@ add_library(pm_components STATIC
     src/components/adc_dev/adc_dev.c
     src/components/keypad_dev/keypad_dev.c
     src/components/pm_cmd/pm_cmd_out.c
+    src/components/pm_cmd/pm_cmd_console.c
     src/components/pwm_dev/pwm_dev.c
     src/components/track_dev/track_dev.c
     src/components/encoder_dev/encoder_dev.c
@@ -119,6 +120,7 @@ target_include_directories(pm_components
             ${PM_ROOT}/src/components/aht20_dev
             ${PM_ROOT}/src/components/adc_dev
             ${PM_ROOT}/src/components/keypad_dev
+            ${PM_ROOT}/src/components/pm_cmd
             ${PM_ROOT}/src/components/pwm_dev
             ${PM_ROOT}/src/components/track_dev
             ${PM_ROOT}/src/components/encoder_dev
