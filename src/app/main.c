@@ -1887,7 +1887,7 @@ static void cmd_execute(cmd_port_t *c, const char *line)
         tx_str(c, "HELP DIST=one shot, cm and us; live=1Hz\r\n");
         tx_str(c, "HELP ADC=pot PA5 and NTC PA4, raw and mV\r\n");
         tx_str(c, "HELP OLED=on/off/clear/test/show/frame/col/live/dump\r\n");
-        tx_str(c, "HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz\r\n");
+        tx_str(c, "HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep\r\n");
         tx_str(c, "HELP KEYS=key press counters, clears them\r\n");
     } else if (ci_equal(line, "STAT")) {
         tx_str(c, "STAT clk=");

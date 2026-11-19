@@ -1,0 +1,58 @@
+﻿# PWM sweep capture 2026-11-19 20:29:17.192 port=COM11 (per-line arrival)
+[    117ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    606ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    639ms] >> PWM stat
+[    667ms] PWM stat servo=90.0c pulse=1500us buz=off
+[    932ms] DIST live cm=77.6 us=4498
+[    933ms] hb
+[   1103ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1149ms] # sweep start: 18 steps x 300 ms + return to 90
+[   1151ms] >> PWM sweep
+[   6569ms] PWM sweep deg=0.0 pulse=500us
+[   6570ms] PWM sweep deg=45.0 pulse=1000us
+[   6570ms] PWM sweep deg=90.0 pulse=1500us
+[   6584ms] PWM sweep deg=135.0 pulse=2000us
+[   6585ms] PWM sweep deg=180.0 pulse=2500us
+[   6586ms] PWM sweep deg=135.0 pulse=2000us
+[   6587ms] PWM sweep deg=90.0 pulse=1500us
+[   6587ms] PWM sweep deg=45.0 pulse=1000us
+[   6594ms] PWM sweep deg=0.0 pulse=500us
+[   6616ms] PWM sweep deg=0.0 pulse=500us
+[   6618ms] PWM sweep deg=45.0 pulse=1000us
+[   6619ms] PWM sweep deg=90.0 pulse=1500us
+[   6619ms] PWM sweep deg=135.0 pulse=2000us
+[   6620ms] PWM sweep deg=180.0 pulse=2500us
+[   6621ms] PWM sweep deg=135.0 pulse=2000us
+[   6621ms] PWM sweep deg=90.0 pulse=1500us
+[   6622ms] PWM sweep deg=45.0 pulse=1000us
+[   6622ms] PWM sweep deg=0.0 pulse=500us
+[   6623ms] PWM sweep deg=90.0 pulse=1500us
+[   6624ms] PWM sweep done
+[   6624ms] hb
+[   6625ms] hb
+[   6626ms] hb
+[   6626ms] hb
+[   6627ms] hb
+[   6627ms] DIST live cm=78.0 us=4523
+[   6773ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6928ms] hb
+[   7284ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7609ms] DIST live cm=78.4 us=4546
+[   7778ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7933ms] hb
+[   8278ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8602ms] DIST live cm=78.8 us=4572
+[   8773ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8928ms] hb
+[   9271ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9598ms] DIST live cm=78.0 us=4524
+[   9768ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9939ms] hb
+[  10279ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10605ms] DIST live cm=98.2 us=5694
+[  10775ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10930ms] hb
+[  11163ms] >> PWM stat
+[  11178ms] PWM stat servo=90.0c pulse=1500us buz=off
+[  11272ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11597ms] DIST live cm=98.1 us=5692

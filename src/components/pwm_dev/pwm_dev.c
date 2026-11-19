@@ -5,11 +5,14 @@
  */
 #include "pwm_dev.h"
 
+#include "pm_osal.h"
 #include "pm_pwm.h"
 
 #define PWM_REPLY_MAX 96u
+#define PWM_SWEEP_MAX 768u
 
 static char    s_reply[PWM_REPLY_MAX];
+static char    s_sweep[PWM_SWEEP_MAX];
 static uint8_t s_ready;
 
 static char *put_s(char *p, const char *s)
@@ -205,6 +208,40 @@ static const char *cmd_buz(const char *p)
     return reply_buz();
 }
 
+/* Slow 0->180->0 sweep for visual confirmation: 300 ms per step, two rounds,
+ * then back to 90 degrees. Every step is appended to s_sweep so the whole
+ * sequence leaves the port as one multi-line reply; main.c is not involved. */
+static const uint8_t s_sweep_deg[] = {
+    0u, 45u, 90u, 135u, 180u, 135u, 90u, 45u, 0u
+};
+
+static const char *cmd_sweep(void)
+{
+    char    *p = s_sweep;
+    uint32_t round;
+    uint32_t i;
+
+    for (round = 0u; round < 2u; round++) {
+        for (i = 0u; i < (uint32_t)sizeof(s_sweep_deg); i++) {
+            if (pm_pwm_servo_set((int32_t)s_sweep_deg[i] * 10) != 0) {
+                return reply_lit("PWM err=range");
+            }
+            p = put_s(p, "PWM sweep deg=");
+            p = put_deg(p, (uint32_t)pm_pwm_servo_deg10());
+            p = put_s(p, " pulse=");
+            p = put_u32(p, pm_pwm_servo_pulse_us());
+            p = put_s(p, "us\r\n");
+            pm_osal_delay_ms(300u);
+        }
+    }
+    (void)pm_pwm_servo_set(900);
+    p = put_s(p, "PWM sweep deg=90.0 pulse=");
+    p = put_u32(p, pm_pwm_servo_pulse_us());
+    p = put_s(p, "us\r\nPWM sweep done\r\n");
+    *p = '\0';
+    return s_sweep;
+}
+
 void pwm_dev_init(void)
 {
     s_ready = (pm_pwm_init() == 0) ? 1u : 0u;
@@ -232,6 +269,9 @@ const char *pwm_dev_cmd(const char *line)
     }
     if (ci_eq_n(p, "BUZ", 3u) != 0) {
         return cmd_buz(p + 3);
+    }
+    if (ci_eq_n(p, "SWEEP", 5u) != 0) {
+        return cmd_sweep();
     }
     if (ci_eq_n(p, "STAT", 4u) != 0) {
         q = s_reply;

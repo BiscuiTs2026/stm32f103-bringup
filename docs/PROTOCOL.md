@@ -105,7 +105,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 11 行 `HELP ...`，共 **451 B**（见下） | — | 否 |
+| `HELP` | 无 | 11 行 `HELP ...`，共 **458 B**（见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -123,7 +123,7 @@ HELP AHTS=same but read via repeated START
 HELP DIST=one shot, cm and us; live=1Hz
 HELP ADC=pot PA5 and NTC PA4, raw and mV
 HELP OLED=on/off/clear/test/show/frame/col/live/dump
-HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz
+HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
 HELP KEYS=key press counters, clears them
 ```
 
@@ -248,6 +248,7 @@ PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是
 | `PWM servo <0..180>` | 整数角度 | `PWM servo ok deg=90.0 pulse=1500us` | `PWM err=range deg=<n>`（>180）/ `PWM err=usage`（缺参数、负数、非数字）/ `PWM err=init` | **是**：CCR3 改脉宽 |
 | `PWM buz <100..5000> [duty]` | 频率 Hz，占空比 1..99（默认 20） | `PWM buz ok freq=1000Hz duty=20%` | `PWM err=range hz=<n>` / `PWM err=range duty`（>99）/ `PWM err=range`（duty=0）/ `PWM err=usage` / `PWM err=init` | **是**：开蜂鸣器并改频率 |
 | `PWM buz off` | 无 | `PWM buz off ok` | `PWM err=init` | **是**：停音，PB9 拉低 |
+| `PWM sweep` | 无 | 19 行：`PWM sweep deg=<deg> pulse=<us>us` ×18 + 终档 90° + `PWM sweep done` | `PWM err=range` / `PWM err=init` | **是**：0→180→0 两轮，每档 300 ms，结束回 90° |
 | 其它子命令 | — | — | `PWM err=usage` | 否 |
 
 说明：
@@ -264,6 +265,12 @@ PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是
   不要给 100%（直流不发声）。
 - 蜂鸣器关闭后 `PWM stat` 回 `buz=off`；重新 `PWM buz <hz>` 不保留上次占空比，
   不给第二参数时回到默认 20%。
+- `PWM sweep` 用于肉眼确认舵机是否真的在转：0→45→90→135→180→135→90→45→0
+  连走两轮，每档停 300 ms，最后回 90°。18 个档位 + 终档共 19 行回包在命令结束时
+  **一次性发出**（整个命令阻塞约 5.4 s），串口时间戳只能证明总时长与顺序，不能
+  证明每一行是实时逐档出现的；舵机是否转动必须目视。
+- 慢扫期间主循环停摆约 5.4 s：OLED 刷新、`DIST live`、`hb` 都暂停，结束后 `hb`
+  会补发几条（同一秒内到达），这是预期现象，不是卡死。
 - `PWM err=init` 只在 `pm_pwm_init()` 失败时出现；当前实现恒成功，该分支没有
   现场回包证据（`PATCHES.md` §30.3）。
 - 舵机角度、抖动与蜂鸣器听感**不在串口可证范围内**，回包只说明配置值与脉宽。
@@ -273,7 +280,7 @@ PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **11 行 451 B**（含每条 CRLF）。
+   当前 `HELP` 是 **11 行 458 B**（含每条 CRLF）。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。

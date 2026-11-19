@@ -29,7 +29,7 @@
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
 | USART2 调试口 | 通过 | 115200 8N1 双向收发，`hb` 每秒一行（§5） |
-| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；2026-11-18 端到端验过（`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后 `HELP` 增至 **451 B / 11 行**（§30），蓝牙侧未再做回归——期间改动不涉及 USART3 收发路径，不丢尾机制见 §11、§14 |
+| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；2026-11-18 端到端验过（`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后 `HELP` 增至 **458 B / 11 行**（§30），蓝牙侧未再做回归——期间改动不涉及 USART3 收发路径，不丢尾机制见 §11、§14 |
 | I2C1 | 通过 | 扫描到 `0x70`（AHT20）与 `0x7A`（OLED），PB6/PB7，100 kHz（§9） |
 | AHT20 温湿度 | 通过 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0`（§12） |
 | HC-SR04 测距 | 通过 | `DIST cm=<n> us=<n>`，非阻塞，EXTI + TIM2 计宽（§14） |
@@ -140,7 +140,7 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 
 | 命令 | 作用 |
 | --- | --- |
-| `HELP` | 列出全部命令（11 行、451 B） |
+| `HELP` | 列出全部命令（11 行、458 B） |
 | `PING` | 回 `PONG` |
 | `STAT` | 时钟、运行秒数、按键计数、串口累计字节 |
 | `I2C` | 扫描 I2C1，列 8 位写地址（本板 `0x70`、`0x7A`） |
@@ -148,7 +148,7 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 | `AHT` / `AHTS` | 读 AHT20 温湿度；`AHTS` 是 repeated START 对照，拿到的是上一次结果 |
 | `DIST` | 单次 HC-SR04 测距，回 `cm` 与 `us` |
 | `ADC` | 读 PA5 电位器与 PA4 NTC 的原始值与 mV |
-| `PWM` | `stat` 看舵机/蜂鸣器状态；`servo <0..180>` 设角度；`buz <100..5000> [duty]` 开蜂鸣器、`buz off` 关 |
+| `PWM` | `stat` 看舵机/蜂鸣器状态；`servo <0..180>` 设角度；`buz <100..5000> [duty]` 开蜂鸣器、`buz off` 关；`sweep` 0→180→0 慢扫两轮（每档 300 ms，结束回 90°），用于肉眼确认 |
 | `OLED on\|off\|clear\|test\|show\|frame\|col\|live\|dump` | 显示开关、清屏、测试页、静态文字、边框图案、列偏移、500 ms live（live 期间自带 1 Hz 测距）；`dump` 把屏上 8 行文字化回传 |
 
 参数、成功/失败回包原文、是否改变设备状态、蓝牙端的判读陷阱（回包被拆成多个气泡等），见 **[docs/PROTOCOL.md](docs/PROTOCOL.md)**。
@@ -234,7 +234,7 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 
 - `pm_*` 契约只有 GPIO、UART 与 PWM（`pm_pwm.h`）；I2C1 时序、HC-SR04 捕获、OLED 调度仍在 `src/app/main.c` 里用裸寄存器与胶水实现，尚未抽成 `pm_i2c` 等契约；
 - SPI 只有 HAL 源和默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现；RTC、Flash 编程、看门狗、DMA 均未实现（ADC1 已在胶水里上板）；
-- PWM：TIM4 固定 50 Hz 只服务舵机 PB8，蜂鸣器 PB9 由 TIM3 更新中断翻转 GPIO（100–5000 Hz，回包频率是 10 µs 量化后的实际值）；舵机实际角度/抖动与蜂鸣器听感未采集，只有脉宽与频率回包；
+- PWM：TIM4 固定 50 Hz 只服务舵机 PB8，蜂鸣器 PB9 由 TIM3 更新中断翻转 GPIO（100–5000 Hz，回包频率是 10 µs 量化后的实际值）；舵机实际角度/抖动与蜂鸣器听感未采集，只有脉宽与频率回包；`PWM sweep` 阻塞约 5.4 s，期间 live 页与 `hb` 暂停、结束后补发；
 - UART 是逐字节中断，没有 DMA + 空闲中断的接收路径；TX 环 512 B，超长回包靠"边发边等"（`tx_bytes_all`）；
 - live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间静态命令（`clear`/`test`/`show`/`frame`）照常接管，3 s 后自动交回；live 自带的 1 Hz 测距进行中手发 `DIST` 会回 `DIST err=busy live`；
 - 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；

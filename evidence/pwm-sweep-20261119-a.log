@@ -1,0 +1,93 @@
+﻿# PWM sweep capture 2026-11-19 20:28:42.246 port=COM11
+[     11ms] >> PWM stat
+[     18ms] >> HELP
+[   1252ms] PWM stat servo=90.0c pulse=1500us buz=off
+[   1252ms] HELP HELP=list commands
+[   1253ms] HELP PING=reply PONG
+[   1253ms] HELP STAT=clk/up/tick/keys/uart counters
+[   1254ms] HELP I2C=scan I2C1 bus, list 8-bit addresses
+[   1254ms] HELP AHT=read AHT20, rh and t in 0.1 units
+[   1255ms] HELP AHTS=same but read via repeated START
+[   1255ms] HELP DIST=one shot, cm and us; live=1Hz
+[   1256ms] HELP ADC=pot PA5 and NTC PA4, raw and mV
+[   1256ms] HELP OLED=on/off/clear/test/show/frame/col/live/dump
+[   1257ms] HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz
+[   1258ms] HELP KEYS=key press counters, clears them
+[   1258ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1259ms] DIST live cm=72.4 us=4197
+[   1265ms] hb
+[   1266ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1267ms] >> PWM servo 0
+[   1979ms] PWM servo ok deg=0.0 pulse=500us
+[   1980ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1981ms] DIST live cm=77.5 us=4497
+[   1981ms] hb
+[   1982ms] >> PWM servo 180
+[   2694ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2695ms] PWM servo ok deg=180.0 pulse=2500us
+[   2696ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2697ms] DIST live cm=98.5 us=5715
+[   2697ms] >> PWM servo 90
+[   3425ms] PWM servo ok deg=90.0 pulse=1500us
+[   3426ms] hb
+[   3427ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3427ms] >> PWM sweep
+[  15438ms] PWM sweep deg=0.0 pulse=500us
+[  15439ms] PWM sweep deg=45.0 pulse=1000us
+[  15440ms] PWM sweep deg=90.0 pulse=1500us
+[  15440ms] PWM sweep deg=135.0 pulse=2000us
+[  15441ms] PWM sweep deg=180.0 pulse=2500us
+[  15441ms] PWM sweep deg=135.0 pulse=2000us
+[  15442ms] PWM sweep deg=90.0 pulse=1500us
+[  15442ms] PWM sweep deg=45.0 pulse=1000us
+[  15443ms] PWM sweep deg=0.0 pulse=500us
+[  15443ms] PWM sweep deg=0.0 pulse=500us
+[  15443ms] PWM sweep deg=45.0 pulse=1000us
+[  15444ms] PWM sweep deg=90.0 pulse=1500us
+[  15444ms] PWM sweep deg=135.0 pulse=2000us
+[  15445ms] PWM sweep deg=180.0 pulse=2500us
+[  15445ms] PWM sweep deg=135.0 pulse=2000us
+[  15446ms] PWM sweep deg=90.0 pulse=1500us
+[  15446ms] PWM sweep deg=45.0 pulse=1000us
+[  15447ms] PWM sweep deg=0.0 pulse=500us
+[  15447ms] PWM sweep deg=90.0 pulse=1500us
+[  15448ms] PWM sweep done
+[  15448ms] DIST live cm=79.3 us=4597
+[  15449ms] hb
+[  15449ms] OLED live ok ms=5525 col=2 af=0 berr=0 to=0
+[  15450ms] hb
+[  15450ms] hb
+[  15451ms] hb
+[  15451ms] hb
+[  15452ms] hb
+[  15452ms] OLED live ok ms=99 col=2 af=0 berr=0 to=0
+[  15453ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15453ms] DIST live cm=77.6 us=4498
+[  15453ms] hb
+[  15454ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15455ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15455ms] DIST live cm=77.5 us=4496
+[  15455ms] hb
+[  15456ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15456ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15457ms] DIST live cm=77.5 us=4497
+[  15457ms] hb
+[  15458ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15458ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15459ms] DIST live cm=78.8 us=4572
+[  15459ms] hb
+[  15460ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15460ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15460ms] DIST live cm=77.1 us=4472
+[  15461ms] hb
+[  15461ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15462ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15462ms] DIST live cm=77.5 us=4496
+[  15463ms] hb
+[  15463ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15464ms] >> PWM stat
+[  16274ms] PWM stat servo=90.0c pulse=1500us buz=off
+[  16275ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16275ms] DIST live cm=78.3 us=4544
+[  16276ms] hb
+[  16276ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
