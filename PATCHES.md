@@ -1878,6 +1878,55 @@ MOTOR rev abc / MOTOR foo / MOTOR       MOTOR err=usage ×3
   4 条 ERROR 全在未改动的 `src/core/pm_gpio.c`，属工具侧变动。按 AGENTS §2.6
   停手、不重试、不自行对齐，等上游定稿升锁后重跑基线。
 
+## 36. 2026-11-19 检查器升锁 3.2.0 → 3.3.1，去掉行数棘轮覆盖
+
+### 36.1 升锁
+
+- 上游 **3.3.1**，提交 `7facd2b0039acd407d91c96ee043ef95dfc4b446`；
+  覆盖 `tools/check_layering.py` 后按 integration.md §2.1 改两处：
+  文件头 `source-commit` 注释与 `SOURCE_COMMIT` 常量（`self` → 上游哈希）。
+- `tools/CHECKER.lock`：`checker-version = 3.3.1`、`source-commit` 同上、
+  `source-blob = 64f60ce0e0db56465f8d196ff15144a845f9b084`（与上游该提交的
+  `skill/scripts/check_layering.py` 一致）、`synced-at = 2026-11-19`。
+- 自检输出：
+
+```
+checker-version: 3.3.1
+source-repo: https://github.com/BiscuiTs2026/firmware-four-layer-architecture
+source-commit: 7facd2b0039acd407d91c96ee043ef95dfc4b446
+[LOCK] 与 ...\tools\CHECKER.lock 一致
+（exit 0）
+```
+
+### 36.2 新旧基线对比
+
+扫描目录相同（本工程根），`--roles` 默认读 `.arch-roles`，忽略 `third_party/`、`build-*/`。
+
+| 项 | 3.2.0 + `--glue-max-lines 1700`（旧 CI） | 3.2.0 默认 200 | 3.3.1 默认 200（新 CI） |
+|---|---|---|---|
+| 第 10 项 `main.c` 行数 | 不报（1532 < 1700） | **ERROR** `main.c:1` 1532 行 | **WARN** 同一条（规则降级） |
+| 端口层 ISR 钩子 | WARN 352 / 362 / 374 | 同 | **逐条一致** |
+| `main.c` 胶水层语义规则 | 该版本无此规则 | 无 | **20 条 WARN**（G1 ×7、第 18 项 ×7、第 19 项 ×2、G3 ×2、第 22 项 ×1、第 21 项 ×1） |
+| 合计 | 0 ERROR / 3 WARN | 1 ERROR / 3 WARN | **0 ERROR / 24 WARN** |
+
+- 结论：3 条旧 WARN 一条不少、措辞未变；行数由 ERROR 变 WARN；新增 20 条全部是
+  3.3.1 语义规则对 `main.c` 存量的首次可见，不是本轮代码改动引入。
+- 存量清单落在 `TECH_DEBT.md`（D0–D20，含文件、行号、规则、归属与计划轮次）；
+  **不清零、未加 `arch-allow`**。
+
+### 36.3 去掉 `--glue-max-lines 1700`
+
+- `.github/workflows/layering.yml` 的扫描步骤改为 `python3 tools/check_layering.py .`。
+- 理由：3.3.1 里行数已降为 WARN（默认 200），继续传 1700 等于把这笔债藏起来；
+  去掉后 `main.c` 稳定报 1 条 WARN，是正确读数。CI 仍只以 ERROR 判失败（当前 0）。
+- 单独一个提交，便于回滚时与升锁分开。
+
+### 36.4 7 条 G1 的处理约定
+
+- `i2c1_bus_fix`、`i2c1_scan`、`i2c1_read_after_trigger`、`aht20_trigger`、
+  `dist_start`、`oled_i2c_wait`、`oled_bus_write` 本轮不修。
+- 等 `main.c` 拆分全部完成后单独开一轮，按外设分 2–3 轮下沉，每轮上板验 I2C。
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，
@@ -1891,7 +1940,8 @@ MOTOR rev abc / MOTOR foo / MOTOR       MOTOR err=usage ×3
 - 继电器 PB5 的电平可证（§34.3），但**吸合声、触点通断与 on/off 极性未验证**（§34.4）。
 - 电机 PA0/PA1 的寄存器与回包可证（§35.3），但**是否真转、fwd/rev 对应轴方向、
   转速随占空比变化均未验证**（§35.4）；若电机未接线，只能按"未接"记账。
-- 上游 3.3.0 分层检查器仍在被并发修改，基线待其定稿升锁后重跑（§35.5）。
+- 上游分层检查器已定稿 **3.3.1**（`7facd2b`）并完成升锁（§36）；`main.c` 存量命中
+  记在 `TECH_DEBT.md`，按拆分进度消除，未加 `arch-allow`。
 - 异步命令（`AHT`/`AHTS`/`DIST`）的回包可能晚于其后一条命令的回包（最多晚 60~80 ms）。
 - OLED：已验证到"初始化 + 8 页 GDDRAM 写入全部 ACK、AF/BERR 为 0"，
   **屏上画面是否正常需要肉眼确认**；CH1116 的 I²C 模式不能读回状态/GDDRAM，
