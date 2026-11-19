@@ -12,8 +12,9 @@
 
 #include "stm32f1xx.h"
 
+#define TIM4_CLK_HZ       72000000u  /* APB1 36 MHz x2 for timers */
 #define SERVO_TICK_HZ     1000000u
-#define SERVO_PSC         ((SERVO_TICK_HZ / 1000000u) - 1u)
+#define SERVO_PSC         ((TIM4_CLK_HZ / SERVO_TICK_HZ) - 1u)
 #define SERVO_PULSE_MIN   500u      /* SG90: 0 deg */
 #define SERVO_PULSE_MAX   2500u     /* SG90: 180 deg */
 #define SERVO_PULSE_MID   1500u
@@ -182,6 +183,8 @@ void TIM3_IRQHandler(void)
 
 void pm_pwm_dbg_read(pm_pwm_dbg_t *out)
 {
+    uint32_t div;
+
     out->rcc_apb1enr = RCC->APB1ENR;
     out->rcc_apb2enr = RCC->APB2ENR;
     out->tim4_cr1    = TIM4->CR1;
@@ -192,6 +195,10 @@ void pm_pwm_dbg_read(pm_pwm_dbg_t *out)
     out->tim4_ccr3   = TIM4->CCR3;
     out->gpiob_crh   = GPIOB->CRH;
     out->afio_mapr   = AFIO->MAPR;
+
+    /* Frame frequency implied by PSC/ARR; 0.1 Hz units so 50.0 is 500. */
+    div = ((TIM4->PSC + 1u) * (TIM4->ARR + 1u));
+    out->frame_hz10 = (div == 0u) ? 0u : (TIM4_CLK_HZ * 10u) / div;
 }
 
 uint32_t pm_pwm_counter(void)

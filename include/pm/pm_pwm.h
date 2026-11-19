@@ -50,6 +50,7 @@ typedef struct {
     uint32_t tim4_ccr3;
     uint32_t gpiob_crh;
     uint32_t afio_mapr;
+    uint32_t frame_hz10;   /* PWM frame frequency from PSC/ARR, 0.1 Hz */
 } pm_pwm_dbg_t;
 
 void     pm_pwm_dbg_read(pm_pwm_dbg_t *out);

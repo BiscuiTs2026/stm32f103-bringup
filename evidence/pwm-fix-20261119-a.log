@@ -1,0 +1,71 @@
+===== capture start 2026-11-19 20:47:56.589 port=COM11 =====
+[     93ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    581ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    739ms] DIST live cm=98.6 us=5719
+[    991ms] hb
+[   1080ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> PWM dbg
+[   1566ms] PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000047 arr=0x00004E1F ccmr2=0x00000068 ccer=0x00000100 ccr3=0x000005DC cnt0=8245 cnt1=8088 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[   1600ms] OLED live ok ms=118 col=2 af=0 berr=0 to=0
+[   1739ms] DIST live cm=98.6 us=5720
+[   1991ms] hb
+[   2081ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> PWM servo 0
+[   2298ms] PWM servo ok deg=0.0 pulse=500us
+[   2581ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2739ms] DIST live cm=98.2 us=5696
+[   2990ms] hb
+[   3079ms] O
+>> PWM dbg
+[   3081ms] LED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3120ms] PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000047 arr=0x00004E1F ccmr2=0x00000068 ccer=0x00000100 ccr3=0x000001F4 cnt0=2331 cnt1=2088 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[   3580ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3738ms] DIST live cm=79.9 us=4633
+>> PWM servo 180
+[   3854ms] PWM servo ok deg=180.0 pulse=2500us
+[   3991ms] hb
+[   4081ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4579ms] O
+>> PWM dbg
+[   4581ms] LED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4620ms] PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000047 arr=0x00004E1F ccmr2=0x00000068 ccer=0x00000100 ccr3=0x000009C4 cnt0=2141 cnt1=2088 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[   4738ms] DIST live cm=98.2 us=5693
+[   4990ms] hb
+[   5081ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> PWM sweep
+[  10698ms] PWM sweep deg=0.0 pulse=500us
+[  10698ms] PWM sweep deg=45.0 pulse=1000us
+[  10704ms] PWM sweep deg=90.0 pulse=1500us
+[  10708ms] PWM sweep deg=135.0 pulse=2000us
+[  10709ms] PWM sweep deg=180.0 pulse=2500us
+[  10714ms] PWM sweep deg=135.0 pulse=2000us
+[  10715ms] PWM sweep deg=90.0 pulse=1500us
+[  10720ms] PWM sweep deg=45.0 pulse=1000us
+[  10720ms] PWM sweep deg=0.0 pulse=500us
+[  10725ms] PWM sweep deg=0.0 pulse=500us
+[  10726ms] PWM sweep deg=45.0 pulse=1000us
+[  10731ms] PWM sweep deg=90.0 pulse=1500us
+[  10731ms] PWM sweep deg=135.0 pulse=2000us
+[  10736ms] PWM sweep deg=180.0 pulse=2500us
+[  10737ms] PWM sweep deg=135.0 pulse=2000us
+[  10742ms] PWM sweep deg=90.0 pulse=1500us
+[  10742ms] PWM sweep deg=45.0 pulse=1000us
+[  10747ms] PWM sweep deg=0.0 pulse=500us
+[  10748ms] PWM sweep deg=90.0 pulse=1500us
+[  10751ms] PWM sweep done
+[  10751ms] hb
+[  10751ms] hb
+[  10751ms] hb
+[  10751ms] hb
+[  10752ms] hb
+[  10752ms] DIST live cm=98.2 us=5693
+[  10920ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10978ms] hb
+[  11419ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11748ms] DIST live cm=98.6 us=5719
+[  11920ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11978ms] hb
+[  12419ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12748ms] DIST live cm=99.0 us=5740
+[  12920ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12978ms] hb

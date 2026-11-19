@@ -294,6 +294,9 @@ static const char *cmd_dbg(void)
     q = put_hex32(q, d.gpiob_crh);
     q = put_s(q, " mapr=");
     q = put_hex32(q, d.afio_mapr);
+    q = put_s(q, " fpwm=");
+    q = put_deg(q, d.frame_hz10);
+    q = put_s(q, "Hz");
     *q = '\0';
     return finish();
 }
