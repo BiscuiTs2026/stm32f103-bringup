@@ -250,7 +250,9 @@ PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是
 | `PWM servo <0..180>` | 整数角度 | `PWM servo ok deg=90.0 pulse=1500us` | `PWM err=range deg=<n>`（>180）/ `PWM err=usage`（缺参数、负数、非数字）/ `PWM err=init` | **是**：CCR3 改脉宽 |
 | `PWM buz <100..5000> [duty]` | 频率 Hz，占空比 1..99（默认 20） | `PWM buz ok freq=1000Hz duty=20%` | `PWM err=range hz=<n>` / `PWM err=range duty`（>99）/ `PWM err=range`（duty=0）/ `PWM err=usage` / `PWM err=init` | **是**：开蜂鸣器并改频率 |
 | `PWM buz off` | 无 | `PWM buz off ok` | `PWM err=init` | **是**：停音，PB9 拉低 |
-| `PWM sweep` | 无 | 19 行：`PWM sweep deg=<deg> pulse=<us>us` ×18 + 终档 90° + `PWM sweep done` | `PWM err=range` / `PWM err=init` | **是**：0→180→0 两轮，每档 300 ms，结束回 90° |
+| `PWM sweep` | 无 | 20 行：`PWM sweep deg=<deg> pulse=<us>us` ×18 + 终档 90° + `PWM sweep done` | `PWM err=range` / `PWM err=init` | **是**：0→180→0 两轮，每档 300 ms，结束回 90° |
+| `PWM dbg` | 无 | 1 行：`PWM dbg apb1enr=… apb2enr=… cr1=… psc=… arr=… ccmr2=… ccer=… ccr3=… cnt0=<n> cnt1=<n> dt=20ms crh=… mapr=… fpwm=<Hz>` | `PWM err=init` | 否（只读，中间 `delay_ms(20)`） |
+| `PWM test` | 无 | `PWM test done 1Hz 10s pb8=af servo=<deg> pulse=<us>us` | — | **是**：PB8 切普通 GPIO 推 1 Hz 方波 10 s，结束后恢复 TIM4 复用并回 90° |
 | 其它子命令 | — | — | `PWM err=usage` | 否 |
 
 说明：
@@ -268,14 +270,23 @@ PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是
 - 蜂鸣器关闭后 `PWM stat` 回 `buz=off`；重新 `PWM buz <hz>` 不保留上次占空比，
   不给第二参数时回到默认 20%。
 - `PWM sweep` 用于肉眼确认舵机是否真的在转：0→45→90→135→180→135→90→45→0
-  连走两轮，每档停 300 ms，最后回 90°。18 个档位 + 终档共 19 行回包在命令结束时
+  连走两轮，每档停 300 ms，最后回 90°。18 个档位 + 终档共 20 行回包在命令结束时
   **一次性发出**（整个命令阻塞约 5.4 s），串口时间戳只能证明总时长与顺序，不能
   证明每一行是实时逐档出现的；舵机是否转动必须目视。
+- `PWM dbg` 是只读快照，不改变任何配置：`psc/arr/ccmr2/ccer/ccr3` 来自 TIM4，
+  `crh` 是 F103 的 `GPIOB->CRH`（PB8 在低 4 位），`mapr` 是 `AFIO->MAPR`，
+  `cnt0/cnt1` 是相隔约 20 ms 的两次 `TIM4->CNT` 采样；`fpwm` 由 `PSC/ARR`
+  反算（0.1 Hz 单位），用于一眼看出预分频对不对。`cnt1-cnt0` 含调度抖动，
+  不能当精确计时。
+- `PWM test` 是诊断命令：把 PB8 从 TIM4_CH3 切成普通推挽 GPIO，高 500 ms /
+  低 500 ms 共 10 个周期（10 s），结束后恢复复用并回到 90°。串口调试时它会
+  阻塞 10 s。该命令已编译进固件，但**没有上板运行过**（`PATCHES.md` §32.4）。
 - 慢扫期间主循环停摆约 5.4 s：OLED 刷新、`DIST live`、`hb` 都暂停，结束后 `hb`
   会补发几条（同一秒内到达），这是预期现象，不是卡死。
 - `PWM err=init` 只在 `pm_pwm_init()` 失败时出现；当前实现恒成功，该分支没有
   现场回包证据（`PATCHES.md` §30.3）。
-- 舵机角度、抖动与蜂鸣器听感**不在串口可证范围内**，回包只说明配置值与脉宽。
+- 舵机"有动作"已由用户目视确认（`PATCHES.md` §32.4），但角度精度、到位抖动/回弹、
+  带负载表现与蜂鸣器听感**不在串口可证范围内**，回包只说明配置值与脉宽。
 
 ### 4.7 输入侧（PB14 循迹 / PA8-PA9 编码器 / PB15 按键）
 
