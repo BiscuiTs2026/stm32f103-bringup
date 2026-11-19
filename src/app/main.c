@@ -910,7 +910,7 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
         pm_cmd_out_tx_str(c, "OLED err=busy pending\r\n");
         return;
     }
-    /* AHTS keeps bus ownership across its 80 ms window; do not cut in. */
+    /* An AHT/AHTS read is pending (80 ms window); do not cut in. */
     if (aht20_busy() != 0) {
         pm_cmd_out_tx_str(c, "OLED err=busy i2c\r\n");
         return;

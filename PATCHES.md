@@ -197,9 +197,9 @@ HELP KEYS=key press counters, clears them
 ### 实现
 
 - `AHT`：START → 写 `0x70` → 写 `AC 33 00` → 等 BTF → **STOP** → 延时 80 ms →
-  重新 START → 写 `0x71` → 读 6 B → 停止
-- `AHTS`：同样触发，但**不发 STOP**，保持总线 80 ms 后直接 repeated START 读，
-  用于对照（这就是此前只有 mock 覆盖的路径）
+  普通 START → 写 `0x71` → 读 6 B → 停止
+- `AHTS`：与 `AHT` 同一条线序（触发即 STOP、80 ms 后普通 START 读），**只把回包的
+  `rst=` 置 1**；2026-11-19 S4 之前它曾"握总线 80 ms 后 repeated START"，那条路径已删除
 - 校验：`d[0] & 0x80` 判忙，忙则 20 ms 后重试，最多 3 次
 - 换算（数据手册 6.2，全整数，不用浮点）：
   - `raw_h = (d1<<12)|(d2<<4)|(d3>>4)`，`RH% = raw_h/2^20*100`
@@ -223,14 +223,16 @@ TX: AHTS → AHT err=busy raw=98 68 A6 F5 A2 AE
 - `d[0] = 0x18`：bit7 忙=0，bit3 校准位=1（已校准），数据有效
 - 第 2 组 `428655 / 369326` → 40.878 % / 20.443 °C，两次一致
 
-### 结论：repeated START 读到的是上一次结果
+### 结论：旧 AHTS 的 repeated START 读到的是上一次结果
 
-- `AHTS` 的 6 字节 = **前一条 `AHT` 的 6 字节**，仅 `d[0]` 由 `0x18` 变成 `0x98`（多出 bit7 忙位）
+- 当时 `AHTS` 的 6 字节 = **前一条 `AHT` 的 6 字节**，仅 `d[0]` 由 `0x18` 变成 `0x98`（多出 bit7 忙位）
 - 两组对照完全重复同一规律 → AHT20 **必须以 STOP 结束触发命令才开始测量**；
   不发 STOP 就读，拿到的是上一次转换的旧数据 + 忙标志
 - I2C 层本身没有异常：repeated START 正常产生 SB/ADDR，6 字节完整读回，
   没有 AF/BERR（否则会返回 `err=io`）
-- 结论：**AHT 路径（STOP + 80 ms + 新 START）可用；AHTS 保留作对照，不作正常读数使用**
+- 结论：**触发必须以 STOP 结束，80 ms 后用普通 START 读**；2026-11-19 S4 已把 `AHTS`
+  改成同一线序（只保留 `rst=1`），旧"握总线"路径删除，两种模式各 3/3 实测通过
+  （`evidence/split-s5-aht.log`，差异登记 `TECH_DEBT.md` D21）
 
 ## 13. `AHT` 无回包：命令没被解析，不是发送失败
 
