@@ -52,6 +52,7 @@ add_library(pm_core STATIC
     src/core/pm_gpio.c
     src/core/pm_uart.c
     src/core/pm_cmd.c
+    src/core/pm_cmd_table.c
 )
 target_include_directories(pm_core PUBLIC ${PM_ROOT}/include/pm ${PM_ROOT}/include)
 target_compile_options(pm_core PRIVATE

@@ -13,6 +13,7 @@
 #include "pm_gpio.h"
 #include "pm_uart.h"
 #include "pm_cmd.h"
+#include "pm_cmd_table.h"
 #include "pm_port_mock.h"
 
 void host_time_advance(uint32_t ms);
@@ -395,6 +396,158 @@ static void test_cmd(void)
     CHECK(memcmp(buf, "99.9", 4) == 0);
 }
 
+/* ------------------------------------------------------------- cmd table */
+
+static int         s_exact_runs;
+static int         s_arg_runs;
+static const char *s_arg_last;
+
+static void table_run(cmd_port_t *c, const char *line)
+{
+    (void)c;
+    (void)line;
+    s_exact_runs++;
+}
+
+/* Deliberately also answers the EXACT token: pass 1 must win. */
+static const char *table_try(const char *line)
+{
+    if ((pm_cmd_ci_equal(line, "EXA") != 0) ||
+        (pm_cmd_ci_equal(line, "TRY") != 0)) {
+        return "T\r\n";
+    }
+    return NULL;
+}
+
+/* Also answers "TRY": pass 2 must win over pass 3. */
+static const char *table_match(const char *line)
+{
+    if (pm_cmd_ci_equal(line, "TRY") != 0) {
+        return "try";
+    }
+    if (pm_cmd_ci_equal(line, "PRE 7") != 0) {
+        return "7";
+    }
+    return NULL;
+}
+
+static void table_run_arg(cmd_port_t *c, const char *arg)
+{
+    (void)c;
+    s_arg_runs++;
+    s_arg_last = arg;
+}
+
+static const pm_cmd_entry_t s_test_table[] = {
+    { "EXA", "EXA=x", PM_CMD_EXACT,  table_run, NULL,        NULL,        NULL },
+    { "TRY", "TRY=x", PM_CMD_TRY,    NULL,      table_try,   NULL,        NULL },
+    { "PRE", "PRE=x", PM_CMD_PREFIX, NULL,      NULL,        table_match, table_run_arg },
+};
+
+static pm_uart_t s_tbl_uart;
+static uint8_t   s_tbl_rx[64];
+static uint8_t   s_tbl_tx[256];
+
+static void table_port_init(cmd_port_t *c)
+{
+    pm_uart_cfg_t cfg;
+
+    mock_reset();
+    memset(&s_tbl_uart, 0, sizeof(s_tbl_uart));
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.hw_id      = 1u;
+    cfg.baudrate   = 115200u;
+    cfg.parity     = PM_UART_PARITY_NONE;
+    cfg.stop_bits  = PM_UART_STOP_1;
+    cfg.data_bits  = 8u;
+    cfg.rx_storage = s_tbl_rx;
+    cfg.rx_size    = (uint16_t)sizeof(s_tbl_rx);
+    cfg.tx_storage = s_tbl_tx;
+    cfg.tx_size    = (uint16_t)sizeof(s_tbl_tx);
+    (void)pm_uart_init(&s_tbl_uart, &cfg);
+
+    memset(c, 0, sizeof(*c));
+    c->port = &s_tbl_uart;
+}
+
+static void test_cmd_table(void)
+{
+    cmd_port_t     c;
+    pm_cmd_entry_t bad[3];
+    char           buf[32];
+    size_t         base;
+
+    CHECK(pm_cmd_table_validate(s_test_table, 3) == 0);
+
+    /* Help lines: "HELP " + help + CRLF, in table order, with truncation. */
+    CHECK(pm_cmd_help_line(s_test_table, 3, 0, buf, sizeof(buf)) == 0);
+    CHECK(strcmp(buf, "HELP EXA=x\r\n") == 0);
+    CHECK(pm_cmd_help_line(s_test_table, 3, 2, buf, sizeof(buf)) == 0);
+    CHECK(strcmp(buf, "HELP PRE=x\r\n") == 0);
+    CHECK(pm_cmd_help_line(s_test_table, 3, 3, buf, sizeof(buf)) == -1);
+    CHECK(pm_cmd_help_line(s_test_table, 3, 0, buf, 12u) == -1);  /* needs 12 + NUL */
+    CHECK(pm_cmd_help_line(s_test_table, 3, 0, buf, 13u) == 0);
+
+    /* Validation: duplicate name, empty help, mixed-case name, kind mismatch. */
+    memcpy(bad, s_test_table, sizeof(bad));
+    bad[1].name = "EXA";
+    CHECK(pm_cmd_table_validate(bad, 3) == 1);
+    memcpy(bad, s_test_table, sizeof(bad));
+    bad[0].help = "";
+    CHECK(pm_cmd_table_validate(bad, 3) == 1);
+    memcpy(bad, s_test_table, sizeof(bad));
+    bad[2].name = "Pre";
+    CHECK(pm_cmd_table_validate(bad, 3) == 1);
+    memcpy(bad, s_test_table, sizeof(bad));
+    bad[1].run = table_run;
+    CHECK(pm_cmd_table_validate(bad, 3) == 1);
+
+    table_port_init(&c);
+    s_exact_runs = 0;
+    s_arg_runs = 0;
+    s_arg_last = NULL;
+
+    /* EXACT beats TRY even though the TRY handler also answers "exa". */
+    base = mock_uart_tx_len();
+    pm_cmd_dispatch(s_test_table, 3, &c, "exa");
+    CHECK(s_exact_runs == 1);
+    CHECK(mock_uart_tx_len() == base);            /* nothing written */
+
+    /* TRY beats PREFIX on the same token, and its reply is sent. */
+    pm_uart_hw_tx_complete(&s_tbl_uart);
+    base = mock_uart_tx_len();
+    pm_cmd_dispatch(s_test_table, 3, &c, "TRY");
+    CHECK(s_exact_runs == 1);
+    CHECK(s_arg_runs == 0);
+    CHECK(mock_uart_tx_len() - base == 3u);
+    CHECK(memcmp(mock_uart_tx_data() + base, "T\r\n", 3u) == 0);
+
+    /* PREFIX pass runs last and hands the argument to run_arg. */
+    pm_uart_hw_tx_complete(&s_tbl_uart);
+    pm_cmd_dispatch(s_test_table, 3, &c, "pre 7");
+    CHECK(s_arg_runs == 1);
+    CHECK(strcmp(s_arg_last, "7") == 0);
+
+    /* Miss: the original line is echoed verbatim. The three tx_str calls queue
+     * behind one another, so drain the mock TX path before checking. */
+    pm_uart_hw_tx_complete(&s_tbl_uart);
+    base = mock_uart_tx_len();
+    pm_cmd_dispatch(s_test_table, 3, &c, "nope");
+    while (mock_uart_tx_len() < (base + strlen("ERR unknown=nope\r\n"))) {
+        size_t before = mock_uart_tx_len();
+
+        pm_uart_hw_tx_complete(&s_tbl_uart);
+        if (mock_uart_tx_len() == before) {
+            break;
+        }
+    }
+    CHECK(mock_uart_tx_len() - base == strlen("ERR unknown=nope\r\n"));
+    CHECK(memcmp(mock_uart_tx_data() + base, "ERR unknown=nope\r\n",
+                 strlen("ERR unknown=nope\r\n")) == 0);
+    CHECK(s_exact_runs == 1);
+    CHECK(s_arg_runs == 1);
+}
+
 int main(void)
 {
     test_ringbuf();
@@ -405,6 +558,7 @@ int main(void)
     test_uart_rx();
     test_uart_timeout();
     test_cmd();
+    test_cmd_table();
 
     printf("\n%d checks, %d failure(s)\n", s_checks, s_failures);
     return (s_failures == 0) ? 0 : 1;

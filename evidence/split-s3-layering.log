@@ -1,0 +1,46 @@
+﻿=== S3 命令注册表：分层检查（检查器 3.3.1，默认参数） ===
+时间：2026-11-19 22:0x
+命令：python tools/check_layering.py .
+
+--- 版本与锁 ---
+checker-version: 3.3.1
+source-repo: https://github.com/BiscuiTs2026/firmware-four-layer-architecture
+source-commit: 7facd2b0039acd407d91c96ee043ef95dfc4b446
+[LOCK] 与 tools\CHECKER.lock 一致
+
+--- 扫描输出 ---
+[WARN ] src/app/main.c:1 入口胶水层 1437 行代码（上限 200），业务逻辑应下沉到组件层
+[WARN ] src/app/main.c:221 胶水层实现外设驱动：函数 i2c1_bus_fix 有 13 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:235 胶水层阻塞延时：pm_osal_delay_ms()（初始化外的等待应下沉到端口/时基，运行期轮询改非阻塞）
+[WARN ] src/app/main.c:237 胶水层阻塞延时：pm_osal_delay_ms()（初始化外的等待应下沉到端口/时基，运行期轮询改非阻塞）
+[WARN ] src/app/main.c:240 胶水层阻塞延时：pm_osal_delay_ms()（初始化外的等待应下沉到端口/时基，运行期轮询改非阻塞）
+[WARN ] src/app/main.c:242 胶水层阻塞延时：pm_osal_delay_ms()（初始化外的等待应下沉到端口/时基，运行期轮询改非阻塞）
+[WARN ] src/app/main.c:266 胶水层实现外设驱动：函数 i2c1_scan 有 9 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:296 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
+[WARN ] src/app/main.c:335 胶水层实现外设驱动：函数 i2c1_read_after_trigger 有 10 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:371 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
+[WARN ] src/app/main.c:375 胶水层实现外设驱动：函数 aht20_trigger 有 5 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:609 胶水层硬编码引脚/端口：GPIO_PIN_4（引脚映射应归端口层）
+[WARN ] src/app/main.c:611 胶水层硬编码引脚/端口：GPIOA（引脚映射应归端口层）
+[WARN ] src/app/main.c:817 胶水层实现外设驱动：函数 dist_start 有 4 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:852 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
+[WARN ] src/app/main.c:966 胶水层实现外设驱动：函数 oled_i2c_wait 有 3 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:992 胶水层实现外设驱动：函数 oled_bus_write 有 8 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:1183 胶水层函数 oled_screen_name 有 5 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
+[WARN ] src/app/main.c:1225 胶水层函数 oled_start_screen 有 4 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
+[WARN ] src/app/main.c:1271 胶水层函数 cmd_oled 有 123 行代码（上限 80）；拆出组件或改成表驱动
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:352 端口层调用组件 ISR 钩子：pm_uart_hw_rx_byte（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:362 端口层调用组件 ISR 钩子：pm_uart_hw_tx_complete（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:374 端口层调用组件 ISR 钩子：pm_uart_hw_error（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[NOTE ] 已按角色清单 .arch-roles 判定层归属
+[NOTE ] 忽略路径：third_party/, build-*/
+
+合计 0 ERROR / 23 WARN（扫描目录：D:\All the work\TRAEwork\AI-STM32F1-1\2026-11-18\board-bringup\work）
+
+--- 与 S2 命中集合对比（去掉行号后按消息文本比对） ---
+S2: 24 条；S3: 23 条。
+消失：[WARN] src/app/main.c 胶水层函数 cmd_execute 有 8 个字符串 else-if 分支（阈值 4）；命令分发应改注册表
+新增：无（唯一文本变化是胶水层行数告警 1404 -> 1437，仍属同一条规则、同一处命中）
+因此 §8 命中 #11 已清除；其余 22 条逐条保留，新增 0 条。
+
+注：行数从 1404 增至 1437 是表驱动写法的直接结果（15 行表 + 6 个适配器 + 4 个 run 函数），目标不是行数而是路由归属；不构成新增命中。

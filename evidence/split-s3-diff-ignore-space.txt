@@ -1,0 +1,64 @@
+﻿=== S3 命令注册表：夹带检查（--ignore-all-space） ===
+
+=== 1. git diff --numstat（原始） ===
+1	0	CMakeLists.txt
+115	66	src/app/main.c
+2	0	tests/host/CMakeLists.txt
+154	0	tests/host/test_main.c
+
+=== 2. git diff --ignore-all-space --numstat ===
+1	0	CMakeLists.txt
+92	43	src/app/main.c
+2	0	tests/host/CMakeLists.txt
+154	0	tests/host/test_main.c
+
+=== 3. git diff --stat（原始） ===
+ CMakeLists.txt            |   1 +
+ src/app/main.c            | 181 +++++++++++++++++++++++++++++-----------------
+ tests/host/CMakeLists.txt |   2 +
+ tests/host/test_main.c    | 154 +++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 272 insertions(+), 66 deletions(-)
+
+=== 4. git diff --ignore-all-space --stat ===
+ CMakeLists.txt            |   1 +
+ src/app/main.c            | 135 +++++++++++++++++++++++++++-------------
+ tests/host/CMakeLists.txt |   2 +
+ tests/host/test_main.c    | 154 ++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 249 insertions(+), 43 deletions(-)
+
+=== 5. 结论：numstat 不相等，差 23 对（+23/-23），原因已定位 ===
+
+原始 115/66，忽略空白 92/43。差值 23 恰好是 PING/STAT/KEYS 三段内联函数体：
+旧实现在 if 分支里缩进 8 空格，搬到独立函数后缩进 4 空格；行内容逐字符相同，只有前导空白不同，
+-w 把它们当成同一行，所以不计入增删。HELP 的 15 条文案则改成表项后前缀由 "HELP " 拼接，属于真实改写。
+
+这不是夹带。下面第 6、7 节给出两条逐字符校验，覆盖面强于 numstat 相等：
+  (a) 15 条 HELP 文案与旧实现逐字节一致，顺序一致，总字节 638；
+  (b) PING/STAT/KEYS 三段函数体去掉缩进后逐行一致（新增的只有 PM_UNUSED(line)）。
+
+=== 6. HELP 文案与旧实现等价性校验 ===
+HELP lines: old=15 new=15
+HELP names: HELP,PING,STAT,I2C,AHT,AHTS,DIST,ADC,OLED,PWM,TRACK,ENC,RELAY,MOTOR,KEYS
+HELP byte total: 638
+HELP strings identical: True
+BODY PING: old=1 lines new=1 lines identical=True
+BODY STAT: old=13 lines new=13 lines identical=True
+BODY KEYS: old=10 lines new=10 lines identical=True
+ALL BODIES IDENTICAL AFTER INDENT NORMALISATION: True
+
+=== 7. 本次改动的非空白新增内容清单（按类别） ===
++#include "pm_cmd_table.h"                                （1 行，声明依赖）
++注释块（4 行）+ 4 个前向声明                          （表在 run 函数之前，必须先声明）
++6 个适配器函数 run_i2c/run_aht/run_ahts/run_dist/run_adc/run_oled（签名对齐，没有业务逻辑）
++15 行注册表 s_cmds[]                                （顺序=HELP 顺序；help 字段逐字符取自旧 HELP 行）
++cmd_help/cmd_ping/cmd_stat/cmd_keys 的函数外壳           （函数体来自旧 if 分支，逐行核对见第 6 节）
++cmd_execute 收敛为一行 pm_cmd_dispatch 调用
+-旧 if-else 链（PING/HELP/STAT/I2C/AHT/AHTS/DIST/ADC/KEYS + 5 个 *_dev_cmd + OLED 尾分支）
+
+新文件：include/pm/pm_cmd_table.h、src/core/pm_cmd_table.c（三遍扫描 + help 行生成 + 表校验）
+构建：CMakeLists.txt 1 行、tests/host/CMakeLists.txt 2 行
+测试：tests/host/test_main.c 154 行（新增 test_cmd_table）
+
+=== 8. 结论 ===
+除上面列出的类别外，main.c 没有其它内容变化；15 条 HELP 文案、三段函数体均已逐字符核对。
+唯一不满足的是"两个 numstat 逐项相同"这一字面判据，原因是表格改写必然带来缩进变化，需要复核方裁决。

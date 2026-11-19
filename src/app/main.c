@@ -18,6 +18,7 @@
 #include "pm_uart.h"
 #include "pm_cmd.h"
 #include "pm_cmd_out.h"
+#include "pm_cmd_table.h"
 #include "pm_platform.h"
 #include "board_f103c8.h"
 #include "oled_ch1116.h"
@@ -1570,76 +1571,124 @@ static const char *oled_arg(const char *line)
     return p;
 }
 
+/* Command registry. Entries are in HELP output order. Routing precedence is
+ * the old if/else-if order: names first, then the five device consumers, then
+ * the "OLED <arg>" prefix. pm_cmd_dispatch() walks the table three times, one
+ * pass per kind, so declaration order only decides within a single kind. */
+static void cmd_help(cmd_port_t *c, const char *line);
+static void cmd_ping(cmd_port_t *c, const char *line);
+static void cmd_stat(cmd_port_t *c, const char *line);
+static void cmd_keys(cmd_port_t *c, const char *line);
+
+static void run_i2c(cmd_port_t *c, const char *line)
+{
+    PM_UNUSED(line);
+    cmd_i2c(c);
+}
+
+static void run_aht(cmd_port_t *c, const char *line)
+{
+    PM_UNUSED(line);
+    aht_start(c, 0);
+}
+
+static void run_ahts(cmd_port_t *c, const char *line)
+{
+    PM_UNUSED(line);
+    aht_start(c, 1);
+}
+
+static void run_dist(cmd_port_t *c, const char *line)
+{
+    PM_UNUSED(line);
+    dist_start(c, 0u);
+}
+
+static void run_adc(cmd_port_t *c, const char *line)
+{
+    PM_UNUSED(line);
+    cmd_adc(c);
+}
+
+static void run_oled(cmd_port_t *c, const char *arg)
+{
+    cmd_oled(c, arg);
+}
+
+static const pm_cmd_entry_t s_cmds[] = {
+    { "HELP",  "HELP=list commands",                              PM_CMD_EXACT,  cmd_help,  NULL, NULL, NULL },
+    { "PING",  "PING=reply PONG",                                 PM_CMD_EXACT,  cmd_ping,  NULL, NULL, NULL },
+    { "STAT",  "STAT=clk/up/tick/keys/uart counters",             PM_CMD_EXACT,  cmd_stat,  NULL, NULL, NULL },
+    { "I2C",   "I2C=scan I2C1 bus, list 8-bit addresses",         PM_CMD_EXACT,  run_i2c,   NULL, NULL, NULL },
+    { "AHT",   "AHT=read AHT20, rh and t in 0.1 units",           PM_CMD_EXACT,  run_aht,   NULL, NULL, NULL },
+    { "AHTS",  "AHTS=same but read via repeated START",           PM_CMD_EXACT,  run_ahts,  NULL, NULL, NULL },
+    { "DIST",  "DIST=disabled, TIM2 given to motor",              PM_CMD_EXACT,  run_dist,  NULL, NULL, NULL },
+    { "ADC",   "ADC=pot PA5 and NTC PA4, raw and mV",             PM_CMD_EXACT,  run_adc,   NULL, NULL, NULL },
+    { "OLED",  "OLED=on/off/clear/test/show/frame/col/live/dump", PM_CMD_PREFIX, NULL, NULL, oled_arg, run_oled },
+    { "PWM",   "PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep", PM_CMD_TRY,   NULL, pwm_dev_cmd,     NULL, NULL },
+    { "TRACK", "TRACK=raw level of PB14 line sensor",             PM_CMD_TRY,    NULL, track_dev_cmd,   NULL, NULL },
+    { "ENC",   "ENC=count/clear, dir, a/b, button PB15",          PM_CMD_TRY,    NULL, encoder_dev_cmd, NULL, NULL },
+    { "RELAY", "RELAY=on/off/stat, PB5 relay coil",               PM_CMD_TRY,    NULL, relay_dev_cmd,   NULL, NULL },
+    { "MOTOR", "MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM",  PM_CMD_TRY,    NULL, motor_dev_cmd,   NULL, NULL },
+    { "KEYS",  "KEYS=key press counters, clears them",            PM_CMD_EXACT,  cmd_keys,  NULL, NULL, NULL },
+};
+
+static void cmd_help(cmd_port_t *c, const char *line)
+{
+    char   buf[80];
+    size_t i;
+    size_t n = sizeof(s_cmds) / sizeof(s_cmds[0]);
+
+    PM_UNUSED(line);
+    for (i = 0u; i < n; i++) {
+        if (pm_cmd_help_line(s_cmds, n, i, buf, sizeof(buf)) == 0) {
+            pm_cmd_out_tx_str(c, buf);
+        }
+    }
+}
+
+static void cmd_ping(cmd_port_t *c, const char *line)
+{
+    PM_UNUSED(line);
+    pm_cmd_out_tx_str(c, "PONG\r\n");
+}
+
+static void cmd_stat(cmd_port_t *c, const char *line)
+{
+    PM_UNUSED(line);
+    pm_cmd_out_tx_str(c, "STAT clk=");
+    pm_cmd_out_tx_u32(c, pm_platform_core_clock());
+    pm_cmd_out_tx_str(c, " up=");
+    pm_cmd_out_tx_u32(c, pm_osal_now_ms());
+    pm_cmd_out_tx_str(c, " tick=1 key1=");
+    pm_cmd_out_tx_u32(c, s_key_press[0]);
+    pm_cmd_out_tx_str(c, " key2=");
+    pm_cmd_out_tx_u32(c, s_key_press[1]);
+    pm_cmd_out_tx_str(c, " uart_rx=");
+    pm_cmd_out_tx_u32(c, s_rx_total);
+    pm_cmd_out_tx_str(c, " uart_tx=");
+    pm_cmd_out_tx_u32(c, pm_cmd_out_tx_total());
+    pm_cmd_out_tx_str(c, "\r\n");
+}
+
+static void cmd_keys(cmd_port_t *c, const char *line)
+{
+    PM_UNUSED(line);
+    pm_cmd_out_tx_str(c, "KEYS k1=");
+    pm_cmd_out_tx_u32(c, s_key_press[0]);
+    pm_cmd_out_tx_str(c, " k2=");
+    pm_cmd_out_tx_u32(c, s_key_press[1]);
+    pm_cmd_out_tx_str(c, " last=");
+    pm_cmd_out_tx_str(c, (s_key_last == 0) ? "k1" : (s_key_last == 1) ? "k2" : "none");
+    pm_cmd_out_tx_str(c, "\r\n");
+    s_key_press[0] = 0u;
+    s_key_press[1] = 0u;
+    s_key_last = -1;
+}
+
 static void cmd_execute(cmd_port_t *c, const char *line)
 {
-    const char *pw;
-
-    if (pm_cmd_ci_equal(line, "PING")) {
-        pm_cmd_out_tx_str(c, "PONG\r\n");
-    } else if (pm_cmd_ci_equal(line, "HELP")) {
-        pm_cmd_out_tx_str(c, "HELP HELP=list commands\r\n");
-        pm_cmd_out_tx_str(c, "HELP PING=reply PONG\r\n");
-        pm_cmd_out_tx_str(c, "HELP STAT=clk/up/tick/keys/uart counters\r\n");
-        pm_cmd_out_tx_str(c, "HELP I2C=scan I2C1 bus, list 8-bit addresses\r\n");
-        pm_cmd_out_tx_str(c, "HELP AHT=read AHT20, rh and t in 0.1 units\r\n");
-        pm_cmd_out_tx_str(c, "HELP AHTS=same but read via repeated START\r\n");
-        pm_cmd_out_tx_str(c, "HELP DIST=disabled, TIM2 given to motor\r\n");
-        pm_cmd_out_tx_str(c, "HELP ADC=pot PA5 and NTC PA4, raw and mV\r\n");
-        pm_cmd_out_tx_str(c, "HELP OLED=on/off/clear/test/show/frame/col/live/dump\r\n");
-        pm_cmd_out_tx_str(c, "HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep\r\n");
-        pm_cmd_out_tx_str(c, "HELP TRACK=raw level of PB14 line sensor\r\n");
-        pm_cmd_out_tx_str(c, "HELP ENC=count/clear, dir, a/b, button PB15\r\n");
-        pm_cmd_out_tx_str(c, "HELP RELAY=on/off/stat, PB5 relay coil\r\n");
-        pm_cmd_out_tx_str(c, "HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM\r\n");
-        pm_cmd_out_tx_str(c, "HELP KEYS=key press counters, clears them\r\n");
-    } else if (pm_cmd_ci_equal(line, "STAT")) {
-        pm_cmd_out_tx_str(c, "STAT clk=");
-        pm_cmd_out_tx_u32(c, pm_platform_core_clock());
-        pm_cmd_out_tx_str(c, " up=");
-        pm_cmd_out_tx_u32(c, pm_osal_now_ms());
-        pm_cmd_out_tx_str(c, " tick=1 key1=");
-        pm_cmd_out_tx_u32(c, s_key_press[0]);
-        pm_cmd_out_tx_str(c, " key2=");
-        pm_cmd_out_tx_u32(c, s_key_press[1]);
-        pm_cmd_out_tx_str(c, " uart_rx=");
-        pm_cmd_out_tx_u32(c, s_rx_total);
-        pm_cmd_out_tx_str(c, " uart_tx=");
-        pm_cmd_out_tx_u32(c, pm_cmd_out_tx_total());
-        pm_cmd_out_tx_str(c, "\r\n");
-    } else if (pm_cmd_ci_equal(line, "I2C")) {
-        cmd_i2c(c);
-    } else if (pm_cmd_ci_equal(line, "AHT")) {
-        aht_start(c, 0);
-    } else if (pm_cmd_ci_equal(line, "AHTS")) {
-        aht_start(c, 1);
-    } else if (pm_cmd_ci_equal(line, "DIST")) {
-        dist_start(c, 0u);
-    } else if (pm_cmd_ci_equal(line, "ADC")) {
-        cmd_adc(c);
-    } else if (pm_cmd_ci_equal(line, "KEYS")) {
-        pm_cmd_out_tx_str(c, "KEYS k1=");
-        pm_cmd_out_tx_u32(c, s_key_press[0]);
-        pm_cmd_out_tx_str(c, " k2=");
-        pm_cmd_out_tx_u32(c, s_key_press[1]);
-        pm_cmd_out_tx_str(c, " last=");
-        pm_cmd_out_tx_str(c, (s_key_last == 0) ? "k1" : (s_key_last == 1) ? "k2" : "none");
-        pm_cmd_out_tx_str(c, "\r\n");
-        s_key_press[0] = 0u;
-        s_key_press[1] = 0u;
-        s_key_last = -1;
-    } else if (((pw = pwm_dev_cmd(line)) != NULL) || ((pw = track_dev_cmd(line)) != NULL) || ((pw = encoder_dev_cmd(line)) != NULL) || ((pw = relay_dev_cmd(line)) != NULL) || ((pw = motor_dev_cmd(line)) != NULL)) {
-        pm_cmd_out_tx_str(c, pw);
-    } else {
-        const char *oa = oled_arg(line);
-
-        if (oa != NULL) {
-            cmd_oled(c, oa);
-            return;
-        }
-        pm_cmd_out_tx_str(c, "ERR unknown=");
-        pm_cmd_out_tx_str(c, line);
-        pm_cmd_out_tx_str(c, "\r\n");
-    }
+    pm_cmd_dispatch(s_cmds, sizeof(s_cmds) / sizeof(s_cmds[0]), c, line);
 }
 
 static void cmd_feed(cmd_port_t *c, const uint8_t *d, size_t n)

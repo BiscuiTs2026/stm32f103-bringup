@@ -1,0 +1,67 @@
+﻿=== S3 命令注册表：固件构建 ===
+时间：2026-11-19 22:0x
+配置：cmake -S . -B build-split-s3 -G Ninja -DCMAKE_TOOLCHAIN_FILE=<abs>\cmake\arm-gcc-toolchain.cmake -DCMAKE_MAKE_PROGRAM=<ninja 1.13.2+st.1>
+工具链：arm-none-eabi-gcc 14.3.1+st.2；标志 -Wall -Wextra -Wshadow -Wundef -Werror=implicit-function-declaration
+说明：全量重编（只改源文件 mtime 触发，内容未变）；下面是 51 行完整输出。
+
+--- 构建输出 ---
+[0/1] Re-running CMake...
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: D:/All the work/TRAEwork/AI-STM32F1-1/2026-11-18/board-bringup/work/build-split-s3
+[1/30] Building C object CMakeFiles/pm_core.dir/src/core/pm_err.c.obj
+[2/30] Building C object CMakeFiles/pm_core.dir/src/core/pm_event.c.obj
+[3/30] Building C object CMakeFiles/pm_core.dir/src/core/pm_ringbuf.c.obj
+[4/30] Building C object CMakeFiles/pm_core.dir/src/core/pm_gpio.c.obj
+[5/30] Building C object CMakeFiles/pm_core.dir/src/core/pm_uart.c.obj
+[6/30] Building C object CMakeFiles/pm_core.dir/src/core/pm_cmd.c.obj
+[7/30] Building C object CMakeFiles/pm_core.dir/src/core/pm_cmd_table.c.obj
+[8/30] Building C object CMakeFiles/pm_osal.dir/src/osal/pm_osal_port_cm3.c.obj
+[9/30] Building C object CMakeFiles/pm_components.dir/src/components/track_dev/track_dev.c.obj
+[10/30] Building C object CMakeFiles/pm_components.dir/src/components/oled_ch1116/oled_ch1116.c.obj
+[11/30] Building C object CMakeFiles/pm_components.dir/src/components/encoder_dev/encoder_dev.c.obj
+[12/30] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_track_stm32f1.c.obj
+[13/30] Building C object CMakeFiles/pm_components.dir/src/components/relay_dev/relay_dev.c.obj
+[14/30] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_pwm_stm32f1.c.obj
+[15/30] Building C object CMakeFiles/pm_components.dir/src/components/pm_cmd/pm_cmd_out.c.obj
+[16/30] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_encoder_stm32f1.c.obj
+[17/30] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_relay_stm32f1.c.obj
+[18/30] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_port_stm32f1.c.obj
+[19/30] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_motor_stm32f1.c.obj
+[20/30] Building C object CMakeFiles/pm_components.dir/src/components/pwm_dev/pwm_dev.c.obj
+[21/30] Building C object CMakeFiles/pm_components.dir/src/components/motor_dev/motor_dev.c.obj
+[22/30] Linking C static library libpm_osal.a
+[23/30] Linking C static library libpm_core.a
+[24/30] Building C object CMakeFiles/pm_port_stm32f1.dir/platform/stm32f103/pm_platform.c.obj
+[25/30] Building C object CMakeFiles/pm_port_stm32f1.dir/platform/stm32f103/board_f103c8.c.obj
+[26/30] Linking C static library libpm_components.a
+[27/30] Linking C static library libpm_port_stm32f1.a
+[28/30] Building C object CMakeFiles/pm_f103_demo.dir/src/app/main.c.obj
+[29/30] Linking C executable pm_f103_demo; Generating .bin/.hex and reporting size
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-closer.o): in function `_close_r':
+(.text._close_r+0xc): warning: _close is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-closer.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-lseekr.o): in function `_lseek_r':
+(.text._lseek_r+0x10): warning: _lseek is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-lseekr.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-readr.o): in function `_read_r':
+(.text._read_r+0x10): warning: _read is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-readr.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-writer.o): in function `_write_r':
+(.text._write_r+0x10): warning: _write is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-writer.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: warning: pm_f103_demo has a LOAD segment with RWX permissions
+Memory region         Used Size  Region Size  %age Used
+           FLASH:       27620 B        64 KB     42.14%
+             RAM:        4976 B        20 KB     24.30%
+   text	   data	    bss	    dec	    hex	filename
+  27160	    460	   4524	  32144	   7d90	D:/All the work/TRAEwork/AI-STM32F1-1/2026-11-18/board-bringup/work/build-split-s3/pm_f103_demo
+
+--- 告警核对 ---
+编译器告警：0 条（51 行输出里 warning 共 5 条，全部来自链接期 newlib nosys 桩：_close/_lseek/_read/_write，加 1 条 RWX LOAD segment）。
+与 S2 构建日志（evidence/split-s2-build.log）的告警集合逐条相同，S3 未新增任何告警。
+
+--- 体积对照（arm-none-eabi-size / 链接报告） ---
+S2 (fc34b0a): Flash 27296 B / RAM 4976 B
+S3 (本次)  : Flash 27620 B / RAM 4976 B   (+324 B 代码+常量，RAM 不变)
+text=27160 data=460 bss=4524
