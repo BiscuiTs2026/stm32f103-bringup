@@ -1,0 +1,13 @@
+﻿== git diff --numstat ==
+1	0	CMakeLists.txt
+5	7	src/app/main.c
+1	1	src/components/keypad_dev/keypad_dev.c
+2	9	src/components/keypad_dev/keypad_dev.h
+== git diff -w --numstat ==
+1	0	CMakeLists.txt
+5	7	src/app/main.c
+1	1	src/components/keypad_dev/keypad_dev.c
+2	9	src/components/keypad_dev/keypad_dev.h
+== untracked (lines) ==
+28	D:\All the work\TRAEwork\AI-STM32F1-1\2026-11-18\board-bringup\work\include\pm\pm_keypad.h
+22	D:\All the work\TRAEwork\AI-STM32F1-1\2026-11-18\board-bringup\work\src\port\stm32f1\pm_keypad_stm32f1.c

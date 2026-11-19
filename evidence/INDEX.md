@@ -1064,3 +1064,85 @@
 | 不能证明什么 | **不含真实按键**：`KEY1 pressed/released` 文本、LED、`uart_tx +14/+15`、长按 3 s、快点 20 次均未验证；`K1=    1` 只在 0 值上验证了宽度 |
 | 局限 | 需人手按键；待 `split-s8-keys.log` 补 |
 | PATCHES 引用 | 未引用（S8 拆分证据） |
+
+## 81. split-s8b-build.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 7 行构建步骤；`cmake --build build-split-s8` 增量（GCC 14.3.1 / Ninja） |
+| 当时在做什么 | S8b 把 `s_key_map` 迁到端口层后的编译 |
+| 关键内容 | 新增 `pm_port_stm32f1.dir/.../pm_keypad_stm32f1.c.obj`；无编译器 warning（只有 newlib `_close/_read/_write` 链接提示，与 S8 同）；`FLASH 27996 B / RAM 5024 B`（S8 为 27976 / 5024，+20 B 为端口访问器与表） |
+| 能证明什么 | S8b 可编译、零新增告警、端口源确实进目标 |
+| 不能证明什么 | 不证明运行时行为（由第 84 项覆盖非按键项） |
+| 局限 | 仅比对 warning 文本有无新增 |
+| PATCHES 引用 | 未引用（S8b 拆分证据） |
+
+## 82. split-s8b-layering.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 14 行；`python tools/check_layering.py .`（3.3.1，锁 `7facd2b` 一致） |
+| 当时在做什么 | 核对 S8 过渡态 10 条 WARN 是否回到 9 条 |
+| 关键内容 | `0 ERROR / 9 WARN`；`main.c` 962（S8 为 963）；S8 新增的 `main.c:83 胶水层定义板级资源表：s_key_map` 已消失；余下 9 条与 S8 前逐条同址同文案（行数、`dist_start`、`dist` 忙等、`oled_screen_name`、`oled_start_screen`、`cmd_oled`、三条端口 `*_hw_*`） |
+| 能证明什么 | 第 22 条零命中；S8b 达成"必须回到 9 条" |
+| 不能证明什么 | 不证明其余 9 条已清（分属 S6/S9 与端口钩子） |
+| 局限 | 行号随搬迁继续漂移，按文案与函数名核对 |
+| PATCHES 引用 | 未引用（S8b 拆分证据） |
+
+## 83. split-s8b-flash.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 58 行；`STM32_Programmer_CLI -c port=SWD mode=UR -w build-split-s8/pm_f103_demo.hex -v -rst` |
+| 当时在做什么 | S8b 固件写入并回读校验 |
+| 关键内容 | `Size 27.34 KB`、`Download verified successfully`、`MCU Reset` |
+| 能证明什么 | 第 84 项抓包对应这版 hex |
+| 不能证明什么 | 不证明功能正确 |
+| 局限 | 只校验 Flash 回读 |
+| PATCHES 引用 | 未引用（S8b 拆分证据） |
+
+## 84. split-s8b-after.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 95 行；COM11 @115200，17 s 窗口；S8b 固件；**只覆盖非按键项** |
+| 采样窗口 | 复位抓横幅；5 s `KEYS`、6.5 s `KEYS`、8 s `STAT`、10 s `HELP`、11.5 s `DIST`、13 s `OLED dump`、14.5 s `STAT` |
+| 关键内容 | 横幅 `board-bringup` / `core clock = 72000000 Hz` / `USART2` / `BT USART3` / `ADC1` / `OLED` 各 1 次；`KEYS k1=0 k2=0 last=none` 两次；`STAT clk=72000000 ... key1=0 key2=0`；`HELP` 恰好 15 行且逐行文案与 S8 相同；`DIST err=disabled` 单行；`OLED L5=K1=    0 K2=    0`（5 位定宽）；`OLED live ok ms=98 af=0 berr=0 to=0` |
+| 能证明什么 | `pm_keypad_map()` + `keypad_dev_init()` 注入路径可用、`KEYS`/`STAT`/OLED 第 5 行读取来源正确、HELP 与 DIST 未受搬迁影响 |
+| 不能证明什么 | **不含真实按键**：`KEY1 pressed/released` 文本、LED 镜像、`uart_tx +14/+15`、长按 3 s、快点 20 次、OLED 非零值宽度，均为 PENDING（见第 87 项） |
+| 局限 | 需人手按键，按派发方裁决挂账到次日统一做 |
+| PATCHES 引用 | 未引用（S8b 拆分证据） |
+
+## 85. split-s8b-diff-numstat.txt
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 12 行；S8b 工作树 `git diff --numstat` 与 `git diff -w --numstat` 对照，另附两个新文件行数 |
+| 关键内容 | 两种口径完全相同：`CMakeLists.txt 1/0`、`main.c 5/7`、`keypad_dev.c 1/1`、`keypad_dev.h 2/9`；新增 `include/pm/pm_keypad.h` 28 行、`src/port/stm32f1/pm_keypad_stm32f1.c` 22 行 |
+| 能证明什么 | S8b 无空白夹带（判据 ⑤） |
+| 不能证明什么 | 不覆盖未跟踪文件的内容审查（行数已单列） |
+| 局限 | 只统计行数，不看语义 |
+| PATCHES 引用 | 未引用（S8b 拆分证据） |
+
+## 86. split-s8-diff-numstat.txt
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 11 行；`git diff --numstat d3b8cf2..d386b44` 与 `-w` 对照 |
+| 关键内容 | `main.c` 普通口径 `23/86`，`-w` 口径 `22/85`；差异来自一行 `error_loop();` 从 4 空格缩进改为 8 空格后被 `-w` 与另一处新增调用配对，属缩进跟随，不是空白 churn；其余文件两口径逐条相同 |
+| 能证明什么 | S8 判据 ⑤ 的偏差有可核对的解释（S8b 已无此偏差，见第 85 项） |
+| 不能证明什么 | 不证明该行移动在语义上必要（由代码审查判断） |
+| 局限 | 依赖 Git 配对启发式 |
+| PATCHES 引用 | 未引用（S8 拆分证据） |
+
+## 87. MANUAL-CHECKS.md
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 人工验收作业单；M1–M8 共 8 组，全部 `PENDING` |
+| 当时在做什么 | 按派发方裁决，把所有需要人按 / 听 / 看 / 动手的项集中挂账到次日一次做完 |
+| 关键内容 | M1 按键五项（文本与 14/15 B、`KEYS` 清零、OLED 第 5 行、长按 3 s、快点 20 次、LED 镜像）；M2 心跳灯；M3 继电器吸合声；M4 电机转向与转速；M5 蜂鸣器；M6 电位器（十字螺丝刀）；M7 蓝牙镜像（S2 欠账）；M8 编码器按键与手感。每项含步骤、命令、期望回包、验收出处、状态列 |
+| 能证明什么 | H 组已登记、口径统一，S10 前可按表清零 |
+| 不能证明什么 | 表内没有任何 PASS；S8/S8b 的按键功能**未验证** |
+| 局限 | 需要人在板边操作；`FAIL` 需回退到对应提交 |
+| PATCHES 引用 | 未引用（人工验收登记表） |

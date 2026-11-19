@@ -1,0 +1,22 @@
+﻿== git diff --numstat d3b8cf2..d386b44 (S8 commit) ==
+2	0	CMakeLists.txt
+60	0	evidence/INDEX.md
+95	0	evidence/split-s8-after.log
+13	0	evidence/split-s8-before.log
+69	0	evidence/split-s8-build.log
+58	0	evidence/split-s8-flash.log
+14	0	evidence/split-s8-layering.log
+23	86	src/app/main.c
+118	0	src/components/keypad_dev/keypad_dev.c
+40	0	src/components/keypad_dev/keypad_dev.h
+== git diff -w --numstat d3b8cf2..d386b44 ==
+2	0	CMakeLists.txt
+60	0	evidence/INDEX.md
+95	0	evidence/split-s8-after.log
+13	0	evidence/split-s8-before.log
+69	0	evidence/split-s8-build.log
+58	0	evidence/split-s8-flash.log
+14	0	evidence/split-s8-layering.log
+22	85	src/app/main.c
+118	0	src/components/keypad_dev/keypad_dev.c
+40	0	src/components/keypad_dev/keypad_dev.h

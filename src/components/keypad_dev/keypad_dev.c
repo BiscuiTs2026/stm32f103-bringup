@@ -42,7 +42,7 @@ static size_t      s_count;
 static uint32_t    s_press[KEYPAD_MAX_KEYS];
 static int         s_last = -1;
 
-int keypad_dev_init(const keypad_map_t *map, size_t n)
+int keypad_dev_init(const pm_keypad_map_t *map, size_t n)
 {
     size_t i;
 

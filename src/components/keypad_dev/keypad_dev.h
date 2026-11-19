@@ -14,18 +14,11 @@
 
 #include "pm_cmd_out.h"
 #include "pm_gpio.h"
-
-#define KEYPAD_MAX_KEYS 4u
-
-typedef struct {
-    pm_gpio_pin_t key;   /* active low */
-    pm_gpio_pin_t led;   /* on while pressed */
-    const char   *name;
-} keypad_map_t;
+#include "pm_keypad.h"
 
 /* 0 = ok. Configures each key as input with pull-up and each LED as output
  * driven low, in the order given. */
-int keypad_dev_init(const keypad_map_t *map, size_t n);
+int keypad_dev_init(const pm_keypad_map_t *map, size_t n);
 
 /* 20 ms debounce; counts and reports on the press edge, drives the LED and
  * reports on both edges. */

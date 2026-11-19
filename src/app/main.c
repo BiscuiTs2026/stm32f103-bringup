@@ -27,6 +27,7 @@
 #include "oled_ch1116.h"
 #include "aht20_dev.h"
 #include "keypad_dev.h"
+#include "pm_keypad.h"
 #include "pwm_dev.h"
 #include "track_dev.h"
 #include "encoder_dev.h"
@@ -77,12 +78,6 @@ static const pm_uart_cfg_t s_bt_cfg = {
     .rx_size    = (uint16_t)sizeof(s_bt_rx_storage),
     .tx_storage = s_bt_tx_storage,
     .tx_size    = (uint16_t)sizeof(s_bt_tx_storage),
-};
-
-/* Pin mapping for the keypad component; the board header stays here. */
-static const keypad_map_t s_key_map[] = {
-    { .key = { .id = BOARD_GPIO_KEY1 }, .led = { .id = BOARD_GPIO_LED_GREEN }, .name = "KEY1" },
-    { .key = { .id = BOARD_GPIO_KEY2 }, .led = { .id = BOARD_GPIO_LED_RED   }, .name = "KEY2" },
 };
 
 /* Command channel state; the parser itself lives further down. */
@@ -1223,6 +1218,8 @@ static void bt_service(void)
 int main(void)
 {
     pm_gpio_pin_t led_blue = { .id = BOARD_GPIO_LED_BLUE };
+    const pm_keypad_map_t *key_map;
+    size_t   key_count;
     uint32_t next_led_ms;
     uint32_t next_hb_ms;
 
@@ -1232,7 +1229,8 @@ int main(void)
     if (pm_gpio_configure(led_blue, &s_led_cfg) != PM_OK) {
         error_loop();
     }
-    if (keypad_dev_init(s_key_map, sizeof(s_key_map) / sizeof(s_key_map[0])) != 0) {
+    key_map = pm_keypad_map(&key_count);
+    if ((key_map == NULL) || (keypad_dev_init(key_map, key_count) != 0)) {
         error_loop();
     }
     if (pm_uart_init(&s_uart, &s_uart_cfg) != PM_OK) {
