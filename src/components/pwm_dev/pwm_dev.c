@@ -8,7 +8,7 @@
 #include "pm_osal.h"
 #include "pm_pwm.h"
 
-#define PWM_REPLY_MAX 96u
+#define PWM_REPLY_MAX 384u
 #define PWM_SWEEP_MAX 768u
 
 static char    s_reply[PWM_REPLY_MAX];
@@ -42,6 +42,19 @@ static char *put_deg(char *p, uint32_t deg10)
     p = put_u32(p, deg10 / 10u);
     *p++ = '.';
     *p++ = (char)('0' + (deg10 % 10u));
+    return p;
+}
+
+/* Fixed width 0xXXXXXXXX so register dumps line up and are easy to compare. */
+static char *put_hex32(char *p, uint32_t v)
+{
+    static const char hex[] = "0123456789ABCDEF";
+    int32_t           sh;
+
+    p = put_s(p, "0x");
+    for (sh = 28; sh >= 0; sh -= 4) {
+        *p++ = hex[(v >> sh) & 0xFu];
+    }
     return p;
 }
 
@@ -242,6 +255,76 @@ static const char *cmd_sweep(void)
     return s_sweep;
 }
 
+/* Read-only register snapshot: proves what the timer and pin config contain.
+ * STM32F1 has no MODER/OSPEEDR/AFRH, so PB8 mode is shown as GPIOB->CRH (low
+ * nibble) and remap state as AFIO->MAPR. Does not change any configuration. */
+static const char *cmd_dbg(void)
+{
+    pm_pwm_dbg_t d;
+    uint32_t     c0;
+    uint32_t     c1;
+    char        *q = s_reply;
+
+    pm_pwm_dbg_read(&d);
+    c0 = pm_pwm_counter();
+    pm_osal_delay_ms(20u);
+    c1 = pm_pwm_counter();
+
+    q = put_s(q, "PWM dbg apb1enr=");
+    q = put_hex32(q, d.rcc_apb1enr);
+    q = put_s(q, " apb2enr=");
+    q = put_hex32(q, d.rcc_apb2enr);
+    q = put_s(q, " cr1=");
+    q = put_hex32(q, d.tim4_cr1);
+    q = put_s(q, " psc=");
+    q = put_hex32(q, d.tim4_psc);
+    q = put_s(q, " arr=");
+    q = put_hex32(q, d.tim4_arr);
+    q = put_s(q, " ccmr2=");
+    q = put_hex32(q, d.tim4_ccmr2);
+    q = put_s(q, " ccer=");
+    q = put_hex32(q, d.tim4_ccer);
+    q = put_s(q, " ccr3=");
+    q = put_hex32(q, d.tim4_ccr3);
+    q = put_s(q, " cnt0=");
+    q = put_u32(q, c0);
+    q = put_s(q, " cnt1=");
+    q = put_u32(q, c1);
+    q = put_s(q, " dt=20ms crh=");
+    q = put_hex32(q, d.gpiob_crh);
+    q = put_s(q, " mapr=");
+    q = put_hex32(q, d.afio_mapr);
+    *q = '\0';
+    return finish();
+}
+
+/* 1 Hz (500 ms high, 500 ms low) on PB8 as a plain GPIO for 10 s, then back to
+ * TIM4 alternate function and 90 degrees. The multimeter measures the average
+ * voltage on the signal pin: 1.65 V means the MCU drives it, 0/3.3 V means not. */
+static const char *cmd_test(void)
+{
+    uint32_t i;
+    char    *q;
+
+    pm_pwm_test_begin();
+    for (i = 0u; i < 10u; i++) {
+        pm_pwm_test_level(1);
+        pm_osal_delay_ms(500u);
+        pm_pwm_test_level(0);
+        pm_osal_delay_ms(500u);
+    }
+    pm_pwm_test_end();
+
+    q = s_reply;
+    q = put_s(q, "PWM test done 1Hz 10s pb8=af servo=");
+    q = put_deg(q, (uint32_t)pm_pwm_servo_deg10());
+    q = put_s(q, " pulse=");
+    q = put_u32(q, pm_pwm_servo_pulse_us());
+    q = put_s(q, "us");
+    *q = '\0';
+    return finish();
+}
+
 void pwm_dev_init(void)
 {
     s_ready = (pm_pwm_init() == 0) ? 1u : 0u;
@@ -272,6 +355,12 @@ const char *pwm_dev_cmd(const char *line)
     }
     if (ci_eq_n(p, "SWEEP", 5u) != 0) {
         return cmd_sweep();
+    }
+    if (ci_eq_n(p, "DBG", 3u) != 0) {
+        return cmd_dbg();
+    }
+    if (ci_eq_n(p, "TEST", 4u) != 0) {
+        return cmd_test();
     }
     if (ci_eq_n(p, "STAT", 4u) != 0) {
         q = s_reply;

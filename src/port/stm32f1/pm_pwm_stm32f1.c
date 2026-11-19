@@ -179,3 +179,47 @@ void TIM3_IRQHandler(void)
         s_buz_phase = 1u;
     }
 }
+
+void pm_pwm_dbg_read(pm_pwm_dbg_t *out)
+{
+    out->rcc_apb1enr = RCC->APB1ENR;
+    out->rcc_apb2enr = RCC->APB2ENR;
+    out->tim4_cr1    = TIM4->CR1;
+    out->tim4_psc    = TIM4->PSC;
+    out->tim4_arr    = TIM4->ARR;
+    out->tim4_ccmr2  = TIM4->CCMR2;
+    out->tim4_ccer   = TIM4->CCER;
+    out->tim4_ccr3   = TIM4->CCR3;
+    out->gpiob_crh   = GPIOB->CRH;
+    out->afio_mapr   = AFIO->MAPR;
+}
+
+uint32_t pm_pwm_counter(void)
+{
+    return TIM4->CNT;
+}
+
+void pm_pwm_test_begin(void)
+{
+    TIM4->CCER &= ~TIM_CCER_CC3E;
+    GPIOB->CRH = (GPIOB->CRH & ~(0xFu << 0)) | (0x2u << 0);
+    GPIOB->BRR = (1u << 8);
+}
+
+void pm_pwm_test_level(int high)
+{
+    if (high != 0) {
+        GPIOB->BSRR = (1u << 8);
+    } else {
+        GPIOB->BRR = (1u << 8);
+    }
+}
+
+void pm_pwm_test_end(void)
+{
+    GPIOB->CRH = (GPIOB->CRH & ~(0xFu << 0)) | (0xBu << 0);
+    s_servo_deg10 = 900u;
+    s_servo_pulse = SERVO_PULSE_MID;
+    TIM4->CCR3    = SERVO_PULSE_MID;
+    TIM4->CCER   |= TIM_CCER_CC3E;
+}

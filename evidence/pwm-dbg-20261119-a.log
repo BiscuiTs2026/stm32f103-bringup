@@ -1,0 +1,45 @@
+===== capture start 2026-11-19 20:45:36.798 port=COM11 =====
+[     79ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    565ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    723ms] DIST live cm=98.2 us=5694
+[    975ms] hb
+[   1066ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> PWM dbg
+[   1333ms] PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000000 arr=0x00004E1F ccmr2=0x00000068 ccer=0x00000100 ccr3=0x000001F4 cnt0=9951 cnt1=15869 dt=20ms crh=0x88888B2B mapr=0x00000000
+[   1565ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1723ms] DIST live cm=98.6 us=5720
+[   1975ms] hb
+[   2064ms] O
+>> PWM servo 180
+[   2066ms] LED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2071ms] PWM servo ok deg=180.0 pulse=2500us
+[   2565ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2723ms] DIST live cm=89.7 us=5204
+>> PWM dbg
+[   2879ms] PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000000 arr=0x00004E1F ccmr2=0x00000068 ccer=0x00000100 ccr3=0x000009C4 cnt0=14343 cnt1=7869 dt=20ms crh=0x88888B2B mapr=0x00000000
+[   2975ms] hb
+[   3065ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3564ms] O
+>> PWM servo 0
+[   3565ms] LED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3570ms] PWM servo ok deg=0.0 pulse=500us
+[   3723ms] DIST live cm=99.1 us=5746
+[   3975ms] hb
+[   4065ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> PWM dbg
+[   4332ms] PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000000 arr=0x00004E1F ccmr2=0x00000068 ccer=0x00000100 ccr3=0x000001F4 cnt0=2277 cnt1=19869 dt=20ms crh=0x88888B2B mapr=0x00000000
+[   4565ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4723ms] DIST live cm=99.0 us=5742
+[   4975ms] hb
+[   5064ms] O
+>> PWM stat
+[   5066ms] LED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5071ms] PWM stat servo=0.0c pulse=500us buz=off
+[   5565ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5723ms] DIST live cm=98.2 us=5695
+[   5975ms] hb
+[   6065ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6565ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6723ms] DIST live cm=98.2 us=5695
+[   6975ms] hb
+[   7064ms] O

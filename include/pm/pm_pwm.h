@@ -37,4 +37,28 @@ uint32_t pm_pwm_buzzer_hz(void);
 uint8_t  pm_pwm_buzzer_duty(void);
 int      pm_pwm_buzzer_on(void);
 
+/* Read-only snapshot for `PWM dbg`. STM32F1 has no MODER/OSPEEDR/AFRH; the
+ * PB8 pin mode lives in GPIOB->CRH bits 3:0 and remap state in AFIO->MAPR. */
+typedef struct {
+    uint32_t rcc_apb1enr;
+    uint32_t rcc_apb2enr;
+    uint32_t tim4_cr1;
+    uint32_t tim4_psc;
+    uint32_t tim4_arr;
+    uint32_t tim4_ccmr2;
+    uint32_t tim4_ccer;
+    uint32_t tim4_ccr3;
+    uint32_t gpiob_crh;
+    uint32_t afio_mapr;
+} pm_pwm_dbg_t;
+
+void     pm_pwm_dbg_read(pm_pwm_dbg_t *out);
+uint32_t pm_pwm_counter(void);
+
+/* Temporary PB8 test: begin() detaches TIM4_CH3 and turns PB8 into a plain
+ * push-pull GPIO; end() restores alternate function and 90 degrees. */
+void pm_pwm_test_begin(void);
+void pm_pwm_test_level(int high);
+void pm_pwm_test_end(void);
+
 #endif /* PM_PWM_H */
