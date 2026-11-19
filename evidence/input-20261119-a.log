@@ -1,0 +1,447 @@
+﻿# input-side capture 2026-11-19 20:33:05.810 port=COM11
+[    113ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    260ms] DIST live cm=78.0 us=4523
+[    509ms] hb
+[    601ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    619ms] >> HELP
+[    632ms] HELP HELP=list commands
+[    633ms] HELP PING=reply PONG
+[    648ms] HELP STAT=clk/up/tick/keys/uart counters
+[    649ms] HELP I2C=scan I2C1 bus, list 8-bit addresses
+[    649ms] HELP AHT=read AHT20, rh and t in 0.1 units
+[    650ms] HELP AHTS=same but read via repeated START
+[    663ms] HELP DIST=one shot, cm and us; live=1Hz
+[    665ms] HELP ADC=pot PA5 and NTC PA4, raw and mV
+[    665ms] HELP OLED=on/off/clear/test/show/frame/col/live/dump
+[    666ms] HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
+[    678ms] HELP TRACK=raw level of PB14 line sensor
+[    681ms] HELP ENC=count/clear, dir, a/b, button PB15
+[    682ms] HELP KEYS=key press counters, clears them
+[   1098ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1129ms] # baseline single reads
+[   1130ms] >> TRACK
+[   1144ms] TRACK raw=1
+[   1253ms] DIST live cm=97.7 us=5666
+[   1393ms] >> TRACK stat
+[   1409ms] TRACK raw=1
+[   1518ms] hb
+[   1594ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1655ms] >> TRACK xyz
+[   1672ms] TRACK err=usage
+[   1906ms] >> ENC
+[   1921ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   2104ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2167ms] >> ENC stat
+[   2184ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   2261ms] DIST live cm=78.8 us=4571
+[   2419ms] >> ENC clear
+[   2434ms] ENC clear ok count=0
+[   2512ms] hb
+[   2605ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2684ms] >> ENC xyz
+[   2699ms] ENC err=usage
+[   2935ms] # regression
+[   2936ms] >> STAT
+[   2951ms] STAT clk=72000000 up=15547 tick=1 key1=0 key2=0 uart_rx=76 uart_tx=2763
+[   3106ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3200ms] >> ADC
+[   3216ms] ADC pot=2126 pot_mv=1713 ntc=2239 ntc_mv=1804 vref=3300
+[   3262ms] DIST live cm=98.2 us=5693
+[   3463ms] >> OLED dump
+[   3478ms] OLED dump mode=live screen=live
+[   3479ms] OLED L0=MODE=LIVE    UP=  15S
+[   3480ms] OLED L1=NOW : IDLE           
+[   3480ms] OLED L2=LAST: boot           
+[   3494ms] OLED L3=RH=44.0 T=21.3C
+[   3494ms] OLED L4=NTC=2241 POT=2126
+[   3495ms] OLED L5=K1=    0 K2=    0
+[   3496ms] OLED L6=I2C af= 0 berr= 0
+[   3496ms] OLED L7=LIVE ms= 98
+[   3509ms] hb
+[   3601ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3878ms] # physical window: cover/uncover PB14 and turn the encoder by hand
+[   3880ms] >> TRACK
+[   3895ms] TRACK raw=1
+[   4065ms] >> ENC
+[   4081ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   4097ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5666ms] >> TRACK
+[   5667ms] DIST live cm=98.6 us=5719
+[   5668ms] hb
+[   5668ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5669ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5669ms] DIST live cm=98.6 us=5718
+[   5670ms] hb
+[   5670ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5681ms] TRACK raw=1
+[   5851ms] >> ENC
+[   5866ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   7441ms] >> TRACK
+[   7442ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7443ms] DIST live cm=98.6 us=5718
+[   7443ms] hb
+[   7444ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7444ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7445ms] DIST live cm=78.4 us=4548
+[   7457ms] TRACK raw=1
+[   7504ms] hb
+[   7596ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7628ms] >> ENC
+[   7644ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   9221ms] >> TRACK
+[   9222ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9223ms] DIST live cm=78.0 us=4523
+[   9223ms] hb
+[   9224ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9224ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9251ms] TRACK raw=0
+[   9252ms] DIST live cm=97.7 us=5666
+[   9404ms] >> ENC
+[   9419ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   9514ms] hb
+[  11005ms] >> TRACK
+[  11006ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11007ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11007ms] DIST live cm=67.4 us=3911
+[  11008ms] hb
+[  11009ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11021ms] TRACK raw=0
+[  11096ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11190ms] >> ENC
+[  11206ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  11253ms] DIST live cm=4.6 us=265
+[  12787ms] >> TRACK
+[  12789ms] hb
+[  12789ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12790ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12790ms] DIST live cm=4.6 us=265
+[  12791ms] hb
+[  12791ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12803ms] TRACK raw=0
+[  12975ms] >> ENC
+[  12990ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  13099ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14574ms] >> TRACK
+[  14575ms] DIST live cm=9.8 us=567
+[  14576ms] hb
+[  14577ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14577ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14578ms] DIST live cm=4.9 us=283
+[  14578ms] hb
+[  14590ms] TRACK raw=0
+[  14605ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14762ms] >> ENC
+[  14777ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  16364ms] >> TRACK
+[  16365ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16366ms] DIST live cm=3.9 us=228
+[  16366ms] hb
+[  16367ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16367ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16368ms] DIST live cm=4.9 us=284
+[  16380ms] TRACK raw=0
+[  16503ms] hb
+[  16565ms] >> ENC
+[  16581ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  16597ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  18164ms] >> TRACK
+[  18166ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  18166ms] DIST live cm=58.6 us=3398
+[  18167ms] hb
+[  18167ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  18168ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  18179ms] TRACK raw=1
+[  18257ms] DIST live cm=57.3 us=3323
+[  18352ms] >> ENC
+[  18368ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  18506ms] hb
+[  19953ms] >> TRACK
+[  19954ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  19955ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  19955ms] DIST live cm=57.3 us=3322
+[  19956ms] hb
+[  19956ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  19983ms] TRACK raw=0
+[  20107ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  20139ms] >> ENC
+[  20155ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  20249ms] DIST live cm=7.4 us=432
+[  21741ms] >> TRACK
+[  21743ms] hb
+[  21743ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  21744ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  21744ms] DIST live cm=57.3 us=3322
+[  21745ms] hb
+[  21745ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  21757ms] TRACK raw=0
+[  21926ms] >> ENC
+[  21942ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  22096ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  23536ms] >> TRACK
+[  23538ms] DIST live cm=69.4 us=4028
+[  23538ms] hb
+[  23539ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  23539ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  23540ms] DIST live cm=16.8 us=977
+[  23540ms] hb
+[  23551ms] TRACK raw=1
+[  23598ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  23722ms] >> ENC
+[  23737ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  25311ms] >> TRACK
+[  25312ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  25312ms] DIST live cm=70.8 us=4106
+[  25313ms] hb
+[  25313ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  25314ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  25314ms] DIST live cm=70.8 us=4106
+[  25327ms] TRACK raw=1
+[  25496ms] >> ENC
+[  25511ms] hb
+[  25512ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  25606ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  27097ms] >> TRACK
+[  27098ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  27098ms] DIST live cm=70.8 us=4106
+[  27099ms] hb
+[  27099ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  27100ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  27112ms] TRACK raw=1
+[  27270ms] DIST live cm=188.5 us=10933
+[  27285ms] >> ENC
+[  27300ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  28888ms] >> TRACK
+[  28889ms] hb
+[  28890ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  28890ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  28890ms] DIST live err=timeout
+[  28891ms] hb
+[  28892ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  28903ms] TRACK raw=1
+[  29075ms] >> ENC
+[  29106ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  29107ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  30666ms] >> TRACK
+[  30667ms] DIST live cm=98.9 us=5739
+[  30668ms] hb
+[  30668ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  30669ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  30669ms] DIST live cm=45.8 us=2655
+[  30670ms] hb
+[  30670ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  30681ms] TRACK raw=1
+[  30851ms] >> ENC
+[  30866ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  32449ms] >> TRACK
+[  32450ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  32450ms] DIST live cm=98.1 us=5692
+[  32451ms] hb
+[  32451ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  32452ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  32452ms] DIST live cm=98.6 us=5716
+[  32465ms] TRACK raw=1
+[  32511ms] hb
+[  32605ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  32637ms] >> ENC
+[  32653ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  34237ms] >> TRACK
+[  34238ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  34239ms] DIST live cm=98.1 us=5687
+[  34239ms] hb
+[  34240ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  34240ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  34253ms] TRACK raw=1
+[  34253ms] DIST live cm=98.5 us=5715
+[  34425ms] >> ENC
+[  34440ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  34502ms] hb
+[  34597ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  36024ms] >> TRACK
+[  36024ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  36025ms] DIST live cm=97.2 us=5640
+[  36025ms] hb
+[  36026ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  36039ms] TRACK raw=1
+[  36101ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  36211ms] >> ENC
+[  36227ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  36258ms] DIST live cm=98.5 us=5713
+[  37810ms] >> TRACK
+[  37811ms] hb
+[  37811ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  37812ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  37812ms] DIST live cm=57.3 us=3323
+[  37812ms] hb
+[  37813ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  37824ms] TRACK raw=1
+[  37993ms] >> ENC
+[  38009ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  38102ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  39595ms] >> TRACK
+[  39596ms] DIST live cm=98.6 us=5719
+[  39597ms] hb
+[  39597ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  39597ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  39598ms] DIST live cm=98.6 us=5720
+[  39598ms] hb
+[  39598ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  39626ms] TRACK raw=1
+[  39781ms] >> ENC
+[  39797ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  41379ms] >> TRACK
+[  41380ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  41380ms] DIST live cm=98.1 us=5692
+[  41381ms] hb
+[  41381ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  41381ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  41382ms] DIST live cm=73.8 us=4280
+[  41394ms] TRACK raw=1
+[  41502ms] hb
+[  41580ms] >> ENC
+[  41595ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  41596ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  43178ms] >> TRACK
+[  43179ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  43179ms] DIST live cm=98.6 us=5719
+[  43180ms] hb
+[  43180ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  43180ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  43194ms] TRACK raw=1
+[  43255ms] DIST live cm=98.1 us=5689
+[  43362ms] >> ENC
+[  43378ms] ENC count=25 dir=cw a=0 b=1 btn=1
+[  43503ms] hb
+[  44965ms] >> TRACK
+[  44966ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  44967ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  44967ms] DIST live cm=98.1 us=5692
+[  44967ms] hb
+[  44968ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  44981ms] TRACK raw=1
+[  45104ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  45151ms] >> ENC
+[  45166ms] ENC count=64 dir=cw a=1 b=1 btn=1
+[  45259ms] DIST live cm=98.6 us=5720
+[  46738ms] >> TRACK
+[  46739ms] hb
+[  46740ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  46741ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  46742ms] DIST live cm=98.6 us=5719
+[  46742ms] hb
+[  46743ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  46753ms] TRACK raw=1
+[  46924ms] >> ENC
+[  46955ms] ENC count=89 dir=cw a=0 b=1 btn=1
+[  47095ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  48519ms] >> TRACK
+[  48520ms] DIST live cm=98.6 us=5718
+[  48521ms] hb
+[  48522ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  48523ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  48523ms] DIST live cm=98.6 us=5719
+[  48524ms] hb
+[  48534ms] TRACK raw=1
+[  48597ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  48707ms] >> ENC
+[  48722ms] ENC count=89 dir=ccw a=0 b=1 btn=1
+[  50305ms] >> TRACK
+[  50306ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  50307ms] DIST live cm=98.6 us=5717
+[  50307ms] hb
+[  50308ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  50308ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  50309ms] DIST live cm=99.0 us=5740
+[  50320ms] TRACK raw=1
+[  50491ms] >> ENC
+[  50507ms] hb
+[  50508ms] ENC count=64 dir=ccw a=1 b=1 btn=1
+[  50598ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  52091ms] >> TRACK
+[  52092ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  52092ms] DIST live cm=99.0 us=5740
+[  52093ms] hb
+[  52093ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  52094ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  52106ms] TRACK raw=1
+[  52260ms] DIST live cm=99.0 us=5742
+[  52276ms] >> ENC
+[  52291ms] ENC count=44 dir=ccw a=1 b=1 btn=1
+[  53864ms] >> TRACK
+[  53865ms] hb
+[  53865ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  53866ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  53867ms] DIST live cm=98.1 us=5687
+[  53867ms] hb
+[  53868ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  53879ms] TRACK raw=1
+[  54050ms] >> ENC
+[  54066ms] ENC count=16 dir=ccw a=1 b=1 btn=1
+[  54096ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  55639ms] >> TRACK
+[  55640ms] DIST live cm=98.5 us=5715
+[  55641ms] hb
+[  55641ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  55642ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  55642ms] DIST live cm=98.5 us=5715
+[  55643ms] hb
+[  55643ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  55671ms] TRACK raw=1
+[  55825ms] >> ENC
+[  55841ms] ENC count=4 dir=ccw a=1 b=1 btn=1
+[  57412ms] >> TRACK
+[  57414ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  57414ms] DIST live cm=98.5 us=5715
+[  57415ms] hb
+[  57416ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  57417ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  57417ms] DIST live cm=98.1 us=5692
+[  57428ms] TRACK raw=1
+[  57506ms] hb
+[  57600ms] >> ENC
+[  57601ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  57615ms] ENC count=-16 dir=ccw a=1 b=1 btn=1
+[  59200ms] >> TRACK
+[  59201ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  59202ms] DIST live cm=71.2 us=4128
+[  59202ms] hb
+[  59203ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  59203ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  59216ms] TRACK raw=1
+[  59262ms] DIST live cm=99.9 us=5793
+[  59388ms] >> ENC
+[  59405ms] ENC count=-28 dir=ccw a=1 b=1 btn=1
+[  59513ms] hb
+[  60985ms] >> TRACK
+[  60986ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  60986ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  60987ms] DIST live cm=98.1 us=5689
+[  60987ms] hb
+[  60988ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  61015ms] TRACK raw=1
+[  61093ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  61171ms] >> ENC
+[  61186ms] ENC count=-32 dir=ccw a=1 b=1 btn=1
+[  61263ms] DIST live cm=98.1 us=5689
+[  62765ms] >> TRACK
+[  62766ms] hb
+[  62766ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  62767ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  62768ms] DIST live cm=98.5 us=5713
+[  62768ms] hb
+[  62768ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  62796ms] TRACK raw=1
+[  62952ms] >> ENC
+[  62968ms] ENC count=-28 dir=cw a=1 b=1 btn=1
+[  63094ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  64543ms] # final
+[  64544ms] >> TRACK
+[  64545ms] DIST live cm=98.5 us=5715
+[  64545ms] hb
+[  64546ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  64546ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  64547ms] DIST live cm=99.0 us=5741
+[  64547ms] hb
+[  64559ms] TRACK raw=1
+[  64590ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  64746ms] >> ENC
+[  64761ms] ENC count=-32 dir=ccw a=1 b=1 btn=1

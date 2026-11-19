@@ -105,7 +105,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 11 行 `HELP ...`，共 **458 B**（见下） | — | 否 |
+| `HELP` | 无 | 13 行 `HELP ...`，共 **545 B**（见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -124,6 +124,8 @@ HELP DIST=one shot, cm and us; live=1Hz
 HELP ADC=pot PA5 and NTC PA4, raw and mV
 HELP OLED=on/off/clear/test/show/frame/col/live/dump
 HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
+HELP TRACK=raw level of PB14 line sensor
+HELP ENC=count/clear, dir, a/b, button PB15
 HELP KEYS=key press counters, clears them
 ```
 
@@ -275,12 +277,44 @@ PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是
   现场回包证据（`PATCHES.md` §30.3）。
 - 舵机角度、抖动与蜂鸣器听感**不在串口可证范围内**，回包只说明配置值与脉宽。
 
+### 4.7 输入侧（PB14 循迹 / PA8-PA9 编码器 / PB15 按键）
+
+PB14 是 TCRT5000 模块的数字输出（模块自带比较器），上拉输入；PA8/PA9 是 EC11 的
+A/B 相，EXTI8/EXTI9 双边沿 + 软件四倍频（x4）；PB15 是编码器按键，上拉输入。
+三个引脚都不占用 TIM3/TIM4（已给蜂鸣器与舵机），也不与 USART1/TIM1 冲突，
+引脚核对见 `PATCHES.md` §31.1。
+
+| 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
+| --- | --- | --- | --- | --- |
+| `TRACK` / `TRACK stat` | 无 | `TRACK raw=1`（未遮挡/白底）或 `TRACK raw=0`（黑物/遮挡） | `TRACK err=init` | 否（只读） |
+| `ENC` / `ENC stat` | 无 | `ENC count=<i32> dir=cw\|ccw\|idle a=<0\|1> b=<0\|1> btn=<0\|1>` | `ENC err=init` | 否（只读） |
+| `ENC clear` | 无 | `ENC clear ok count=0` | `ENC err=init` | **是**：计数清零 |
+| 其它子命令 | — | — | `TRACK err=usage` / `ENC err=usage` | 否 |
+
+说明：
+
+- `TRACK raw=` 给的是**原始电平**，不是布尔化后的"黑/白"：高电平（`raw=1`）是模块
+  比较器输出未触发，低电平（`raw=0`）是检测到反射面变化（黑线/遮挡）。判据是模块
+  的数字输出，不是固件里的 ADC 阈值。
+- 只有一路 PB14，所以"单路遮挡"和"全黑"在电气上是同一个 `raw=0`，固件无法区分；
+  上板只验证过"盖黑物→0、拿开→1"两个状态（`PATCHES.md` §31.3）。
+- `count=` 是 32 位有符号累计值，x4 解码：A/B 每产生一次合法跳变计 ±1，
+  一个机械格通常 4 个计数，手停在半格时会出现非 4 的倍数（实测 25/39/89）。
+  方向由 A/B 相位关系决定（A 领先 B 为 `cw` 即正），**符号与物理转向的对应需目视确认**。
+- `dir=` 是最近一次有效跳变的方向，不是本次查询时的运动方向：手停下后仍保持
+  `cw`/`ccw`，只有从未动过才是 `idle`。
+- `a=`/`b=` 是查询瞬间 PA8/PA9 的电平，`btn=` 是 PB15：`1`=松开，`0`=按下。
+- `ENC clear` 只清计数，不清 `dir`（下一格转动前仍显示上次方向）与 a/b/btn。
+- `TRACK err=init` / `ENC err=init` 只在端口层初始化失败时出现；当前实现恒成功，
+  没有现场回包证据。
+- 串口只能证明电平与计数；轮子是否打滑、转向是否与计数符号一致，不在串口可证范围内。
+
 ---
 
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **11 行 458 B**（含每条 CRLF）。
+   当前 `HELP` 是 **13 行 545 B**（含每条 CRLF）。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。

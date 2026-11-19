@@ -1497,7 +1497,8 @@ PWM stat servo=90.0c pulse=1500us buz=1000Hz/20%
   ntc=2274 ntc_mv=1833 vref=3300`、`OLED dump mode=live screen=live`、`DIST cm=69.0 us=4002`）。
   `AHT` 在 +42033 ms 回 `AHT err=busy oled`，是 §29 已定义的"撞上 live 整屏推送"行为，
   不是本轮改动引入。
-- `HELP` 现为 **11 行 458 B**（新增 `HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep`）。
+- `HELP` **当时为 11 行 458 B**（新增 `HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep`；
+  §31 加入 TRACK/ENC 后为 13 行 545 B）。
 
 **观察结论（与上面的回包分开）**
 
@@ -1555,12 +1556,117 @@ PWM stat servo=90.0c pulse=1500us buz=1000Hz/20%
 - **未验证**：舵机是否真的转、转到几度、有没有堵转或抖动——串口没有证据，必须
   人眼看。按 AGENTS.md 1.4，若慢扫仍完全不动，两次尝试后停手报告，不再改代码碰运气。
 
+## 31. 2026-11-19 输入侧：循迹 PB14 / 编码器 PA8·PA9·PB15
+
+### 31.1 先核引脚（未改接线、未动 PWM）
+
+本树是手写初始化工程，没有 `.ioc`，所以按代码核占用：
+
+- USART2 = PA2/PA3，USART3 = PB10/PB11；USART1 从未初始化，**PA9 没有被
+  USART1_TX 占用**（`pm_port_stm32f1.c` 的 USART1 分支不会执行）。
+- TIM1 未启用，**PB15 的 TIM1_CH3N 不构成冲突**；TIM3/TIM4 仍只服务蜂鸣器与舵机。
+- PB14 只有在 `PM_DEMO_SPI=ON` 时才会被 SPI2_MISO 占用，默认关闭。
+- 编码器不用定时器：EXTI8/9 双边沿 + 软件 x4 解码，因此不与 TIM3/TIM4 抢资源。
+- 结论：PA8、PA9、PB14、PB15 均空闲，可直接接；本轮没有改任何接线或 PWM 配置。
+
+### 31.2 改了什么
+
+| 文件 | 角色 | 内容 |
+| --- | --- | --- |
+| `include/pm/pm_track.h`（新） | common | `pm_track_init()` / `pm_track_raw()` |
+| `include/pm/pm_encoder.h`（新） | common | 初始化、有符号计数、清零、最后方向、A/B 原始电平、按键 |
+| `src/port/stm32f1/pm_track_stm32f1.c`（新） | BSP | PB14 输入上拉，读 IDR |
+| `src/port/stm32f1/pm_encoder_stm32f1.c`（新） | BSP | PA8/PA9 上拉 + EXTI 双边沿 + x4 跳变表；PB15 上拉 |
+| `src/components/track_dev/`（新） | components | `TRACK` 命令与回包 |
+| `src/components/encoder_dev/`（新） | components | `ENC` / `ENC clear` 命令与回包 |
+| `CMakeLists.txt` | 构建 | 两个 port 文件、两个组件与 include 目录 |
+| `src/app/main.c` | glue | **+5 行**：2 个 include、2 行 HELP、1 行 `track_dev_init(); encoder_dev_init();`；分发复用原有 `else if` 那一行 |
+
+`main.c` 1658（PWM 接入前）→ 1663（PWM）→ **1668**；`--glue-max-lines` 仍 **1700**，
+没有抬。PWM 的 `pwm_dev.c`、`pm_pwm*` 未改。
+
+### 31.3 已实测（`evidence/input-20261119-a.log`）
+
+构建 `build-pwm2`：Flash **24444 B / 64 KB（37.30%）**、RAM **4528 B / 20 KB（22.11%）**
+（text 23984 / data 460 / bss 4076）；烧录 `-v -rst` 回读校验通过。
+`check_layering.py . --glue-max-lines 1700` = **0 ERROR / 3 WARN**。
+
+**原始回包（摘录，逐字）**
+
+```
+HELP TRACK=raw level of PB14 line sensor
+HELP ENC=count/clear, dir, a/b, button PB15
+TRACK raw=1
+TRACK raw=0
+TRACK err=usage
+ENC count=0 dir=idle a=1 b=1 btn=1
+ENC clear ok count=0
+ENC count=25 dir=cw a=0 b=1 btn=1
+ENC count=64 dir=cw a=1 b=1 btn=1
+ENC count=89 dir=cw a=0 b=1 btn=1
+ENC count=89 dir=ccw a=0 b=1 btn=1
+ENC count=64 dir=ccw a=1 b=1 btn=1
+ENC count=44 dir=ccw a=1 b=1 btn=1
+ENC count=16 dir=ccw a=1 b=1 btn=1
+ENC count=4 dir=ccw a=1 b=1 btn=1
+ENC count=-16 dir=ccw a=1 b=1 btn=1
+ENC count=-28 dir=ccw a=1 b=1 btn=1
+ENC count=-32 dir=ccw a=1 b=1 btn=1
+ENC err=usage
+```
+
+- `HELP` 现为 **13 行 545 B**。
+- 循迹（PB14，1.78 s 采样一次，共 37 条 `TRACK` 回包）：1.14–7.46 s `raw=1`；
+  9.25–16.38 s `raw=0`；18.18 s 短暂 `raw=1`；19.98–21.76 s `raw=0`；
+  23.55 s 起至 64.56 s 全部 `raw=1`（23 个采样点）。即 **4 次跳变、2 个完整盖/放周期**，
+  同一状态内 0 次跳变（按 1.78 s 采样分辨率）。本模块**白底输出 1、黑物/遮挡输出 0**。
+- 编码器：+43.4 s 起 `count` 25→64→89（`dir=cw`），+48.7 s 起反向
+  89→64→44→16→4→-16→-28→-32（`dir=ccw`）；两段之间 `a/b` 原始电平随之变化。
+  64/44/16/4/-16/-28/-32 都是 4 的倍数，和"每格 4 次跳变"的 x4 解码一致；
+  25/39/89 是转动中途采样，不是计数错误。末尾 62.97 s `-28 dir=cw`、64.76 s
+  `-32 dir=ccw` 是两次 4 计数的小幅反向移动，是否收手回弹未确认。
+- 回归：`STAT clk=72000000 up=15547 ...`、`ADC pot=2126 pot_mv=1713 ntc=2239
+  ntc_mv=1804 vref=3300`、`OLED dump mode=live screen=live` 且 8 行文本正常。
+- 全窗口无复位（`up=` 持续增长、`hb` 不中断），EXTI 中断与 OLED/DIST 共存正常。
+- 抓包局限：脚本每 1.78 s 发一次 `TRACK`/`ENC`，sleep 期间不读串口，醒来补打，
+  于是 5.67/7.44/9.22 s 等处出现 1–4 ms 内连出两条 `OLED live ok`、两条 `hb` 的假节拍。
+  这些时间戳是**读出时刻**，不能用来判断刷新节拍；也不影响 `TRACK`/`ENC` 回包内容。
+
+### 31.4 观察结论（与回包分开）
+
+- 串口能证明：引脚电平确实随遮挡变化；编码器计数在两个方向上一增一减，
+  `dir` 与计数变化符号一致；清零生效；错误路径有回包。
+- 串口不能证明：`dir=cw` 对应旋钮的哪个视觉方向（需要用户确认转动顺序）；
+  每格是否固定 4 个计数（只在转动中采样，未逐格核对）；按键按下是否读到 0；
+  轮子/机构有没有打滑（本轮没接电机与轮子）。
+
+### 31.5 未验证
+
+- `TRACK` 只有一路数字量，"单路遮挡"与"全黑"都返回 `raw=0`，**无法区分**；
+  要区分需要多路循迹模块。
+- 编码器按键 29 次采样全部 `btn=1`（含 41.6–64.8 s 的转动阶段），**按下那一次没有被抓到**。
+  可能落在 1.78 s 采样间隔内，也可能按压时间过短；两种原因无法区分，需另抓
+  "按住 2 s"的窗口才能给出按下证据。
+- 两个方向符号相反已确认（cw 为正、ccw 为负），但**符号与物理顺时针/逆时针的对应未确认**。
+- 1.78 s 采样只有净计数，看不到单步过程：**是否丢步、是否有反向抖动均无法判断**；
+  增量含 25/39/89 这些非 4 倍数，说明手停在半格，不能拿"4 的倍数"当丢步判据。
+- `ENC err=init` / `TRACK err=init` 只有代码路径，两个 init 当前恒成功。
+- 编码器计数与实际角度/位移的比例未标定。
+
+### 31.6 副作用
+
+`DIST live` 在本窗口内仍出现 3.9–188.5 cm 的跳变与 `err=timeout`；**本窗口没有发过
+任何 `PWM`/`buz` 命令**，所以不能把这次异常归给蜂鸣器开关。短读数（4.6/3.9/7.4/9.8/
+16.8 cm）集中在 11.2–16.4 s，与 PB14 被遮挡的时间窗重合，**推测**是手/黑物同时进入
+HC-SR04 视场（物理遮挡），不是固件；`err=timeout` 出现在 28.89 s（遮挡已结束）。
+本轮按约束没有排查、没有改 DIST 与 PWM，归因留待后续专项。
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，
   当前未使用 printf，无影响。
 - 判读规则：BLE 侧一个长回包可能显示成多个气泡，**只看总字节数，不看气泡个数**。
-  `HELP` 完整 = **458 B（11 行，COM11 实测）**。
+  `HELP` 完整 = **545 B（13 行，COM11 实测）**。
 - 舵机/蜂鸣器只有串口回包证据，**目视角度、抖动、听感均未采集**（§30.3）。
 - `DIST` 的 timeout 分支（无回波、>4 m）只做了代码路径，**没有制造出真实现场验证**。
 - 异步命令（`AHT`/`AHTS`/`DIST`）的回包可能晚于其后一条命令的回包（最多晚 60~80 ms）。
