@@ -1,0 +1,90 @@
+﻿# board-bringup 2026-11-19 post-key / panel-off diagnosis, COM11 115200 8N1 (USART2/CH343)
+# Requested: KEYS reconciliation (expect k1=1 k2=1), explain the dark panel, OLED on/show, and a DIST timeout attempt.
+# Lines starting with ">>" are PC sends; every other line came from the board.
+# capture start 2026-11-19 19:03:35.197 local
+[+48ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+193ms] DIST live cm=98.6 us=5720<CR>
+[+414ms] hb<CR>
+[+528ms] >> STAT
+[+537ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+542ms] STAT clk=72000000 up=453219 tick=1 key1=9 key2=7 uart_rx=372 uart_tx=45726<CR>
+[+589ms] >> KEYS
+[+593ms] KEYS k1=9 k2=7 last=k1<CR>
+[+678ms] >> I2C
+[+694ms] I2C found=0x70,0x7A<CR>
+[+1035ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+1193ms] DIST live cm=98.2 us=5694<CR>
+[+1414ms] hb<CR>
+[+1535ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+2034ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+2192ms] DIST live cm=95.3 us=5525<CR>
+[+2311ms] >> OLED live off
+[+2315ms] OLED live=off<CR>
+[+2390ms] >> OLED on
+[+2395ms] OLED on ok af=0 berr=0 to=0<CR>
+[+2413ms] hb<CR>
+[+3057ms] >> OLED show
+[+3163ms] OLED show ok ms=97 col=2 live=off af=0 berr=0 to=0<CR>
+[+3414ms] hb<CR>
+[+4414ms] hb<CR>
+[+5413ms] hb<CR>
+[+5770ms] >> OLED live on
+[+5775ms] OLED live=on period=500ms<CR>
+[+5875ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+6033ms] DIST live cm=98.2 us=5694<CR>
+[+6080ms] >> DIST
+[+6090ms] DIST cm=62.4 us=3621<CR>
+[+6375ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+6413ms] hb<CR>
+[+6874ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+7033ms] DIST live cm=96.4 us=5593<CR>
+[+7069ms] >> DIST
+[+7080ms] DIST cm=79.7 us=4624<CR>
+[+7374ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+7413ms] hb<CR>
+[+7874ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+8033ms] DIST live cm=97.3 us=5645<CR>
+[+8076ms] >> DIST
+[+8087ms] DIST cm=62.9 us=3646<CR>
+[+8374ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+8413ms] hb<CR>
+[+8874ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+9033ms] DIST live cm=98.6 us=5720<CR>
+[+9073ms] >> DIST
+[+9083ms] DIST cm=62.7 us=3637<CR>
+[+9374ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+9413ms] hb<CR>
+[+9875ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+10033ms] DIST live cm=98.6 us=5719<CR>
+[+10068ms] >> DIST
+[+10080ms] DIST cm=98.6 us=5719<CR>
+[+10374ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+10413ms] hb<CR>
+[+10875ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+11031ms] DIST live cm=67.3 us=3904<CR>
+[+11078ms] >> DIST
+[+11088ms] DIST cm=61.1 us=3546<CR>
+[+11374ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+11413ms] hb<CR>
+[+11874ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+12032ms] DIST live cm=99.1 us=5746<CR>
+[+12070ms] >> DIST
+[+12080ms] DIST cm=62.4 us=3621<CR>
+[+12374ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+12413ms] hb<CR>
+[+12874ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+13033ms] DIST live cm=98.6 us=5719<CR>
+[+13065ms] >> DIST
+[+13077ms] DIST cm=98.2 us=5694<CR>
+[+13374ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+13413ms] hb<CR>
+[+13874ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+14032ms] DIST live cm=98.6 us=5720<CR>
+[+14374ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+14413ms] hb<CR>
+[+14705ms] >> OLED live off
+[+14709ms] OLED live=off<CR>
+[+14782ms] >> STAT
+[+14791ms] STAT clk=72000000 up=467471 tick=1 key1=0 key2=0 uart_rx=501 uart_tx=47417<CR>
+[+15413ms] hb<CR>
+# capture closed at +15695ms
