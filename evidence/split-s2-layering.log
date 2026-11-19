@@ -1,0 +1,28 @@
+﻿[WARN ] src/app/main.c:1 入口胶水层 1404 行代码（上限 200），业务逻辑应下沉到组件层
+[WARN ] src/app/main.c:220 胶水层实现外设驱动：函数 i2c1_bus_fix 有 13 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:234 胶水层阻塞延时：pm_osal_delay_ms()（初始化外的等待应下沉到端口/时基，运行期轮询改非阻塞）
+[WARN ] src/app/main.c:236 胶水层阻塞延时：pm_osal_delay_ms()（初始化外的等待应下沉到端口/时基，运行期轮询改非阻塞）
+[WARN ] src/app/main.c:239 胶水层阻塞延时：pm_osal_delay_ms()（初始化外的等待应下沉到端口/时基，运行期轮询改非阻塞）
+[WARN ] src/app/main.c:241 胶水层阻塞延时：pm_osal_delay_ms()（初始化外的等待应下沉到端口/时基，运行期轮询改非阻塞）
+[WARN ] src/app/main.c:265 胶水层实现外设驱动：函数 i2c1_scan 有 9 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:295 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
+[WARN ] src/app/main.c:334 胶水层实现外设驱动：函数 i2c1_read_after_trigger 有 10 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:370 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
+[WARN ] src/app/main.c:374 胶水层实现外设驱动：函数 aht20_trigger 有 5 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:608 胶水层硬编码引脚/端口：GPIO_PIN_4（引脚映射应归端口层）
+[WARN ] src/app/main.c:610 胶水层硬编码引脚/端口：GPIOA（引脚映射应归端口层）
+[WARN ] src/app/main.c:816 胶水层实现外设驱动：函数 dist_start 有 4 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:851 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
+[WARN ] src/app/main.c:965 胶水层实现外设驱动：函数 oled_i2c_wait 有 3 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:991 胶水层实现外设驱动：函数 oled_bus_write 有 8 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:1182 胶水层函数 oled_screen_name 有 5 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
+[WARN ] src/app/main.c:1224 胶水层函数 oled_start_screen 有 4 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
+[WARN ] src/app/main.c:1270 胶水层函数 cmd_oled 有 123 行代码（上限 80）；拆出组件或改成表驱动
+[WARN ] src/app/main.c:1573 胶水层函数 cmd_execute 有 8 个字符串 else-if 分支（阈值 4）；命令分发应改注册表
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:352 端口层调用组件 ISR 钩子：pm_uart_hw_rx_byte（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:362 端口层调用组件 ISR 钩子：pm_uart_hw_tx_complete（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:374 端口层调用组件 ISR 钩子：pm_uart_hw_error（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[NOTE ] 已按角色清单 .arch-roles 判定层归属
+[NOTE ] 忽略路径：third_party/, build-*/
+
+合计 0 ERROR / 24 WARN（扫描目录：D:\All the work\TRAEwork\AI-STM32F1-1\2026-11-18\board-bringup\work）

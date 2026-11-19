@@ -17,6 +17,7 @@
 #include "pm_gpio.h"
 #include "pm_uart.h"
 #include "pm_cmd.h"
+#include "pm_cmd_out.h"
 #include "pm_platform.h"
 #include "board_f103c8.h"
 #include "oled_ch1116.h"
@@ -100,115 +101,19 @@ static key_state_t s_keys[] = {
 #define KEY_COUNT ((size_t)(sizeof(s_keys) / sizeof(s_keys[0])))
 
 /* Command channel state; the parser itself lives further down. */
-#define CMD_LINE_MAX 48u
-
-typedef struct {
-    pm_uart_t *port;
-    char       line[CMD_LINE_MAX];
-    size_t     len;
-    uint32_t   last_ms;    /* last byte seen on this port, for idle flush */
-} cmd_port_t;
-
 static cmd_port_t s_debug = { .port = &s_uart };
 static cmd_port_t s_ble   = { .port = &s_bt };
 
 static uint32_t s_key_press[KEY_COUNT];
 static int      s_key_last = -1;
 static uint32_t s_rx_total;
-static uint32_t s_tx_total;
-
-/* Last command and result, shown on the live page as "LAST: ". Capped at 15
- * characters so it fits after the 6-column prefix; longer replies are cut. */
-static char s_last[16] = "boot";
 
 /* Declared here because aht_bg_tick() runs before the OLED block: the
  * background AHT trigger must not cut into a multi-page I2C push. */
 static cmd_port_t *s_oled_req;         /* NULL = no job running */
 static void oled_now_row_flash(void);  /* repaint the NOW row for a short job */
 
-static void last_set(const char *s)
-{
-    size_t n = 0u;
-
-    while ((s[n] != '\0') && (n < (sizeof(s_last) - 1u))) {
-        s_last[n] = s[n];
-        n++;
-    }
-    s_last[n] = '\0';
-}
-
-static void last_num(const char *pre, uint32_t v, const char *suf)
-{
-    char  b[16];
-    char *p = b;
-
-    while (*pre != '\0') {
-        *p++ = *pre++;
-    }
-    p = pm_cmd_sput_u32(p, v);
-    while (*suf != '\0') {
-        *p++ = *suf++;
-    }
-    *p = '\0';
-    last_set(b);
-}
-
-static void last_two(const char *a, const char *b)
-{
-    char        buf[16];
-    char       *p = buf;
-    const char *s;
-
-    for (s = a; (*s != '\0') && (p < &buf[15]); s++) {
-        *p++ = *s;
-    }
-    for (s = b; (*s != '\0') && (p < &buf[15]); s++) {
-        *p++ = *s;
-    }
-    *p = '\0';
-    last_set(buf);
-}
-
 static void cmd_feed(cmd_port_t *c, const uint8_t *d, size_t n);
-
-static void uart_write_str(const char *s)
-{
-    size_t n = strlen(s);
-
-    /* Bounded, but not zero: with PM_UART_TIMEOUT_NOW the tail of a long line
-     * is dropped as soon as the ring is full, which silently corrupted the
-     * BLE traffic mirror. 50 ms at 115200 is ~570 bytes. */
-    (void)pm_uart_write(&s_uart, (const uint8_t *)s, n, NULL, 50u);
-    s_tx_total += (uint32_t)n;
-}
-
-static void uart_write_u32(uint32_t v)
-{
-    char  buf[11];
-    char *p = &buf[sizeof(buf) - 1];
-
-    *p = '\0';
-    do {
-        *--p = (char)('0' + (v % 10u));
-        v /= 10u;
-    } while (v != 0u);
-    uart_write_str(p);
-}
-
-static void uart_write_hex(const uint8_t *d, size_t n)
-{
-    static const char hex[] = "0123456789ABCDEF";
-    char   out[4];
-    size_t i;
-
-    for (i = 0u; i < n; i++) {
-        out[0] = ' ';
-        out[1] = hex[(d[i] >> 4) & 0x0Fu];
-        out[2] = hex[d[i] & 0x0Fu];
-        out[3] = '\0';
-        uart_write_str(out);
-    }
-}
 
 static void on_uart_event(pm_uart_t *u, const pm_evt_t *evt, void *ctx)
 {
@@ -264,8 +169,8 @@ static void key_service(uint32_t now)
             (void)pm_gpio_write(k->led,
                                 (pressed != 0u) ? PM_GPIO_LEVEL_HIGH
                                                 : PM_GPIO_LEVEL_LOW);
-            uart_write_str(k->name);
-            uart_write_str((pressed != 0u) ? " pressed\r\n" : " released\r\n");
+            pm_cmd_out_uart_write_str(k->name);
+            pm_cmd_out_uart_write_str((pressed != 0u) ? " pressed\r\n" : " released\r\n");
         }
     }
 }
@@ -286,64 +191,6 @@ static void error_loop(void)
  * port the command arrived on. Replies are single-line key=value pairs with
  * CRLF, no decoration, so both a human and a program can parse them.
  * No dynamic allocation is used anywhere. */
-
-/* pm_uart_write() drops the tail when the TX ring stays full until the
- * timeout, which silently truncated long replies (HELP is 274 B and the BLE
- * ring was 128 B). Keep pushing until every byte is accepted. */
-static void tx_bytes_all(cmd_port_t *c, const uint8_t *d, size_t n)
-{
-    size_t off = 0u;
-
-    while (off < n) {
-        size_t   w  = 0u;
-        pm_err_t rc = pm_uart_write(c->port, &d[off], n - off, &w, 1000u);
-
-        off += w;
-        if ((rc != PM_OK) && (w == 0u)) {
-            break;
-        }
-    }
-    s_tx_total += (uint32_t)off;
-
-    /* Mirror what actually left the BLE port so a COM11 capture shows both
-     * directions of the USART3 path, not just the RX side. */
-    if (c == &s_ble) {
-        uart_write_str("BT tx n=");
-        uart_write_u32((uint32_t)off);
-        uart_write_str("B:");
-        uart_write_hex(d, off);
-        uart_write_str("\r\n");
-    }
-}
-
-static void tx_str(cmd_port_t *c, const char *s)
-{
-    tx_bytes_all(c, (const uint8_t *)s, strlen(s));
-}
-
-static void tx_u32(cmd_port_t *c, uint32_t v)
-{
-    char  buf[11];
-    char *p = &buf[sizeof(buf) - 1];
-
-    *p = '\0';
-    do {
-        *--p = (char)('0' + (v % 10u));
-        v /= 10u;
-    } while (v != 0u);
-    tx_str(c, p);
-}
-
-static void tx_hex_byte(cmd_port_t *c, uint8_t b)
-{
-    static const char hex[] = "0123456789ABCDEF";
-    char out[3];
-
-    out[0] = hex[(b >> 4) & 0x0Fu];
-    out[1] = hex[b & 0x0Fu];
-    out[2] = '\0';
-    tx_str(c, out);
-}
 
 /* -------------------------------------------------------------- I2C1 scan
  * Bring-up only: polling access on purpose (the model has no I2C driver yet)
@@ -460,19 +307,19 @@ static void cmd_i2c(cmd_port_t *c)
     size_t  i;
 
     n = i2c1_scan(found, sizeof(found));
-    tx_str(c, "I2C found=");
+    pm_cmd_out_tx_str(c, "I2C found=");
     if (n == 0u) {
-        tx_str(c, "none\r\n");
+        pm_cmd_out_tx_str(c, "none\r\n");
         return;
     }
     for (i = 0u; i < n; i++) {
         if (i != 0u) {
-            tx_str(c, ",");
+            pm_cmd_out_tx_str(c, ",");
         }
-        tx_str(c, "0x");
-        tx_hex_byte(c, found[i]);
+        pm_cmd_out_tx_str(c, "0x");
+        pm_cmd_out_tx_hex_byte(c, found[i]);
     }
-    tx_str(c, "\r\n");
+    pm_cmd_out_tx_str(c, "\r\n");
 }
 
 /* ------------------------------------------------ AHT20 temperature/humidity
@@ -591,27 +438,16 @@ static int32_t  s_aht_t10;
 static uint8_t  s_aht_have;
 static uint32_t s_aht_next = AHT_BG_PERIOD_MS;
 
-static void tx_fixed1(cmd_port_t *c, int32_t v)
-{
-    if (v < 0) {
-        tx_str(c, "-");
-        v = -v;
-    }
-    tx_u32(c, (uint32_t)(v / 10));
-    tx_str(c, ".");
-    tx_u32(c, (uint32_t)(v % 10));
-}
-
 static void aht_reply_raw(cmd_port_t *c, const uint8_t *d)
 {
     size_t i;
 
-    tx_str(c, " raw=");
+    pm_cmd_out_tx_str(c, " raw=");
     for (i = 0u; i < 6u; i++) {
         if (i != 0u) {
-            tx_str(c, " ");
+            pm_cmd_out_tx_str(c, " ");
         }
-        tx_hex_byte(c, d[i]);
+        pm_cmd_out_tx_hex_byte(c, d[i]);
     }
 }
 
@@ -620,11 +456,11 @@ static void aht_reply_err(cmd_port_t *c, const uint8_t *d, const char *why)
     if (c == NULL) {
         return;                        /* background sample: no port, no reply */
     }
-    last_two("AHT err=", why);
-    tx_str(c, "AHT err=");
-    tx_str(c, why);
+    pm_cmd_out_last_two("AHT err=", why);
+    pm_cmd_out_tx_str(c, "AHT err=");
+    pm_cmd_out_tx_str(c, why);
     aht_reply_raw(c, d);
-    tx_str(c, "\r\n");
+    pm_cmd_out_tx_str(c, "\r\n");
 }
 
 static void aht_reply_ok(cmd_port_t *c, const uint8_t *d, int repeated)
@@ -647,16 +483,16 @@ static void aht_reply_ok(cmd_port_t *c, const uint8_t *d, int repeated)
         lp = pm_cmd_sput_s(lp, "AHT ok ", 7u);
         lp = pm_cmd_sput_f1(lp, (int32_t)rh10);
         *lp = '\0';
-        last_set(lb);
+        pm_cmd_out_last_set(lb);
     }
-    tx_str(c, "AHT ok rh=");
-    tx_fixed1(c, (int32_t)rh10);
-    tx_str(c, " t=");
-    tx_fixed1(c, t10);
+    pm_cmd_out_tx_str(c, "AHT ok rh=");
+    pm_cmd_out_tx_fixed1(c, (int32_t)rh10);
+    pm_cmd_out_tx_str(c, " t=");
+    pm_cmd_out_tx_fixed1(c, t10);
     aht_reply_raw(c, d);
-    tx_str(c, " rst=");
-    tx_u32(c, (uint32_t)repeated);
-    tx_str(c, "\r\n");
+    pm_cmd_out_tx_str(c, " rst=");
+    pm_cmd_out_tx_u32(c, (uint32_t)repeated);
+    pm_cmd_out_tx_str(c, "\r\n");
 }
 
 static void aht_start(cmd_port_t *c, int repeated)
@@ -664,13 +500,13 @@ static void aht_start(cmd_port_t *c, int repeated)
     static const uint8_t zero[6] = { 0u, 0u, 0u, 0u, 0u, 0u };
 
     if (s_aht.active != 0u) {
-        tx_str(c, "AHT err=busy pending\r\n");
+        pm_cmd_out_tx_str(c, "AHT err=busy pending\r\n");
         return;
     }
     /* aht_trigger_only() re-initialises I2C1 when the peripheral is off; doing
      * that between two pages of an OLED push wedged the panel (err=io run). */
     if (s_oled_req != NULL) {
-        tx_str(c, "AHT err=busy oled\r\n");
+        pm_cmd_out_tx_str(c, "AHT err=busy oled\r\n");
         return;
     }
     if (aht_trigger_only(repeated) == 0) {
@@ -781,15 +617,15 @@ static void adc_boot(void)
     s_adc1.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
     s_adc1.Init.NbrOfConversion       = 1;
     if (HAL_ADC_Init(&s_adc1) != HAL_OK) {
-        uart_write_str("ADC1 init FAILED\r\n");
+        pm_cmd_out_uart_write_str("ADC1 init FAILED\r\n");
         return;
     }
     if (HAL_ADCEx_Calibration_Start(&s_adc1) != HAL_OK) {
-        uart_write_str("ADC1 calibration FAILED\r\n");
+        pm_cmd_out_uart_write_str("ADC1 calibration FAILED\r\n");
         return;
     }
     s_adc_ok = 1u;
-    uart_write_str("ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit\r\n");
+    pm_cmd_out_uart_write_str("ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit\r\n");
 }
 
 /* One software-triggered conversion; 0 on any HAL failure. */
@@ -851,30 +687,30 @@ static void cmd_adc(cmd_port_t *c)
     uint16_t ntc = 0u;
 
     if (s_adc_ok == 0u) {
-        last_set("ADC err=init");
-        tx_str(c, "ADC err=init\r\n");
+        pm_cmd_out_last_set("ADC err=init");
+        pm_cmd_out_tx_str(c, "ADC err=init\r\n");
         return;
     }
     if (adc_sample(ADC_CHANNEL_5, &pot) == 0) {
-        last_set("ADC err=tout pa5");
-        tx_str(c, "ADC err=timeout ch=pa5\r\n");
+        pm_cmd_out_last_set("ADC err=tout pa5");
+        pm_cmd_out_tx_str(c, "ADC err=timeout ch=pa5\r\n");
         return;
     }
     if (adc_sample(ADC_CHANNEL_4, &ntc) == 0) {
-        last_set("ADC err=tout pa4");
-        tx_str(c, "ADC err=timeout ch=pa4\r\n");
+        pm_cmd_out_last_set("ADC err=tout pa4");
+        pm_cmd_out_tx_str(c, "ADC err=timeout ch=pa4\r\n");
         return;
     }
-    last_num("ADC ok ", adc_to_mv(pot), "mV");
-    tx_str(c, "ADC pot=");
-    tx_u32(c, pot);
-    tx_str(c, " pot_mv=");
-    tx_u32(c, adc_to_mv(pot));
-    tx_str(c, " ntc=");
-    tx_u32(c, ntc);
-    tx_str(c, " ntc_mv=");
-    tx_u32(c, adc_to_mv(ntc));
-    tx_str(c, " vref=3300\r\n");
+    pm_cmd_out_last_num("ADC ok ", adc_to_mv(pot), "mV");
+    pm_cmd_out_tx_str(c, "ADC pot=");
+    pm_cmd_out_tx_u32(c, pot);
+    pm_cmd_out_tx_str(c, " pot_mv=");
+    pm_cmd_out_tx_u32(c, adc_to_mv(pot));
+    pm_cmd_out_tx_str(c, " ntc=");
+    pm_cmd_out_tx_u32(c, ntc);
+    pm_cmd_out_tx_str(c, " ntc_mv=");
+    pm_cmd_out_tx_u32(c, adc_to_mv(ntc));
+    pm_cmd_out_tx_str(c, " vref=3300\r\n");
 }
 
 /* ---------------------------------------------- HC-SR04 distance, PA11/PA10
@@ -936,7 +772,7 @@ static void dist_last_ok(uint32_t cm10)
     *p++ = '.';
     *p++ = (char)('0' + (cm10 % 10u));
     *p = '\0';
-    last_set(b);
+    pm_cmd_out_last_set(b);
 }
 
 static void dist_hw_init(void)
@@ -986,7 +822,7 @@ static void dist_start(cmd_port_t *c, uint8_t auto_live)
      * the screen is not flooded once per second. */
     if (DIST_TIME_BASE_READY == 0) {
         if (auto_live == 0u) {
-            tx_str(c, "DIST err=disabled\r\n");
+            pm_cmd_out_tx_str(c, "DIST err=disabled\r\n");
         }
         return;
     }
@@ -997,7 +833,7 @@ static void dist_start(cmd_port_t *c, uint8_t auto_live)
         }
         /* Manual DIST must not run a second HC-SR04 sequence next to the
          * measurement live started. */
-        tx_str(c, (s_dist.auto_live != 0u) ? "DIST err=busy live\r\n"
+        pm_cmd_out_tx_str(c, (s_dist.auto_live != 0u) ? "DIST err=busy live\r\n"
                                            : "DIST err=busy\r\n");
         return;
     }
@@ -1039,14 +875,14 @@ static void dist_service(uint32_t now)
         s_dist.active    = 0u;
         s_dist.have_rise = 0u;
         s_dist_last_ok   = 0u;
-        last_set("DIST err=tout");
+        pm_cmd_out_last_set("DIST err=tout");
         if (s_dist.auto_live != 0u) {
-            tx_str(s_dist.c, "DIST live ");
+            pm_cmd_out_tx_str(s_dist.c, "DIST live ");
             s_dist.auto_live = 0u;
         } else {
-            tx_str(s_dist.c, "DIST ");
+            pm_cmd_out_tx_str(s_dist.c, "DIST ");
         }
-        tx_str(s_dist.c, "err=timeout\r\n");
+        pm_cmd_out_tx_str(s_dist.c, "err=timeout\r\n");
         return;
     }
 
@@ -1056,14 +892,14 @@ static void dist_service(uint32_t now)
     if ((us < DIST_MIN_US) || (us > DIST_MAX_US)) {
         /* HC-SR04 holds ECHO high ~38 ms when nothing reflects the burst. */
         s_dist_last_ok = 0u;
-        last_set("DIST err=tout");
+        pm_cmd_out_last_set("DIST err=tout");
         if (s_dist.auto_live != 0u) {
-            tx_str(s_dist.c, "DIST live ");
+            pm_cmd_out_tx_str(s_dist.c, "DIST live ");
             s_dist.auto_live = 0u;
         } else {
-            tx_str(s_dist.c, "DIST ");
+            pm_cmd_out_tx_str(s_dist.c, "DIST ");
         }
-        tx_str(s_dist.c, "err=timeout\r\n");
+        pm_cmd_out_tx_str(s_dist.c, "err=timeout\r\n");
         return;
     }
 
@@ -1076,16 +912,16 @@ static void dist_service(uint32_t now)
     }
 
     if (s_dist.auto_live != 0u) {
-        tx_str(s_dist.c, "DIST live ");
+        pm_cmd_out_tx_str(s_dist.c, "DIST live ");
         s_dist.auto_live = 0u;
     } else {
-        tx_str(s_dist.c, "DIST ");
+        pm_cmd_out_tx_str(s_dist.c, "DIST ");
     }
-    tx_str(s_dist.c, "cm=");
-    tx_fixed1(s_dist.c, (int32_t)cm10);
-    tx_str(s_dist.c, " us=");
-    tx_u32(s_dist.c, us);
-    tx_str(s_dist.c, "\r\n");
+    pm_cmd_out_tx_str(s_dist.c, "cm=");
+    pm_cmd_out_tx_fixed1(s_dist.c, (int32_t)cm10);
+    pm_cmd_out_tx_str(s_dist.c, " us=");
+    pm_cmd_out_tx_u32(s_dist.c, us);
+    pm_cmd_out_tx_str(s_dist.c, "\r\n");
 }
 
 /* ----------------------------------------------------- OLED (CH1116, 0x7A)
@@ -1194,20 +1030,20 @@ static int oled_bus_write(void *ctx, uint8_t control, const uint8_t *d,
 
 static void oled_tx_counters(cmd_port_t *c)
 {
-    tx_str(c, " af=");
-    tx_u32(c, s_oled_af);
-    tx_str(c, " berr=");
-    tx_u32(c, s_oled_berr);
-    tx_str(c, " to=");
-    tx_u32(c, s_oled_to);
+    pm_cmd_out_tx_str(c, " af=");
+    pm_cmd_out_tx_u32(c, s_oled_af);
+    pm_cmd_out_tx_str(c, " berr=");
+    pm_cmd_out_tx_u32(c, s_oled_berr);
+    pm_cmd_out_tx_str(c, " to=");
+    pm_cmd_out_tx_u32(c, s_oled_to);
 }
 
 static void oled_err_reply(cmd_port_t *c, const char *why)
 {
-    tx_str(c, "OLED err=");
-    tx_str(c, why);
+    pm_cmd_out_tx_str(c, "OLED err=");
+    pm_cmd_out_tx_str(c, why);
     oled_tx_counters(c);
-    tx_str(c, "\r\n");
+    pm_cmd_out_tx_str(c, "\r\n");
 }
 
 /* Stateless parse/format helpers now live in src/core/pm_cmd.c. */
@@ -1285,7 +1121,7 @@ static void oled_stage_live(void)
     oled_stage_now_row();
 
     p = pm_cmd_sput_s(b, "LAST: ", 6u);
-    p = pm_cmd_sput_s(p, s_last, 15u);
+    p = pm_cmd_sput_s(p, pm_cmd_out_last(), 15u);
     *p = '\0';
     oled_ch1116_stage_line(&s_oled, 2u, b);
 
@@ -1462,38 +1298,38 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
         uint32_t now = pm_osal_now_ms();
         uint8_t  pg;
 
-        tx_str(c, "OLED dump mode=");
-        tx_str(c, oled_mode_name(now));
+        pm_cmd_out_tx_str(c, "OLED dump mode=");
+        pm_cmd_out_tx_str(c, oled_mode_name(now));
         if ((s_oled_live != 0u) && (s_oled_hold_until != 0u) &&
             ((int32_t)(s_oled_hold_until - now) > 0)) {
-            tx_str(c, " left=");
-            tx_u32(c, ((s_oled_hold_until - now) + 999u) / 1000u);
-            tx_str(c, "s");
+            pm_cmd_out_tx_str(c, " left=");
+            pm_cmd_out_tx_u32(c, ((s_oled_hold_until - now) + 999u) / 1000u);
+            pm_cmd_out_tx_str(c, "s");
         }
-        tx_str(c, " screen=");
-        tx_str(c, oled_screen_name(s_oled_last));
-        tx_str(c, "\r\n");
+        pm_cmd_out_tx_str(c, " screen=");
+        pm_cmd_out_tx_str(c, oled_screen_name(s_oled_last));
+        pm_cmd_out_tx_str(c, "\r\n");
         if ((s_oled_last == OLED_SCREEN_LIVE) ||
             (s_oled_last == OLED_SCREEN_SHOW)) {
             for (pg = 0u; pg < (uint8_t)OLED_CH1116_PAGES; pg++) {
-                tx_str(c, "OLED L");
-                tx_u32(c, pg);
-                tx_str(c, "=");
-                tx_str(c, s_oled.line[pg]);
-                tx_str(c, "\r\n");
+                pm_cmd_out_tx_str(c, "OLED L");
+                pm_cmd_out_tx_u32(c, pg);
+                pm_cmd_out_tx_str(c, "=");
+                pm_cmd_out_tx_str(c, s_oled.line[pg]);
+                pm_cmd_out_tx_str(c, "\r\n");
             }
         }
-        last_set("OLED dump");
+        pm_cmd_out_last_set("OLED dump");
         return;
     }
 
     if (s_oled_req != NULL) {
-        tx_str(c, "OLED err=busy pending\r\n");
+        pm_cmd_out_tx_str(c, "OLED err=busy pending\r\n");
         return;
     }
     /* AHTS keeps bus ownership across its 80 ms window; do not cut in. */
     if (s_aht.active != 0u) {
-        tx_str(c, "OLED err=busy i2c\r\n");
+        pm_cmd_out_tx_str(c, "OLED err=busy i2c\r\n");
         return;
     }
 
@@ -1503,10 +1339,10 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
             return;
         }
         oled_live_arm(c, pm_osal_now_ms());
-        last_set("OLED on ok");
-        tx_str(c, "OLED on ok display=on live=on");
+        pm_cmd_out_last_set("OLED on ok");
+        pm_cmd_out_tx_str(c, "OLED on ok display=on live=on");
         oled_tx_counters(c);
-        tx_str(c, "\r\n");
+        pm_cmd_out_tx_str(c, "\r\n");
         return;
     }
     if (pm_cmd_ci_equal(arg, "OFF")) {
@@ -1516,16 +1352,16 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
         }
         s_oled_live = 0u;   /* stop refreshing and stop the 1 Hz ranging */
         s_oled_hold_until = 0u;
-        last_set("OLED off ok");
-        tx_str(c, "OLED off ok display=off live=paused");
+        pm_cmd_out_last_set("OLED off ok");
+        pm_cmd_out_tx_str(c, "OLED off ok display=off live=paused");
         oled_tx_counters(c);
-        tx_str(c, "\r\n");
+        pm_cmd_out_tx_str(c, "\r\n");
         return;
     }
 
     /* `OLED live on|off`; a bare `OLED live` is a usage error. */
     if (pm_cmd_ci_equal(arg, "LIVE")) {
-        tx_str(c, "OLED err=usage\r\n");
+        pm_cmd_out_tx_str(c, "OLED err=usage\r\n");
         return;
     }
     if (pm_cmd_ci_starts(arg, "LIVE ", &rest)) {
@@ -1534,17 +1370,17 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
         }
         if (pm_cmd_ci_equal(rest, "ON")) {
             oled_live_arm(c, pm_osal_now_ms());
-            tx_str(c, "OLED live=on period=");
-            tx_u32(c, OLED_LIVE_PERIOD_MS);
-            tx_str(c, "ms\r\n");
+            pm_cmd_out_tx_str(c, "OLED live=on period=");
+            pm_cmd_out_tx_u32(c, OLED_LIVE_PERIOD_MS);
+            pm_cmd_out_tx_str(c, "ms\r\n");
             return;
         }
         if (pm_cmd_ci_equal(rest, "OFF")) {
             s_oled_live = 0u;
-            tx_str(c, "OLED live=off\r\n");
+            pm_cmd_out_tx_str(c, "OLED live=off\r\n");
             return;
         }
-        tx_str(c, "OLED err=usage\r\n");
+        pm_cmd_out_tx_str(c, "OLED err=usage\r\n");
         return;
     }
 
@@ -1554,30 +1390,30 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
         uint32_t v;
 
         if ((pm_cmd_parse_u32(rest, &v) == 0) || (v > 4u)) {
-            tx_str(c, "OLED err=usage col=0..4\r\n");
+            pm_cmd_out_tx_str(c, "OLED err=usage col=0..4\r\n");
             return;
         }
         oled_ch1116_set_col_offset(&s_oled, (uint8_t)v);
-        tx_str(c, "OLED col=");
-        tx_u32(c, v);
-        tx_str(c, " ok");
+        pm_cmd_out_tx_str(c, "OLED col=");
+        pm_cmd_out_tx_u32(c, v);
+        pm_cmd_out_tx_str(c, " ok");
         if (s_oled_last == OLED_SCREEN_LIVE) {
             uint32_t now = pm_osal_now_ms();
 
             if (oled_start_live_job(c, "redraw", now) == 0) {
                 s_oled_live_next = now + OLED_LIVE_PERIOD_MS;
-                tx_str(c, " redraw=live");
+                pm_cmd_out_tx_str(c, " redraw=live");
             }
         } else if (s_oled_last != OLED_SCREEN_NONE) {
             if (oled_start_screen(s_oled_last) == 0) {
                 s_oled_req  = c;
                 s_oled_name = "redraw";
                 s_oled_t0   = pm_osal_now_ms();
-                tx_str(c, " redraw=");
-                tx_str(c, oled_screen_name(s_oled_last));
+                pm_cmd_out_tx_str(c, " redraw=");
+                pm_cmd_out_tx_str(c, oled_screen_name(s_oled_last));
             }
         }
-        tx_str(c, "\r\n");
+        pm_cmd_out_tx_str(c, "\r\n");
         return;
     }
 
@@ -1590,14 +1426,14 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
     } else if (pm_cmd_ci_equal(arg, "SHOW")) {
         s = OLED_SCREEN_SHOW;
     } else {
-        tx_str(c, "OLED err=usage\r\n");
+        pm_cmd_out_tx_str(c, "OLED err=usage\r\n");
         return;
     }
 
     /* Static screens take the panel for OLED_STATIC_HOLD_MS and then hand it
      * back to live; it is only a temporary takeover, live stays armed. */
     if (oled_start_screen(s) != 0) {
-        tx_str(c, "OLED err=busy pending\r\n");
+        pm_cmd_out_tx_str(c, "OLED err=busy pending\r\n");
         return;
     }
 
@@ -1605,7 +1441,7 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
     s_oled_req   = c;
     s_oled_name  = oled_screen_name(s);
     s_oled_t0    = pm_osal_now_ms();
-    last_two("OLED ", oled_screen_name(s));
+    pm_cmd_out_last_two("OLED ", oled_screen_name(s));
 }
 
 /* Called once per main loop iteration: at most one page per call. */
@@ -1642,27 +1478,27 @@ static void oled_service(void)
     if (was_live != 0) {
         s_oled_last_ms = ms;           /* health value shown as "LIVE ms=" */
     }
-    tx_str(c, "OLED ");
-    tx_str(c, s_oled_name);
-    tx_str(c, " ok ms=");
-    tx_u32(c, ms);
-    tx_str(c, " col=");
-    tx_u32(c, (uint32_t)oled_ch1116_col_offset(&s_oled));
+    pm_cmd_out_tx_str(c, "OLED ");
+    pm_cmd_out_tx_str(c, s_oled_name);
+    pm_cmd_out_tx_str(c, " ok ms=");
+    pm_cmd_out_tx_u32(c, ms);
+    pm_cmd_out_tx_str(c, " col=");
+    pm_cmd_out_tx_u32(c, (uint32_t)oled_ch1116_col_offset(&s_oled));
     /* A periodic refresh already implies live=on; pattern commands report that
      * they took the panel back. */
     if (was_live == 0) {
-        tx_str(c, " live=");
-        tx_str(c, (s_oled_live != 0u) ? "on" : "off");
+        pm_cmd_out_tx_str(c, " live=");
+        pm_cmd_out_tx_str(c, (s_oled_live != 0u) ? "on" : "off");
         /* A static screen only holds the panel briefly before live returns. */
         if (s_oled_live != 0u) {
             s_oled_live_next = pm_osal_now_ms() + OLED_STATIC_HOLD_MS;
             s_oled_hold_until = s_oled_live_next;
             s_dist_live_next = s_oled_live_next + (OLED_LIVE_PERIOD_MS / 2u);
-            tx_str(c, " hold="); tx_u32(c, OLED_STATIC_HOLD_MS); tx_str(c, "ms");
+            pm_cmd_out_tx_str(c, " hold="); pm_cmd_out_tx_u32(c, OLED_STATIC_HOLD_MS); pm_cmd_out_tx_str(c, "ms");
         }
     }
     oled_tx_counters(c);
-    tx_str(c, "\r\n");
+    pm_cmd_out_tx_str(c, "\r\n");
 }
 
 /* Called once per main loop iteration. One refresh per 500 ms; when the panel
@@ -1739,37 +1575,37 @@ static void cmd_execute(cmd_port_t *c, const char *line)
     const char *pw;
 
     if (pm_cmd_ci_equal(line, "PING")) {
-        tx_str(c, "PONG\r\n");
+        pm_cmd_out_tx_str(c, "PONG\r\n");
     } else if (pm_cmd_ci_equal(line, "HELP")) {
-        tx_str(c, "HELP HELP=list commands\r\n");
-        tx_str(c, "HELP PING=reply PONG\r\n");
-        tx_str(c, "HELP STAT=clk/up/tick/keys/uart counters\r\n");
-        tx_str(c, "HELP I2C=scan I2C1 bus, list 8-bit addresses\r\n");
-        tx_str(c, "HELP AHT=read AHT20, rh and t in 0.1 units\r\n");
-        tx_str(c, "HELP AHTS=same but read via repeated START\r\n");
-        tx_str(c, "HELP DIST=disabled, TIM2 given to motor\r\n");
-        tx_str(c, "HELP ADC=pot PA5 and NTC PA4, raw and mV\r\n");
-        tx_str(c, "HELP OLED=on/off/clear/test/show/frame/col/live/dump\r\n");
-        tx_str(c, "HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep\r\n");
-        tx_str(c, "HELP TRACK=raw level of PB14 line sensor\r\n");
-        tx_str(c, "HELP ENC=count/clear, dir, a/b, button PB15\r\n");
-        tx_str(c, "HELP RELAY=on/off/stat, PB5 relay coil\r\n");
-        tx_str(c, "HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM\r\n");
-        tx_str(c, "HELP KEYS=key press counters, clears them\r\n");
+        pm_cmd_out_tx_str(c, "HELP HELP=list commands\r\n");
+        pm_cmd_out_tx_str(c, "HELP PING=reply PONG\r\n");
+        pm_cmd_out_tx_str(c, "HELP STAT=clk/up/tick/keys/uart counters\r\n");
+        pm_cmd_out_tx_str(c, "HELP I2C=scan I2C1 bus, list 8-bit addresses\r\n");
+        pm_cmd_out_tx_str(c, "HELP AHT=read AHT20, rh and t in 0.1 units\r\n");
+        pm_cmd_out_tx_str(c, "HELP AHTS=same but read via repeated START\r\n");
+        pm_cmd_out_tx_str(c, "HELP DIST=disabled, TIM2 given to motor\r\n");
+        pm_cmd_out_tx_str(c, "HELP ADC=pot PA5 and NTC PA4, raw and mV\r\n");
+        pm_cmd_out_tx_str(c, "HELP OLED=on/off/clear/test/show/frame/col/live/dump\r\n");
+        pm_cmd_out_tx_str(c, "HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep\r\n");
+        pm_cmd_out_tx_str(c, "HELP TRACK=raw level of PB14 line sensor\r\n");
+        pm_cmd_out_tx_str(c, "HELP ENC=count/clear, dir, a/b, button PB15\r\n");
+        pm_cmd_out_tx_str(c, "HELP RELAY=on/off/stat, PB5 relay coil\r\n");
+        pm_cmd_out_tx_str(c, "HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM\r\n");
+        pm_cmd_out_tx_str(c, "HELP KEYS=key press counters, clears them\r\n");
     } else if (pm_cmd_ci_equal(line, "STAT")) {
-        tx_str(c, "STAT clk=");
-        tx_u32(c, pm_platform_core_clock());
-        tx_str(c, " up=");
-        tx_u32(c, pm_osal_now_ms());
-        tx_str(c, " tick=1 key1=");
-        tx_u32(c, s_key_press[0]);
-        tx_str(c, " key2=");
-        tx_u32(c, s_key_press[1]);
-        tx_str(c, " uart_rx=");
-        tx_u32(c, s_rx_total);
-        tx_str(c, " uart_tx=");
-        tx_u32(c, s_tx_total);
-        tx_str(c, "\r\n");
+        pm_cmd_out_tx_str(c, "STAT clk=");
+        pm_cmd_out_tx_u32(c, pm_platform_core_clock());
+        pm_cmd_out_tx_str(c, " up=");
+        pm_cmd_out_tx_u32(c, pm_osal_now_ms());
+        pm_cmd_out_tx_str(c, " tick=1 key1=");
+        pm_cmd_out_tx_u32(c, s_key_press[0]);
+        pm_cmd_out_tx_str(c, " key2=");
+        pm_cmd_out_tx_u32(c, s_key_press[1]);
+        pm_cmd_out_tx_str(c, " uart_rx=");
+        pm_cmd_out_tx_u32(c, s_rx_total);
+        pm_cmd_out_tx_str(c, " uart_tx=");
+        pm_cmd_out_tx_u32(c, pm_cmd_out_tx_total());
+        pm_cmd_out_tx_str(c, "\r\n");
     } else if (pm_cmd_ci_equal(line, "I2C")) {
         cmd_i2c(c);
     } else if (pm_cmd_ci_equal(line, "AHT")) {
@@ -1781,18 +1617,18 @@ static void cmd_execute(cmd_port_t *c, const char *line)
     } else if (pm_cmd_ci_equal(line, "ADC")) {
         cmd_adc(c);
     } else if (pm_cmd_ci_equal(line, "KEYS")) {
-        tx_str(c, "KEYS k1=");
-        tx_u32(c, s_key_press[0]);
-        tx_str(c, " k2=");
-        tx_u32(c, s_key_press[1]);
-        tx_str(c, " last=");
-        tx_str(c, (s_key_last == 0) ? "k1" : (s_key_last == 1) ? "k2" : "none");
-        tx_str(c, "\r\n");
+        pm_cmd_out_tx_str(c, "KEYS k1=");
+        pm_cmd_out_tx_u32(c, s_key_press[0]);
+        pm_cmd_out_tx_str(c, " k2=");
+        pm_cmd_out_tx_u32(c, s_key_press[1]);
+        pm_cmd_out_tx_str(c, " last=");
+        pm_cmd_out_tx_str(c, (s_key_last == 0) ? "k1" : (s_key_last == 1) ? "k2" : "none");
+        pm_cmd_out_tx_str(c, "\r\n");
         s_key_press[0] = 0u;
         s_key_press[1] = 0u;
         s_key_last = -1;
     } else if (((pw = pwm_dev_cmd(line)) != NULL) || ((pw = track_dev_cmd(line)) != NULL) || ((pw = encoder_dev_cmd(line)) != NULL) || ((pw = relay_dev_cmd(line)) != NULL) || ((pw = motor_dev_cmd(line)) != NULL)) {
-        tx_str(c, pw);
+        pm_cmd_out_tx_str(c, pw);
     } else {
         const char *oa = oled_arg(line);
 
@@ -1800,9 +1636,9 @@ static void cmd_execute(cmd_port_t *c, const char *line)
             cmd_oled(c, oa);
             return;
         }
-        tx_str(c, "ERR unknown=");
-        tx_str(c, line);
-        tx_str(c, "\r\n");
+        pm_cmd_out_tx_str(c, "ERR unknown=");
+        pm_cmd_out_tx_str(c, line);
+        pm_cmd_out_tx_str(c, "\r\n");
     }
 }
 
@@ -1855,12 +1691,12 @@ static void oled_boot(void)
     uint8_t guard = 0u;
 
     if (oled_ch1116_init(&s_oled, oled_bus_write, NULL) != 0) {
-        uart_write_str("OLED CH1116 addr=7A init FAILED\r\n");
+        pm_cmd_out_uart_write_str("OLED CH1116 addr=7A init FAILED\r\n");
         return;
     }
-    uart_write_str("OLED CH1116 addr=7A init ok, col=");
-    uart_write_u32((uint32_t)oled_ch1116_col_offset(&s_oled));
-    uart_write_str(", clearing\r\n");
+    pm_cmd_out_uart_write_str("OLED CH1116 addr=7A init ok, col=");
+    pm_cmd_out_uart_write_u32((uint32_t)oled_ch1116_col_offset(&s_oled));
+    pm_cmd_out_uart_write_str(", clearing\r\n");
     (void)oled_ch1116_start_pattern(&s_oled, 0x00u);
     while ((oled_ch1116_service(&s_oled) != 0) &&
            (guard < (uint8_t)OLED_CH1116_PAGES)) {
@@ -1868,21 +1704,21 @@ static void oled_boot(void)
     }
     (void)oled_ch1116_display(&s_oled, 1);
     if (oled_ch1116_err(&s_oled) != 0) {
-        uart_write_str("OLED clear FAILED\r\n");
+        pm_cmd_out_uart_write_str("OLED clear FAILED\r\n");
         return;
     }
     /* The boot clear is a real screen state: `OLED col n` repaints it so an
      * A/B before the first pattern command still shows a redraw. */
     s_oled_last = OLED_SCREEN_CLEAR;
-    uart_write_str("OLED ready (128x64, 6x8 font)\r\n");
+    pm_cmd_out_uart_write_str("OLED ready (128x64, 6x8 font)\r\n");
 }
 
 static void bt_init(void)
 {
     if (pm_uart_init(&s_bt, &s_bt_cfg) == PM_OK) {
-        uart_write_str("BT USART3 9600 8N1, command channel ready\r\n");
+        pm_cmd_out_uart_write_str("BT USART3 9600 8N1, command channel ready\r\n");
     } else {
-        uart_write_str("BT USART3 init FAILED\r\n");
+        pm_cmd_out_uart_write_str("BT USART3 init FAILED\r\n");
     }
 }
 
@@ -1896,11 +1732,11 @@ static void bt_service(void)
             break;
         }
         /* Mirror what the BLE side sent so a COM11 capture shows both paths. */
-        uart_write_str("BT rx n=");
-        uart_write_u32((uint32_t)n);
-        uart_write_str("B:");
-        uart_write_hex(buf, n);
-        uart_write_str("\r\n");
+        pm_cmd_out_uart_write_str("BT rx n=");
+        pm_cmd_out_uart_write_u32((uint32_t)n);
+        pm_cmd_out_uart_write_str("B:");
+        pm_cmd_out_uart_write_hex(buf, n);
+        pm_cmd_out_uart_write_str("\r\n");
         cmd_feed(&s_ble, buf, n);
     }
 }
@@ -1929,10 +1765,11 @@ int main(void)
     if (pm_uart_init(&s_uart, &s_uart_cfg) != PM_OK) {
         error_loop();
     }
+    pm_cmd_out_init(&s_uart, &s_bt);
 
-    uart_write_str("\r\nboard-bringup\r\ncore clock = ");
-    uart_write_u32(pm_platform_core_clock());
-    uart_write_str(" Hz\r\nUSART2 115200 8N1, command channel ready\r\n");
+    pm_cmd_out_uart_write_str("\r\nboard-bringup\r\ncore clock = ");
+    pm_cmd_out_uart_write_u32(pm_platform_core_clock());
+    pm_cmd_out_uart_write_str(" Hz\r\nUSART2 115200 8N1, command channel ready\r\n");
 
     bt_init();
     dist_hw_init();
@@ -1977,7 +1814,7 @@ int main(void)
         }
         if ((uint32_t)(now - next_hb_ms) >= 1000u) {
             next_hb_ms += 1000u;
-            uart_write_str("hb\r\n");
+            pm_cmd_out_uart_write_str("hb\r\n");
         }
     }
 }

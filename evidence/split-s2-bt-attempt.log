@@ -1,0 +1,42 @@
+=== S2 蓝牙镜像专项：本轮未能取到证据（未验证） ===
+时间：2026-11-19 21:5x（本地时间）
+板端：S2 拆后固件（Flash 27296 B / RAM 4976 B），已烧录并 verify，COM11 调试口正常
+目的：从蓝牙侧发 HELP，在调试口抓到 BT tx n=<n>B:<hex>，证明镜像路径在 S2 搬家后仍走 USART3 端口
+
+1) 板载模块是 BLE，不是经典 SPP
+   HARDWARE.md:85  「蓝牙模块接口 | USART3 | PB10/PB11 | BLE 排针 1=GND 2=PB10 3=PB11 4=5V」
+   HARDWARE.md:251 「蓝牙模块 DX-BT24 规格书」
+   evidence/INDEX.md:16-19 记录：蓝牙通道用 Web Bluetooth 页面打过（bt-verify2.log），
+   此后日志里的 BT 镜像行只用于间接观察。
+
+2) PC 侧没有可用的经典串口通路
+   Get-CimInstance Win32_SerialPort 只有 COM11（CH343P 调试口）与 6 个
+   「蓝牙链接上的标准串行」端口；其中能对上的设备是 JDY-31-SPP（MAC B092C376FFA4
+   -> 出站口 COM8），不是板载 DX-BT24。
+   打开 COM8 @9600 两次均失败：
+     System.IO.Ports.SerialPort.Open() -> "The semaphore timeout period has expired."
+     （RFCOMM 连不上对端；两次失败后按 AGENTS 1.4 停止重试，不再换号碰运气）
+
+3) PC 侧没有 BLE 中心（central）客户端
+   python 3.14：无 bleak、无 pyserial；
+   Windows PowerShell 5.1：BluetoothLEAdvertisementWatcher 的 Received 事件无法在
+     PowerShell 脚本块里执行——delegate 方式与 Register-ObjectEvent 方式各试一次，
+     均 0 个回调（watcher.Status 正常 Start/Stop，说明扫描器本身起来了，是回调进不来）；
+   桌面版 csc（.NET Framework 4.x）引用 WinMetadata 的 Windows.Devices.winmd 时
+     报 CS0012（System.Runtime 4.0.0.0 契约程序集缺失，本机无 .NET Framework
+     targeting pack / Facades），无法编译 WinRT 调用程序；
+   IDE 侧未连接任何浏览器/桌面自动化工具（ToolSearch 查不到 computer-use / chrome 工具）。
+
+4) 结论
+   本轮没有从蓝牙侧真正发出 HELP，因此「S2 之后镜像路径仍指向 USART3」这一条
+   **未验证**，不能按通过计。硬件与索引记录都表明需要 Web Bluetooth/APP 侧
+   （DX-BT24 官方 Android 调试助手）发起连接。
+
+   补齐办法（任选其一，需要人参与一次）：
+   a. 用 bt-verify2.log 同一套 Web Bluetooth 页面连上模块，发 `HELP\r\n`；
+      同时我在 COM11 抓 `BT rx` / `BT tx n=<n>B:<hex>` 并核对 n 与 2n；
+   b. 允许安装 python `bleak`（AGENTS 第 6 节要求先取得同意），之后由脚本扫描-连接-写
+      FFE0/FFE1（或枚举到可写特征）发出 `HELP\r\n`，同样在 COM11 抓镜像。
+
+   调试口一侧的回归已经完成，见 split-s2-before.log / split-s2-after.log：
+   34 条确定性回包（屏蔽 up=/uart_tx=/ADC/RH-T/按键计数等运行期数值）逐字符一致。

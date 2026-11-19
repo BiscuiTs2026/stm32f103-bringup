@@ -1,0 +1,28 @@
+﻿=== 1. git diff --stat ===
+ CMakeLists.txt |   1 +
+ src/app/main.c | 523 ++++++++++++++++++++-------------------------------------
+ 2 files changed, 181 insertions(+), 343 deletions(-)
+
+=== 2. git diff --numstat (原始 / 忽略空白) ===
+1	0	CMakeLists.txt
+180	343	src/app/main.c
+----
+1	0	CMakeLists.txt
+180	343	src/app/main.c
+
+=== 3. 忽略空白后 main.c 的新增行中，去掉 pm_cmd_out_ 改名行，只剩： ===
++#include "pm_cmd_out.h"
+
+=== 4. 11 个搬出函数体逐字符等价校验（旧文 HEAD:src/app/main.c -> 新文 pm_cmd_out.c，仅做三类归一化后比较） ===
+OK   last_set
+OK   last_num
+OK   last_two
+OK   uart_write_str
+OK   uart_write_u32
+OK   uart_write_hex
+OK   tx_bytes_all
+OK   tx_str
+OK   tx_u32
+OK   tx_hex_byte
+OK   tx_fixed1
+ALL 11 BODIES BYTE-IDENTICAL AFTER NORMALISATION

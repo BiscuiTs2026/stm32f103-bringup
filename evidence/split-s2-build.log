@@ -1,0 +1,40 @@
+=== configure 2026-11-19 21:47 (build-split-s2) ===
+-- The C compiler identification is GNU 14.3.1
+-- Configuring done
+-- Generating done
+
+=== build: 拆前基线（HEAD 9599574，main.c 1532 行） ===
+[3/3] Linking C executable pm_f103_demo; Generating .bin/.hex and reporting size
+Memory region         Used Size  Region Size  %age Used
+           FLASH:       27204 B        64 KB     41.51%
+             RAM:        4968 B        20 KB     24.26%
+
+=== build: S2 拆后（+ pm_cmd_out.c） ===
+ninja: Entering directory `build-split-s2'
+[0/1] Re-running CMake...
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+[1/5] Building C object CMakeFiles/pm_components.dir/src/components/pm_cmd/pm_cmd_out.c.obj
+[2/5] Linking C static library libpm_components.a
+[3/5] Building C object CMakeFiles/pm_f103_demo.dir/src/app/main.c.obj
+[4/5] Linking C executable pm_f103_demo; Generating .bin/.hex and reporting size
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-closer.o): in function `_close_r':
+(.text._close_r+0xc): warning: _close is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-lseekr.o): in function `_lseek_r':
+(.text._lseek_r+0x10): warning: _lseek is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-readr.o): in function `_read_r':
+(.text._read_r+0x10): warning: _read is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-writer.o): in function `_write_r':
+(.text._write_r+0x10): warning: _write is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: warning: pm_f103_demo has a LOAD segment with RWX permissions
+Memory region         Used Size  Region Size  %age Used
+           FLASH:       27296 B        64 KB     41.65%
+             RAM:        4976 B        20 KB     24.30%
+   text	   data	    bss	    dec	    hex	filename
+  26836	    460	   4524	  31820	   7c4c	pm_f103_demo
+
+=== 结论 ===
+编译阶段 0 条编译器警告（-Wall -Wextra -Wshadow -Wundef 全开）。
+7 条 warning: 全部是链接期既有项（libc_nano 的 _close/_lseek/_read/_write 桩 + RWX LOAD 段），
+与拆前基线逐条相同，不是本轮引入。
+Flash +92 B、RAM +8 B：RAM 增量正是 pm_cmd_out.c 里新增的 s_debug_port / s_mirror_port 两个指针。

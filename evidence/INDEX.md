@@ -1,7 +1,7 @@
 # 上板抓包证据登记表
 
 本目录是 `2026-11-18/board-bringup/work` 这一轮上板验证留下的串口抓包归档。
-共 40 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
+共 47 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
 根目录原件保留（`PATCHES.md` 里的路径引用仍然有效），但根目录副本被 `.gitignore` 忽略，
 只有本目录的副本进版本库；第 10–23 个（`retest-20261119*.log`、`dist-probe-20261119-*.log`、
 `autolive-20261119*.log`、`adc-20261119-*.log`）是 2026-11-19 复测与排查时**直接写在本目录**的，
@@ -9,7 +9,9 @@
 输入侧（循迹 PB14 / 编码器 PA8·PA9·PB15）抓包；第 31–32 项是舵机不动的
 寄存器取证（修复前）与修复后复测；第 33 项是测距停用 + 继电器 PB5 的板端验证；
 第 34 项是电机 PA0/PA1（TIM2_CH1/CH2）的寄存器与回包验证；第 35–38 项是
-`main.c` 拆分 S1（纯计算搬家）的拆前/拆后上板回归、编译输出与主机单测输出。
+`main.c` 拆分 S1（纯计算搬家）的拆前/拆后上板回归、编译输出与主机单测输出；
+第 39–45 项是拆分 S2（输出层搬家）的拆前/拆后回归、编译、单测、分层扫描、
+夹带判据，以及**未取到**的蓝牙镜像证据记录。
 
 ## 怎么读这些日志
 
@@ -535,3 +537,90 @@
 | 不能证明什么 | 不覆盖硬件相关路径（中断、DMA、寄存器读写） |
 | 局限 | 单测只编译 `src/core/`，不链接端口层 |
 | PATCHES 引用 | 未引用（S1 拆分证据） |
+
+## 39. split-s2-before.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 96 行 / 4,006 B；文件头 `===== capture start 2026-11-19 21:45:13.327 port=COM11 =====` |
+| 采样窗口 | 约 14 s；固件为 S2 拆前基线（S1 版，Flash **27204 B** / RAM **4968 B**） |
+| 当时在做什么 | S2 的对照组：与 `split-after.log` 同一抓包脚本、同一命令序列（12 条命令 + 1 s 静默） |
+| 关键内容 | `PING`/`HELP`（15 行 638 B）/`STAT`/`OLED dump`/`DIST err=disabled`/`ADC`/`I2C`/`PWM stat`/`TRACK`/`ENC`/`RELAY stat`/`KEYS` |
+| 能证明什么 | S2 拆前的行为基线；与第 40 项成对读 |
+| 不能证明什么 | 单独不能证明任何结论 |
+| 局限 | `up=`、`uart_tx=`、`ms=`、`count=`、`RH/T`、`L4=NTC/POT` 等运行期数值天然逐次不同，对比前须屏蔽 |
+| PATCHES 引用 | 未引用（S2 拆分证据） |
+
+## 40. split-s2-after.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 96 行 / 4,005 B；文件头 `===== capture start 2026-11-19 21:50:28.091 port=COM11 =====` |
+| 采样窗口 | 约 14 s；固件为 S2 拆后（Flash **27296 B** / RAM **4976 B**，烧录 `-v -rst`，`Download verified successfully` + `MCU Reset`） |
+| 当时在做什么 | 烧 S2 固件后，用与第 39 项完全相同的脚本与命令序列复抓 |
+| 关键内容 | 命令序列与拆前逐条对应；`HELP` 仍 15 行 638 B；`DIST err=disabled` 不变 |
+| 能证明什么 | 去掉 `hb` 与首行时间戳后 80 行在屏蔽 `up=`/`uart_tx=`/`ms=`/`count=`/`RH-T`/`L4=NTC/POT` 后**逐字符一致**（Compare-Object diff = 0）；未屏蔽时的唯一差异是抓包起始时间戳与两行模拟量原始值 |
+| 不能证明什么 | 蓝牙侧镜像路径（本项全部走 COM11 自发命令，见第 45 项）；时序级别（中断延迟、100 ms 空闲冲刷边界）未逐周期对比 |
+| 局限 | 同第 39 项 |
+| PATCHES 引用 | 未引用（S2 拆分证据） |
+
+## 41. split-s2-build.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 拆前基线体积 + 拆后增量构建输出（`build-split-s2`，CMake 4.4.0 + Ninja 1.13.2 + arm-none-eabi-gcc 14.3.1） |
+| 当时在做什么 | 新增 `src/components/pm_cmd/pm_cmd_out.c` 后构建：只重编 `pm_cmd_out.c` 与 `main.c`，再链接 |
+| 关键内容 | 编译阶段 **0 条编译器警告**；7 条 `warning:` 全部来自链接期且与拆前逐条相同（`_close`/`_lseek`/`_read`/`_write` 桩 + RWX LOAD 段）；Flash 27204 → **27296 B**，RAM 4968 → **4976 B** |
+| 能证明什么 | S2 编译通过、无新增编译警告；RAM +8 B 正是 `s_debug_port`/`s_mirror_port` 两个指针 |
+| 不能证明什么 | 静态分析结论（见第 43 项） |
+| 局限 | 增量构建，只覆盖两个改动文件；未清空重建（删构建产物需单独确认） |
+| PATCHES 引用 | 未引用（S2 拆分证据） |
+
+## 42. split-s2-host.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 2 行 / 31 B（末行 `140 checks, 0 failure(s)`） |
+| 采样窗口 | 主机侧 VS 生成器构建 `tests/host`（`build-host-s2-vs`） |
+| 当时在做什么 | 跑既有 ringbuf/evtq/gpio/uart/cmd 用例，作 S2 的回归对照 |
+| 关键内容 | **140 checks, 0 failure(s)**，与 S1 相同 |
+| 能证明什么 | S2 没有触碰 `src/core/` 的可测纯函数，主机侧无回归 |
+| 不能证明什么 | 输出层本身（`pm_cmd_out.c` 依赖 `pm_uart_t`，未纳入主机单测） |
+| 局限 | 单测只编译 `src/core/` |
+| PATCHES 引用 | 未引用（S2 拆分证据） |
+
+## 43. split-s2-layering.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 28 行；`tools/check_layering.py` 3.3.1（`--version --lock tools/CHECKER.lock` 一致） |
+| 当时在做什么 | S2 拆后全工程扫描，默认参数（不传 `--glue-max-lines`） |
+| 关键内容 | **0 ERROR / 24 WARN**；`main.c` 检查器口径 **1404 行**（拆前 1532）；21 条 main.c 命中与拆前同一组（7 条 G1：`i2c1_bus_fix`/`i2c1_scan`/`i2c1_read_after_trigger`/`aht20_trigger`/`dist_start`/`oled_i2c_wait`/`oled_bus_write` 一条不少 + 5 条阻塞延时/忙等 + 2 条硬编码引脚 + 3 条 OLED 分支/行长 + `cmd_execute`），另 3 条 WARN 仍在 `pm_port_stm32f1.c` 的 `*_hw_*` |
+| 能证明什么 | S2 只搬输出层，没有清除也**没有新增**任何 glue 命中；`pm_cmd_out.c` 未引入新告警 |
+| 不能证明什么 | 行数 200 闸门下的"债"如何偿还——那正是这 21 条要逐条下沉的内容 |
+| 局限 | 行数 WARN 是 3.3.1 的新默认（WARN 不是 ERROR），CI 仍只以 ERROR 判失败 |
+| PATCHES 引用 | 未引用（S2 拆分证据） |
+
+## 44. split-s2-diff-ignore-space.txt
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 29 行；`git diff --stat` / `--numstat`（原始与 `--ignore-all-space`）/ 非改名新增行清单 / 11 函数等价校验 |
+| 当时在做什么 | 夹带判据：`git diff --ignore-all-space -- src/app/main.c` 后，把 `pm_cmd_out_*` 改名行剔除，看还剩什么新增 |
+| 关键内容 | `CMakeLists.txt +1`；`src/app/main.c 180 insertions / 343 deletions`；原始与忽略空白的 numstat **完全相同**（无纯空白改动）；剔除改名行后新增只剩 `+#include "pm_cmd_out.h"` 与一个空行（`pm_cmd_out_init()`、`pm_cmd_out_last()`、`pm_cmd_out_tx_total()` 三处调用也属于改名/接入，含 `pm_cmd_out_` 前缀） |
+| 能证明什么 | 除了"加前缀 / 换登记指针 / 新增头文件引用与一次 init"，main.c 没有夹带注释、格式、顺序改动 |
+| 不能证明什么 | 搬出的 11 个函数体是否逐字符一致——该项另由搬运校验脚本核对：11/11 在归一化（加前缀、`c == &s_ble`→`c->port == s_mirror_port`、`&s_uart`→`s_debug_port`）后与拆前原文**完全相同** |
+| 局限 | 判据只看 main.c；新文件 `pm_cmd_out.c` 的等价性靠上面的逐函数校验 |
+| PATCHES 引用 | 未引用（S2 拆分证据） |
+
+## 45. split-s2-bt-attempt.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 蓝牙镜像专项的**失败记录**，不是证据 |
+| 当时在做什么 | 试图从蓝牙侧发 `HELP`，在 COM11 抓 `BT tx n=<n>B:<hex>` |
+| 关键内容 | 板载为 BLE 模块 DX-BT24（HARDWARE.md:85/251），PC 侧唯一的"蓝牙串行"是无关的 JDY-31-SPP（COM8），打开两次均 `semaphore timeout`；python 无 bleak/pyserial；PowerShell 5.1 无法接收 WinRT BLE 广播事件；桌面 csc 无法引用 WinMD（CS0012） |
+| 能证明什么 | 只证明本轮**没有**取得蓝牙侧证据 |
+| 不能证明什么 | 不能证明镜像路径好或坏——该项**未验证**，不能按通过计 |
+| 局限 | 补齐需 Web Bluetooth 页面/APP 连一次，或经同意安装 `bleak` |
+| PATCHES 引用 | 未引用（S2 拆分证据，待补） |
