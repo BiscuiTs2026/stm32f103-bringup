@@ -904,13 +904,20 @@ static void cmd_adc(cmd_port_t *c)
  * here; no divider is fitted on the board.
  * ECHO is captured by EXTI10 and timestamped by TIM2 at 1 MHz, so DIST never
  * blocks: it fires the 10 us pulse and replies later from dist_service() when
- * the falling edge or the timeout arrives. */
+ * the falling edge or the timeout arrives.
+ * 2026-11-19: DIST is disabled. TIM2 is handed to the motor PWM, so the
+ * timestamps have no time base; dist_start() replies "DIST err=disabled" and
+ * the counter is no longer started. Pins and edge logic are kept as-is so a
+ * future time source can re-enable it. */
 
 #define DIST_TRIG_BIT    (1u << 11)
 #define DIST_ECHO_BIT    (1u << 10)
 #define DIST_TIMEOUT_MS  60u
 #define DIST_MIN_US      100u      /* < 2 cm: noise */
 #define DIST_MAX_US      25000u    /* > 4.3 m: the module tops out at 4 m */
+/* 0 = DIST disabled: its 1 us time base (TIM2) was reassigned to the motor
+ * PWM. Set back to 1 only after a different time source is chosen. */
+#define DIST_TIME_BASE_READY 0
 
 typedef struct {
     cmd_port_t       *c;
@@ -955,18 +962,14 @@ static void dist_last_ok(uint32_t cm10)
 static void dist_hw_init(void)
 {
     RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_AFIOEN;
-    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 
     /* PA11 push-pull output 2 MHz, PA10 floating input */
     GPIOA->CRH = (GPIOA->CRH & ~((0xFu << 12) | (0xFu << 8)))
                | (0x2u << 12) | (0x4u << 8);
     GPIOA->BRR = DIST_TRIG_BIT;
 
-    /* TIM2: 72 MHz / 72 = 1 MHz, free running, 65.5 ms wrap (handled) */
-    TIM2->PSC = 71u;
-    TIM2->ARR = 0xFFFFu;
-    TIM2->CNT = 0u;
-    TIM2->CR1 = TIM_CR1_CEN;
+    /* TIM2 is no longer configured here: it belongs to the motor PWM. DIST is
+     * disabled until a new time base is chosen (see dist_start()). */
 
     /* EXTI10 <- port A, both edges */
     AFIO->EXTICR[2] = (AFIO->EXTICR[2] & ~(0xFu << 8));
@@ -997,6 +1000,16 @@ void EXTI15_10_IRQHandler(void)
 static void dist_start(cmd_port_t *c, uint8_t auto_live)
 {
     uint16_t t0;
+
+    /* DIST is disabled: TIM2, the 1 us timestamp source, now belongs to the
+     * motor PWM. Manual DIST explains the reason; live mode skips silently so
+     * the screen is not flooded once per second. */
+    if (DIST_TIME_BASE_READY == 0) {
+        if (auto_live == 0u) {
+            tx_str(c, "DIST err=disabled\r\n");
+        }
+        return;
+    }
 
     if (s_dist.active != 0u) {
         if (auto_live != 0u) {
@@ -1886,7 +1899,7 @@ static void cmd_execute(cmd_port_t *c, const char *line)
         tx_str(c, "HELP I2C=scan I2C1 bus, list 8-bit addresses\r\n");
         tx_str(c, "HELP AHT=read AHT20, rh and t in 0.1 units\r\n");
         tx_str(c, "HELP AHTS=same but read via repeated START\r\n");
-        tx_str(c, "HELP DIST=one shot, cm and us; live=1Hz\r\n");
+        tx_str(c, "HELP DIST=disabled, TIM2 given to motor\r\n");
         tx_str(c, "HELP ADC=pot PA5 and NTC PA4, raw and mV\r\n");
         tx_str(c, "HELP OLED=on/off/clear/test/show/frame/col/live/dump\r\n");
         tx_str(c, "HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep\r\n");
