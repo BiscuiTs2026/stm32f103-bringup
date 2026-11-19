@@ -23,13 +23,13 @@
 | 项目 | 状态 | 证据 / 数字 |
 | --- | --- | --- |
 | 交叉编译 | 通过 | `arm-none-eabi-gcc 14.3.1`，`-Wall -Wextra -Wshadow`，项目代码无警告 |
-| 尺寸 | 通过 | Flash **25672 B / 64 KB（39.17%）**，RAM **4864 B / 20 KB（23.75%）**（§28、§30、§31、§32、§33） |
-| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（25672 B）、`.hex`、`.map` |
+| 尺寸 | 通过 | Flash **27168 B / 64 KB（41.46%）**，RAM **4968 B / 20 KB（24.26%）**（§28、§30、§31、§32、§33、§34、§35） |
+| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（27168 B）、`.hex`、`.map` |
 | 主机单测 | 通过 | 96 项断言，0 失败（MSVC 19.51，C11） |
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
 | USART2 调试口 | 通过 | 115200 8N1 双向收发，`hb` 每秒一行（§5） |
-| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；2026-11-18 端到端验过（`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后 `HELP` 增至 **585 B / 14 行**（§30、§31、§33），蓝牙侧未再做回归——期间改动不涉及 USART3 收发路径，不丢尾机制见 §11、§14 |
+| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；2026-11-18 端到端验过（`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后 `HELP` 增至 **638 B / 15 行**（§30、§31、§33、§34、§35），蓝牙侧未再做回归——期间改动不涉及 USART3 收发路径，不丢尾机制见 §11、§14 |
 | I2C1 | 通过 | 扫描到 `0x70`（AHT20）与 `0x7A`（OLED），PB6/PB7，100 kHz（§9） |
 | AHT20 温湿度 | 通过 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0`（§12） |
 | HC-SR04 测距 | **已停用** | 曾通过：`DIST cm=<n> us=<n>`，EXTI + TIM2 1 MHz 计宽（§14）；2026-11-19 起 TIM2 整颗让给电机 PWM，`DIST` 固定回 `DIST err=disabled`，引脚与边沿逻辑保留（§33、`docs/TIM2-CONFLICT.md`） |
@@ -40,6 +40,7 @@
 | 循迹 PB14 | **部分通过** | 盖黑物 2 轮：`TRACK raw=1` → `raw=0` → `raw=1`，同状态内无跳变（1.78 s 采样，§31.3）。**只有一路，单路遮挡与全黑不可区分** |
 | 编码器 PA8/PA9 + 按键 PB15 | **部分通过** | `ENC` 双向计数 0→89→−32，cw 为正、ccw 为负，`ENC clear` 正常（§31.3）。**符号与物理转向的对应未目视确认；按键按下未被抓包（全程 btn=1）** |
 | 继电器 PB5 | **部分通过** | `RELAY stat/on/off` 三轮 `pb5=` 读回与请求一致（§34.3、`evidence/relay-20261119-a.log`）。**吸合"咔哒"声、触点通断、高电平=吸合的极性未验证**（§34.4） |
+| 电机 DRV8833（PA0/PA1） | **部分通过** | `MOTOR fwd/rev/stop/duty` 的 `ccr1/ccr2` 组合、`duty` 0/100/101 边界与错误分支全部与寄存器读回一致（§35.3、`evidence/motor-20261119-a.log`）。**电机是否真转、`fwd/rev` 对应的轴方向、转速随占空比的变化未验证**（§35.4） |
 | SPI | **未验证** | 无实际器件；只有 HAL 源与默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现 |
 
 未做上板验证的部分不写成"可用"。
@@ -86,7 +87,7 @@ cmake -S . -B build-arm -G Ninja `
 cmake --build build-arm
 ```
 
-换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（24444 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（当前 24444 B / 4528 B）。
+换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（27168 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（当前 27168 B / 4968 B）。
 
 烧录（ST-Link，带校验、烧完复位）：
 
@@ -143,7 +144,7 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 
 | 命令 | 作用 |
 | --- | --- |
-| `HELP` | 列出全部命令（14 行、585 B） |
+| `HELP` | 列出全部命令（15 行、638 B） |
 | `PING` | 回 `PONG` |
 | `STAT` | 时钟、运行秒数、按键计数、串口累计字节 |
 | `I2C` | 扫描 I2C1，列 8 位写地址（本板 `0x70`、`0x7A`） |
@@ -155,6 +156,7 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 | `TRACK` | 读 PB14 循迹模块的原始电平（`raw=1` 未遮挡 / `raw=0` 黑物或遮挡） |
 | `ENC` | 读编码器 32 位计数、最后方向、A/B 电平与 PB15 按键（`1`=松开）；`ENC clear` 清零 |
 | `RELAY` | `on` / `off` 驱动 PB5 继电器线圈，`stat` 读回 PB5 实际电平（`pb5=0\|1`） |
+| `MOTOR` | `fwd [duty]` / `rev [duty]` / `stop` / `duty <0..100>` / `stat`；PA0/PA1 = TIM2_CH1/CH2，20 kHz，回包带 `hz/arr/ccr1/ccr2` 寄存器读回 |
 | `OLED on\|off\|clear\|test\|show\|frame\|col\|live\|dump` | 显示开关、清屏、测试页、静态文字、边框图案、列偏移、500 ms live（live 期间的自动测距已随 DIST 停用） |
 
 参数、成功/失败回包原文、是否改变设备状态、蓝牙端的判读陷阱（回包被拆成多个气泡等），见 **[docs/PROTOCOL.md](docs/PROTOCOL.md)**。
@@ -238,13 +240,15 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 
 ## 已知限制
 
-- `pm_*` 契约只有 GPIO、UART、PWM、输入侧与继电器（`pm_pwm.h`、`pm_track.h`、`pm_encoder.h`、`pm_relay.h`）；I2C1 时序、HC-SR04 捕获、OLED 调度仍在 `src/app/main.c` 里用裸寄存器与胶水实现，尚未抽成 `pm_i2c` 等契约；
+- `pm_*` 契约只有 GPIO、UART、PWM、输入侧、继电器与电机（`pm_pwm.h`、`pm_track.h`、`pm_encoder.h`、`pm_relay.h`、`pm_motor.h`）；I2C1 时序、HC-SR04 捕获、OLED 调度仍在 `src/app/main.c` 里用裸寄存器与胶水实现，尚未抽成 `pm_i2c` 等契约；
 - SPI 只有 HAL 源和默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现；RTC、Flash 编程、看门狗、DMA 均未实现（ADC1 已在胶水里上板）；
 - PWM：TIM4 固定 50 Hz 只服务舵机 PB8（`PSC=71` → 1 µs 刻度、`ARR=19999`），蜂鸣器 PB9 由 TIM3 更新中断翻转 GPIO（100–5000 Hz，回包频率是 10 µs 量化后的实际值）；舵机"有动作"已目视确认，但角度精度/到位抖动/回弹与蜂鸣器听感未采集；`PWM sweep` 阻塞约 5.4 s，期间 live 页与 `hb` 暂停、结束后补发；
 - 输入侧：PB14 只有一路数字量，"单路遮挡"与"全黑"同为 `raw=0`，固件不可区分；编码器 x4 计数为 32 位有符号，两个方向符号相反，但符号与物理顺时针/逆时针的对应**未目视确认**；PB15 按键按下尚未在抓包里复现（全程 `btn=1`），按下判定依赖端口上拉与模块接线；
 - UART 是逐字节中断，没有 DMA + 空闲中断的接收路径；TX 环 512 B，超长回包靠"边发边等"（`tx_bytes_all`）；
 - live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间静态命令（`clear`/`test`/`show`/`frame`）照常接管，3 s 后自动交回；
 - **测距已停用**：TIM2 的 1 µs 自由运行计时与电机 PWM 共用 `PSC/ARR` 无法共存，TIM2 已整颗划给电机；`DIST` 固定回 `DIST err=disabled`，TRIG/ECHO 引脚与 EXTI 逻辑保留，重新启用前必须先确定独立计时源（`docs/TIM2-CONFLICT.md`）；
+- 电机：TIM2 `PSC=0 / ARR=3599` → 20 kHz，只有一路通道出 PWM、另一路恒 0（DRV8833 单向驱动）；`duty 0` 与 `stop` 电气等价（两路 CCR=0、全低滑行），`dir` 字段只是状态记忆；`fwd/rev` 只表示选了哪路通道，**对应轴的哪个方向未验证**；电机未接时只能验证寄存器与回包；
+- 分层检查：本仓用 `tools/check_layering.py`（3.2.0，`tools/CHECKER.lock` 固定）扫描，当前 0 ERROR / 3 WARN；上游 3.3.0 在 2026-11-19 21:12 被并发改写，同一命令连跑两次结果不同，暂不作为门禁，等上游定稿并升锁后重跑；
 - 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；
 - 自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`，是 HC-SR04 余振，不是故障；输入侧抓包里未发任何 PWM/BUZ 命令也出现过 3.9–45.8 cm 短读数与一次 `err=timeout`（与手/黑物靠近超声视场时间重合，归因未确认，§31.6）；
 - 没有 CMake presets，没有 CI；对象结构体布局不承诺 ABI 稳定。

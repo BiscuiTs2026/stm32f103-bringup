@@ -1803,17 +1803,95 @@ PB5 → R9 3 kΩ → Q3 SS8050 → U7 SRD-05VDC-SL-C 线圈，D2 FR107 续流，
 - PB5 可被 TIM3 部分重映射占用，但本工程 `AFIO->MAPR=0` 且 TIM3 不输出通道，
   已按代码核对，无冲突。
 
+## 35. 2026-11-19 电机 PA0/PA1（TIM2_CH1/CH2，DRV8833）
+
+### 35.1 接线与驱动假设（来自 HARDWARE.md 第 8 条、4.5 节）
+
+PA0/PA1 → 驱动板 PWM1/PWM2（排针脚 4 / 脚 3），PCB 丝印 **A0/A1**，即 IN1/IN2。
+两路都是方向输入，本实现用"一路 PWM、另一路恒 0"驱动，两路全低为滑行；
+两路全高（刹车）本实现不使用。**哪一路对应轴的正转没有验证**，`dir=fwd/rev`
+只表示电气通道选择。
+
+### 35.2 实现
+
+| 文件 | 内容 |
+| --- | --- |
+| `include/pm/pm_motor.h` | `pm_motor_init/set/duty/stop/stat`，`pm_motor_dir_t` |
+| `src/port/stm32f1/pm_motor_stm32f1.c` | TIM2 `PSC=0 / ARR=3599` → 20 kHz；CH1/CH2 PWM mode 1 + 预装载；PA0/PA1 复用推挽 50 MHz；先写 0 再切模式 |
+| `src/components/motor_dev/` | `MOTOR fwd/rev/stop/duty/stat`，回包 `hz/arr/ccr1/ccr2` 全部取自寄存器 |
+| `CMakeLists.txt` | 新增端口与组件源文件、include 目录 |
+| `src/app/main.c` | 只加 4 处登记（include、HELP、分发链、init） |
+
+关键取舍：
+
+- **占用判据只看寄存器**：`pm_motor_init()` 在写任何配置前检查
+  `TIM2->CR1.CEN`（已在计数 → `-1`/`err=timer`）与 `AFIO->MAPR.TIM2_REMAP` bit0
+  （CH1/CH2 被移出 PA0/PA1 → `-2`/`err=remap`）。没有软件占用标志，
+  不会因状态变量失步而误报，也不会漏报"别人已经启动了 TIM2"。
+- **`duty 0` 与 `stop` 电气等价**：两者都是两路 CCR=0、两路全低滑行；
+  差别只是 `dir` 字段的记忆（`fwd 0` 后可 `duty 60` 续跑）。文档不把它写成两种电气状态。
+- `duty=100` 时 CCR=3600=ARR+1，PWM 模式 1 下输出恒有效，属正常满速。
+- 不碰 DIST 的引脚与边沿代码，只是 TIM2 不再被 `dist_hw_init()` 启动（§33）。
+
+### 35.3 串口可证（已验）
+
+证据：`evidence/motor-20261119-a.log`（139 行，COM11 115200，烧录
+`Download verified successfully` + `MCU Reset`，exit 0）。
+
+```
+MOTOR stat                              dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+MOTOR fwd 30                            dir=fwd  duty=30% ... ccr1=1080 ccr2=0
+MOTOR duty 80                           dir=fwd  duty=80% ... ccr1=2880 ccr2=0
+MOTOR fwd 0                             dir=fwd  duty=0%  ... ccr1=0    ccr2=0
+MOTOR fwd 100                           dir=fwd  duty=100%... ccr1=3600 ccr2=0
+MOTOR fwd 101                           MOTOR err=range duty=101
+MOTOR rev 50                            dir=rev  duty=50% ... ccr1=0 ccr2=1800
+MOTOR stop                              dir=stop duty=0%  ... ccr1=0 ccr2=0
+MOTOR duty 50                           MOTOR err=idle
+MOTOR rev abc / MOTOR foo / MOTOR       MOTOR err=usage ×3
+```
+
+- 30%/50%/80%/100% 的 CCR 分别是 1080/1800/2880/3600，与
+  `duty × 3600 / 100` 全部相等；`ccr1/ccr2` 是 `TIM2->CCR*` 读回，不是请求值回显。
+- 回归：`PWM servo 90` → `pulse=1500us`（TIM4 未受影响）、`DIST` → `err=disabled`、
+  `PING`/`STAT`/`RELAY stat`/`TRACK`/`ENC` 全部正常。
+- `HELP` 由 14 行 585 B 增至 **15 行 638 B**（实测逐行累加与源码字符串一致）；
+  TX 环 512 B 靠 `tx_bytes_all()` 分块边发边等，不丢尾。
+- 尺寸：Flash 25672 → **27168 B（41.46%）**，RAM 4864 → **4968 B（24.26%）**。
+- `main.c` 检查器口径代码行 1668 → **1669（+1）**，物理行 2135 → 2137；
+  `--glue-max-lines 1700` 仍有余量 31 行。
+
+### 35.4 需用户感官/仪表确认（未验证）
+
+- **电机是否真的转**：串口只能证明 CCR 与 20 kHz 时基，不能证明输出级与电机。
+- **`fwd`/`rev` 对应轴的哪个方向**：极性未验证，可能相反。
+- **转速是否随占空比变化**：需要用户听/看 30% → 80% 的差异。
+- 若本轮电机未接线，以上三项只能写"未接、仅验证寄存器与回包"。
+
+### 35.5 分层检查器
+
+- 本仓锁定版 `tools/check_layering.py`（**3.2.0**，`tools/CHECKER.lock` 校验一致）：
+  `0 ERROR / 3 WARN`，与加电机前同数；3 条 WARN 仍是 `pm_port_stm32f1.c`
+  的 ISR 钩子（352/362/374），不来自新文件。
+- 上游 3.3.0 在 **2026-11-19 21:12:39** 被并发改写（`LastWriteTime` 可查），
+  同一命令连跑两次得到 `4 ERROR / 26 WARN` 与 `0 ERROR / 27 WARN` 两个不同结果；
+  4 条 ERROR 全在未改动的 `src/core/pm_gpio.c`，属工具侧变动。按 AGENTS §2.6
+  停手、不重试、不自行对齐，等上游定稿升锁后重跑基线。
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，
   当前未使用 printf，无影响。
 - 判读规则：BLE 侧一个长回包可能显示成多个气泡，**只看总字节数，不看气泡个数**。
-  `HELP` 完整 = **585 B（14 行，按源码字符串计；本轮尚未上板核对）**。
+  `HELP` 完整 = **638 B（15 行，2026-11-19 §35 上板实测）**。
 - 舵机"有动作"已目视确认（§32），但**角度精度、到位抖动/回弹、带负载表现未验证**；
   蜂鸣器**听感未采集**（§30.3、§32.4）。
 - `DIST` 已停用（§33）：TIM2 划给电机 PWM，`DIST` 固定回 `DIST err=disabled`；
   旧的 timeout 分支与短读数现场项一并搁置，重新启用前先定独立计时源。
 - 继电器 PB5 的电平可证（§34.3），但**吸合声、触点通断与 on/off 极性未验证**（§34.4）。
+- 电机 PA0/PA1 的寄存器与回包可证（§35.3），但**是否真转、fwd/rev 对应轴方向、
+  转速随占空比变化均未验证**（§35.4）；若电机未接线，只能按"未接"记账。
+- 上游 3.3.0 分层检查器仍在被并发修改，基线待其定稿升锁后重跑（§35.5）。
 - 异步命令（`AHT`/`AHTS`/`DIST`）的回包可能晚于其后一条命令的回包（最多晚 60~80 ms）。
 - OLED：已验证到"初始化 + 8 页 GDDRAM 写入全部 ACK、AF/BERR 为 0"，
   **屏上画面是否正常需要肉眼确认**；CH1116 的 I²C 模式不能读回状态/GDDRAM，

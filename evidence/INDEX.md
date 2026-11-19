@@ -1,13 +1,14 @@
 # 上板抓包证据登记表
 
 本目录是 `2026-11-18/board-bringup/work` 这一轮上板验证留下的串口抓包归档。
-共 35 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
+共 36 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
 根目录原件保留（`PATCHES.md` 里的路径引用仍然有效），但根目录副本被 `.gitignore` 忽略，
 只有本目录的副本进版本库；第 10–23 个（`retest-20261119*.log`、`dist-probe-20261119-*.log`、
 `autolive-20261119*.log`、`adc-20261119-*.log`）是 2026-11-19 复测与排查时**直接写在本目录**的，
 没有根目录副本；第 24–29 项是 2026-11-19 晚的 OLED 排版、PWM 与慢扫抓包；第 30 项是
 输入侧（循迹 PB14 / 编码器 PA8·PA9·PB15）抓包；第 31–32 项是舵机不动的
-寄存器取证（修复前）与修复后复测；第 33 项是测距停用 + 继电器 PB5 的板端验证。
+寄存器取证（修复前）与修复后复测；第 33 项是测距停用 + 继电器 PB5 的板端验证；
+第 34 项是电机 PA0/PA1（TIM2_CH1/CH2）的寄存器与回包验证。
 
 ## 怎么读这些日志
 
@@ -468,3 +469,16 @@
 | 不能证明什么 | 继电器是否真的吸合/释放（"咔哒"声与触点通断需人耳/万用表）；PB5 高电平是否等于吸合（极性未实测）；舵机角度精度 |
 | 局限 | `OLED live on` 命中一次 I2C 忙窗口，回 `OLED err=busy i2c`，但 live 状态此前已开启并持续到 `live off`；不影响 DIST 静默结论 |
 | PATCHES 引用 | §33、§34 |
+
+## 34. motor-20261119-a.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 139 行，约 25 s；固件 Flash 27168 B / RAM 4968 B（测距停用 + 继电器 + 电机，烧录 `-v -rst` 校验通过） |
+| 采样窗口 | 2026-11-19 21:11:19 起，COM11 115200 |
+| 当时在做什么 | 一次抓完：`HELP` → `MOTOR stat` → `fwd 30`（3 s）→ `stat` → `duty 80`（3 s）→ `stat` → `fwd 0` → `fwd 100` → `fwd 101` → `rev 50`（3 s）→ `stat` → `stop` → `duty 50` → `rev abc` → `foo` → 单独 `MOTOR` → `stat` → 回归 `PWM servo 90`/`DIST`/`PING`/`STAT`/`RELAY stat`/`TRACK`/`ENC` |
+| 关键内容 | `MOTOR stat` 初值 `dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0`；`fwd 30`/`duty 80`/`fwd 100` → `ccr1=1080/2880/3600`、`ccr2=0`；`rev 50` → `ccr1=0 ccr2=1800`；`stop` → 双 0；`fwd 101` → `MOTOR err=range duty=101`；停止后 `duty 50` → `MOTOR err=idle`；`rev abc`/`foo`/单独 `MOTOR` → `MOTOR err=usage`；`HELP` **15 行 638 B**；`PWM servo 90` → `pulse=1500us`；`DIST` → `err=disabled`；`PONG`/`STAT`/`RELAY stat`/`TRACK raw=0`/`ENC` 均正常 |
+| 能证明什么 | TIM2 时基 20 kHz、CCR 与占空比换算一致、三态（fwd/rev/stop）通道组合正确、边界与错误分支都有回包；TIM2 划给电机后 PWM 舵机与其余命令未受影响 |
+| 不能证明什么 | 电机是否真转、`fwd/rev` 对应轴的哪个方向、转速是否随占空比变化（需用户看/听）；电机未接时以上只能记"未接" |
+| 局限 | 抓包期间 `TRACK raw=0`（盖黑或遮挡状态），与上一轮 `raw=1` 不同，仅说明回包正常，未重新做循迹判定 |
+| PATCHES 引用 | §35 |

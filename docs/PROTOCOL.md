@@ -106,7 +106,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 14 行 `HELP ...`，共 **585 B**（见下） | — | 否 |
+| `HELP` | 无 | 15 行 `HELP ...`，共 **638 B**（见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -128,6 +128,7 @@ HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
 HELP TRACK=raw level of PB14 line sensor
 HELP ENC=count/clear, dir, a/b, button PB15
 HELP RELAY=on/off/stat, PB5 relay coil
+HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM
 HELP KEYS=key press counters, clears them
 ```
 
@@ -345,12 +346,39 @@ MCU 只出电平。**假设高电平吸合**（NPN 低边驱动），复位后 P
 - PB5 在 F103C8 上可被部分重映射成 TIM3_CH2，但本工程 `AFIO->MAPR=0`、
   TIM3 只用作蜂鸣器时基不输出通道，且 PB5 配置为普通推挽输出，不冲突。
 
+### 4.9 电机（PA0/PA1，DRV8833）
+
+PA0/PA1 → 驱动板 PWM1/PWM2（排针脚 4 / 脚 3，丝印 A0/A1，即 IN1/IN2）。
+TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一路出 PWM、
+另一路恒低；两路全低为滑行。`fwd/rev` 只表示选了哪一路电气通道，
+**对应轴的哪个机械方向未验证**。
+
+| 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
+| --- | --- | --- | --- | --- |
+| `MOTOR fwd [0..100]` | 占空比，缺省 50 | `MOTOR fwd ok dir=fwd duty=60% hz=20000 arr=3599 ccr1=2160 ccr2=0` | `MOTOR err=range duty=<n>` / `MOTOR err=usage` / `MOTOR err=timer` / `MOTOR err=remap` | **是**：CH1 出 PWM、CH2 低 |
+| `MOTOR rev [0..100]` | 同上 | 同上，`dir=rev`、`ccr1=0 ccr2=<n>` | 同上 | **是**：CH2 出 PWM、CH1 低 |
+| `MOTOR stop` | 无 | `MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0` | 同上 | **是**：两路全低（滑行） |
+| `MOTOR duty <0..100>` | 占空比 | `MOTOR duty ok dir=fwd duty=80% ...` | `MOTOR err=idle`（还没给过方向）/ 同上 | **是**：保持方向改占空比 |
+| `MOTOR` / `MOTOR stat` | 无 | `MOTOR stat dir=<fwd\|rev\|stop> duty=<n>% hz=<n> arr=<n> ccr1=<n> ccr2=<n>` | 同上 | 否（只读） |
+| 其它子命令 | — | — | `MOTOR err=usage` | 否 |
+
+- `hz` 由 `PSC/ARR` 现算、`arr` 与 `ccr1/ccr2` 从 `TIM2` 寄存器读回，不是回显请求值；
+  `duty=` 是最后一次被接受的方向/占空比请求，两者不一致即说明寄存器被别处改过。
+- `duty=100` 时 CCR = 3600 = `ARR+1`，PWM 模式 1 下输出恒有效（满速），不是错误。
+- **`duty 0` 与 `stop` 电气等价**：都是两路 CCR=0、两路全低滑行。区别只在
+  `dir` 字段的记忆（`fwd 0` 记住方向，之后 `duty 60` 直接续跑）；驱动板行为相同。
+- `MOTOR err=timer` 的判据是 `TIM2->CR1.CEN` 已置位（别人已在计数）；
+  `MOTOR err=remap` 是 `AFIO->MAPR.TIM2_REMAP` bit0 已置位（CH1/CH2 被移出 PA0/PA1）。
+  不看任何软件占用标记，因此不会因状态变量失步而误报。
+- 测距停用期间 TIM2 不再有第二个使用者；重新启用 HC-SR04 前必须先解决计时源
+  （`docs/TIM2-CONFLICT.md`）。
+
 ---
 
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **14 行 585 B**（含每条 CRLF）。
+   当前 `HELP` 是 **15 行 638 B**（含每条 CRLF）。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。

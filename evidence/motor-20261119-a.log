@@ -1,0 +1,139 @@
+﻿[      4ms] ===== capture start 2026-11-19 21:11:19.813 port=COM11 =====
+[    392ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    786ms] hb
+[    880ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1379ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1505ms] >> HELP
+[   1517ms] HELP HELP=list commands
+[   1518ms] HELP PING=reply PONG
+[   1518ms] HELP STAT=clk/up/tick/keys/uart counters
+[   1547ms] HELP I2C=scan I2C1 bus, list 8-bit addresses
+[   1548ms] HELP AHT=read AHT20, rh and t in 0.1 units
+[   1548ms] HELP AHTS=same but read via repeated START
+[   1549ms] HELP DIST=disabled, TIM2 given to motor
+[   1549ms] HELP ADC=pot PA5 and NTC PA4, raw and mV
+[   1550ms] HELP OLED=on/off/clear/test/show/frame/col/live/dump
+[   1550ms] HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
+[   1551ms] HELP TRACK=raw level of PB14 line sensor
+[   1552ms] HELP ENC=count/clear, dir, a/b, button PB15
+[   1577ms] HELP RELAY=on/off/stat, PB5 relay coil
+[   1578ms] HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM
+[   1579ms] HELP KEYS=key press counters, clears them
+[   1795ms] hb
+[   1872ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2387ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2512ms] >> MOTOR stat
+[   2527ms] MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[   2793ms] hb
+[   2887ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3216ms] >> MOTOR fwd 30
+[   3231ms] MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[   3388ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3789ms] hb
+[   3883ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4380ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4797ms] hb
+[   4875ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5376ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5795ms] hb
+[   5873ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6382ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6414ms] >> MOTOR stat
+[   6430ms] MOTOR stat dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[   6787ms] hb
+[   6880ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7004ms] >> MOTOR duty 80
+[   7019ms] MOTOR duty ok dir=fwd duty=80% hz=20000 arr=3599 ccr1=2880 ccr2=0
+[   7376ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7797ms] hb
+[   7875ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8386ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8787ms] hb
+[   8881ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9380ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9786ms] hb
+[   9879ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10206ms] >> MOTOR stat
+[  10221ms] MOTOR stat dir=fwd duty=80% hz=20000 arr=3599 ccr1=2880 ccr2=0
+[  10377ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  10796ms] hb
+[  10827ms] >> MOTOR fwd 0
+[  10842ms] MOTOR fwd ok dir=fwd duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[  10873ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11372ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  11403ms] >> MOTOR fwd 100
+[  11421ms] MOTOR fwd ok dir=fwd duty=100% hz=20000 arr=3599 ccr1=3600 ccr2=0
+[  11792ms] hb
+[  11885ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12010ms] >> MOTOR fwd 101
+[  12025ms] MOTOR err=range duty=101
+[  12383ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  12601ms] >> MOTOR rev 50
+[  12617ms] MOTOR rev ok dir=rev duty=50% hz=20000 arr=3599 ccr1=0 ccr2=1800
+[  12788ms] hb
+[  12881ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  13377ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  13797ms] hb
+[  13873ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14385ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  14790ms] hb
+[  14882ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15379ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  15783ms] hb
+[  15815ms] >> MOTOR stat
+[  15831ms] MOTOR stat dir=rev duty=50% hz=20000 arr=3599 ccr1=0 ccr2=1800
+[  15877ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16372ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  16404ms] >> MOTOR stop
+[  16419ms] MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[  16793ms] hb
+[  16886ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  17010ms] >> MOTOR duty 50
+[  17026ms] MOTOR err=idle
+[  17385ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  17602ms] >> MOTOR rev abc
+[  17618ms] MOTOR err=usage
+[  17792ms] hb
+[  17884ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  18210ms] >> MOTOR foo
+[  18226ms] MOTOR err=usage
+[  18383ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  18787ms] hb
+[  18802ms] >> MOTOR
+[  18818ms] MOTOR err=usage
+[  18880ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  19379ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  19409ms] >> MOTOR stat
+[  19426ms] MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[  19783ms] hb
+[  19876ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  20001ms] >> PWM servo 90
+[  20017ms] PWM servo ok deg=90.0 pulse=1500us
+[  20387ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  20792ms] hb
+[  20808ms] >> DIST
+[  20823ms] DIST err=disabled
+[  20886ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  21383ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  21414ms] >> PING
+[  21429ms] PONG
+[  21786ms] hb
+[  21880ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  22005ms] >> STAT
+[  22021ms] STAT clk=72000000 up=39336 tick=1 key1=0 key2=0 uart_rx=243 uart_tx=5320
+[  22377ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  22610ms] >> RELAY stat
+[  22626ms] RELAY stat pb5=0
+[  22797ms] hb
+[  22875ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  23216ms] >> TRACK
+[  23231ms] TRACK raw=0
+[  23371ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  23790ms] hb
+[  23805ms] >> ENC
+[  23820ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[  23882ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  24384ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  24788ms] hb
+[  24880ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[  25005ms] ===== capture end =====
