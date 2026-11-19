@@ -856,6 +856,13 @@ static uint8_t     s_oled_live_job;    /* the running job is a live refresh */
 static cmd_port_t *s_oled_live_port;   /* where live refresh replies go */
 static uint32_t    s_oled_live_next;   /* ms of the next refresh */
 
+/* Live is the default after boot: no command is needed to keep the panel
+ * refreshing. A static screen holds the panel for OLED_STATIC_HOLD_MS and then
+ * hands it back to live; `OLED off` pauses everything, `OLED on` resumes. */
+#define OLED_STATIC_HOLD_MS 3000u
+static uint8_t     s_oled_display = 1u;   /* 1 = panel on */
+static uint32_t    s_oled_hold_until;     /* live stays paused until this ms */
+
 static int oled_i2c_wait(uint32_t mask)
 {
     uint32_t t = OLED_FRAME_SPIN;
@@ -1152,24 +1159,33 @@ static int oled_start_live_job(cmd_port_t *port, const char *name, uint32_t now)
     return 0;
 }
 
+/* (Re)start the periodic refresh. `first_ms` is when the first frame is due:
+ * boot passes now + one period so the boot clear has finished, while
+ * `OLED live on` passes now. The 1 Hz distance measurement sits half a period
+ * away from the display refresh. */
+static void oled_live_arm(cmd_port_t *port, uint32_t first_ms)
+{
+    s_oled_live      = 1u;
+    s_oled_live_port = port;
+    s_oled_last      = OLED_SCREEN_LIVE;
+    s_oled_live_next = first_ms;
+    s_oled_hold_until = 0u;
+    s_dist_live_next = first_ms + (OLED_LIVE_PERIOD_MS / 2u);
+}
+
 static void cmd_oled(cmd_port_t *c, const char *arg)
 {
     oled_screen_t s = OLED_SCREEN_NONE;
     const char   *rest = NULL;
 
-    /* `live` owns the panel; `show` would fight the periodic refresh. */
-    if ((s_oled_live != 0u) && ci_equal(arg, "SHOW")) {
-        tx_str(c, "OLED err=busy live\r\n");
-        return;
-    }
-
-    /* A pattern command or `live off` takes the panel back even in the middle
-     * of a live refresh. Command handling and oled_service() both run in the
-     * main loop, so this always lands on a page boundary and no I2C frame is
-     * cut in half. */
+    /* A pattern command, `show`, `on`/`off` or `live off` takes the panel back
+     * even in the middle of a live refresh. Command handling and oled_service()
+     * both run in the main loop, so this always lands on a page boundary and no
+     * I2C frame is cut in half. */
     if (s_oled_live_job != 0u) {
         int takeover = ci_equal(arg, "FRAME") || ci_equal(arg, "TEST") ||
-                       ci_equal(arg, "CLEAR") ||
+                       ci_equal(arg, "CLEAR") || ci_equal(arg, "SHOW") ||
+                       ci_equal(arg, "ON") || ci_equal(arg, "OFF") ||
                        ci_starts(arg, "LIVE ", &rest) ||
                        ci_starts(arg, "COL", &rest);
 
@@ -1195,7 +1211,9 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
             oled_err_reply(c, "io");
             return;
         }
-        tx_str(c, "OLED on ok");
+        s_oled_display = 1u;
+        oled_live_arm(c, pm_osal_now_ms());
+        tx_str(c, "OLED on ok display=on live=on");
         oled_tx_counters(c);
         tx_str(c, "\r\n");
         return;
@@ -1205,7 +1223,10 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
             oled_err_reply(c, "io");
             return;
         }
-        tx_str(c, "OLED off ok");
+        s_oled_display    = 0u;
+        s_oled_live       = 0u;   /* stop refreshing and stop the 1 Hz ranging */
+        s_oled_hold_until = 0u;
+        tx_str(c, "OLED off ok display=off live=paused");
         oled_tx_counters(c);
         tx_str(c, "\r\n");
         return;
@@ -1221,20 +1242,15 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
             rest++;
         }
         if (ci_equal(rest, "ON")) {
-            s_oled_live      = 1u;
-            s_oled_live_port = c;
-            s_oled_last      = OLED_SCREEN_LIVE;
-            s_oled_live_next = pm_osal_now_ms();
-            /* Half a display period later: the 10 us TRIG pulse and the <=23 ms
-             * echo window then fall between page transfers, not inside one. */
-            s_dist_live_next = s_oled_live_next + (OLED_LIVE_PERIOD_MS / 2u);
+            oled_live_arm(c, pm_osal_now_ms());
             tx_str(c, "OLED live=on period=");
             tx_u32(c, OLED_LIVE_PERIOD_MS);
             tx_str(c, "ms\r\n");
             return;
         }
         if (ci_equal(rest, "OFF")) {
-            s_oled_live = 0u;
+            s_oled_live       = 0u;
+            s_oled_hold_until = 0u;
             tx_str(c, "OLED live=off\r\n");
             return;
         }
@@ -1288,9 +1304,8 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
         return;
     }
 
-    /* frame / test / clear take the panel back from live. */
-    s_oled_live = 0u;
-
+    /* Static screens take the panel for OLED_STATIC_HOLD_MS and then hand it
+     * back to live; it is only a temporary takeover, live stays armed. */
     if (oled_start_screen(s) != 0) {
         tx_str(c, "OLED err=busy pending\r\n");
         return;
@@ -1335,6 +1350,17 @@ static void oled_service(void)
     if (was_live == 0) {
         tx_str(c, " live=");
         tx_str(c, (s_oled_live != 0u) ? "on" : "off");
+        /* A static screen only holds the panel briefly before live returns. */
+        if ((s_oled_live != 0u) && (s_oled_display != 0u)) {
+            uint32_t now = pm_osal_now_ms();
+
+            s_oled_hold_until = now + OLED_STATIC_HOLD_MS;
+            s_oled_live_next  = s_oled_hold_until;
+            s_dist_live_next  = s_oled_hold_until + (OLED_LIVE_PERIOD_MS / 2u);
+            tx_str(c, " hold=");
+            tx_u32(c, OLED_STATIC_HOLD_MS);
+            tx_str(c, "ms");
+        }
     }
     oled_tx_counters(c);
     tx_str(c, "\r\n");
@@ -1344,8 +1370,11 @@ static void oled_service(void)
  * is still busy the period is skipped, never queued. */
 static void oled_live_tick(uint32_t now)
 {
-    if (s_oled_live == 0u) {
+    if ((s_oled_live == 0u) || (s_oled_display == 0u)) {
         return;
+    }
+    if ((int32_t)(now - s_oled_hold_until) < 0) {
+        return;                            /* a static screen still owns it */
     }
     if (s_oled_req != NULL) {
         return;
@@ -1365,8 +1394,11 @@ static void oled_live_tick(uint32_t now)
  * measurement that is still in flight just skips this period. */
 static void dist_live_tick(uint32_t now)
 {
-    if (s_oled_live == 0u) {
+    if ((s_oled_live == 0u) || (s_oled_display == 0u)) {
         return;
+    }
+    if ((int32_t)(now - s_oled_hold_until) < 0) {
+        return;                            /* paused while a static screen shows */
     }
     if ((int32_t)(now - s_dist_live_next) < 0) {
         return;
@@ -1596,6 +1628,11 @@ int main(void)
     bt_init();
     dist_hw_init();
     oled_boot();
+
+    /* Boot default: live. Armed only after oled_boot() has finished the init
+     * sequence and the synchronous clear, so the first refresh cannot race the
+     * clear. One period of delay leaves the boot messages on screen briefly. */
+    oled_live_arm(&s_debug, pm_osal_now_ms() + OLED_LIVE_PERIOD_MS);
 
     next_led_ms = pm_osal_now_ms();
     next_hb_ms  = next_led_ms;

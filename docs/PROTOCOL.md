@@ -86,7 +86,6 @@ OLED ready (128x64, 6x8 font)
   | `DIST err=busy` | 上一次手动测距还在进行 | 60 ms 内重复发 `DIST` |
   | `DIST err=busy live` | live 模式自动测距正在进行 | live 开启时手动 `DIST` 撞上 |
   | `OLED err=busy pending` | 上一次 OLED 分页作业还没推完 | 98 ms 窗口内连发 OLED 命令 |
-  | `OLED err=busy live` | live 模式拥有屏幕 | live 开启时发 `OLED show` |
   | `OLED err=busy i2c` | AHT 正在占用 I2C1 | AHT 的 80 ms 窗口内发 OLED |
   | `OLED err=io` | I2C 写失败（AF/BERR/超时） | 见回包里的 `af/berr/to` 计数 |
 
@@ -151,23 +150,32 @@ HELP KEYS=key press counters, clears them
 
 ### 4.4 OLED（CH1116，0x7A，128×64，I2C1）
 
+**默认行为：复位/上电后自动进入 live（500 ms 刷新），不需要发任何命令。**
+`live` 只在 `OLED off`、`OLED live off` 或 live 作业出错时停止。静态图案命令
+（`clear`/`test`/`frame`/`show`）在 live 期间照常执行并临时接管屏幕，
+画完后保持 **3 s** 再自动交回 live，回包里用 `hold=3000ms` 告知停留时间。
+
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `OLED on` | 无 | `OLED on ok af=0 berr=0 to=0` | `OLED err=io ...` / `OLED err=busy pending` | **是**：显示开 |
-| `OLED off` | 无 | `OLED off ok af=0 berr=0 to=0` | 同上 | **是**：显示关（显存保留） |
-| `OLED clear` | 无 | `OLED clear ok ms=98 col=2 live=off af=0 berr=0 to=0` | `OLED err=io ...` / `err=busy pending` | **是**：整屏黑 |
-| `OLED test` | 无 | `OLED test ok ms=98 col=2 live=off ...` | 同上 | **是**：整屏棋盘格 |
-| `OLED frame` | 无 | `OLED frame ok ms=98 col=2 live=off ...` | 同上 | **是**：边框 + 9 条竖线 |
-| `OLED show` | 无 | `OLED show ok ms=98 col=2 live=off ...` | `OLED err=busy live` / `err=busy pending` | **是**：静态三行状态 |
+| `OLED on` | 无 | `OLED on ok display=on live=on af=0 berr=0 to=0` | `OLED err=io ...` / `OLED err=busy pending` | **是**：显示开并立即恢复 live |
+| `OLED off` | 无 | `OLED off ok display=off live=paused af=0 berr=0 to=0` | 同上 | **是**：显示关，暂停 live 刷新与 1 Hz 自动测距（显存保留） |
+| `OLED clear` | 无 | `OLED clear ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0` | `OLED err=io ...` / `err=busy pending` | **是**：整屏黑，3 s 后回 live |
+| `OLED test` | 无 | `OLED test ok ms=98 col=2 live=on hold=3000ms ...` | 同上 | **是**：整屏棋盘格，3 s 后回 live |
+| `OLED frame` | 无 | `OLED frame ok ms=98 col=2 live=on hold=3000ms ...` | 同上 | **是**：边框 + 9 条竖线，3 s 后回 live |
+| `OLED show` | 无 | `OLED show ok ms=98 col=2 live=on hold=3000ms ...` | `OLED err=busy pending` / `err=busy i2c` | **是**：静态三行状态，3 s 后回 live |
 | `OLED col <0..4>` | 列偏移 | `OLED col=2 ok redraw=<图案名>` | `OLED err=usage col=0..4` | **是**：改列偏移并立即重画 |
 | `OLED live on` | 无 | `OLED live=on period=500ms` | `OLED err=busy pending` / `err=busy i2c` | **是**：进入周期刷新 + 1 Hz 自动测距 |
-| `OLED live off` | 无 | `OLED live=off` | — | **是**：停止周期刷新，屏保留最后一帧 |
+| `OLED live off` | 无 | `OLED live=off` | — | **是**：停住一帧静态画面，屏保留最后一帧 |
 | `OLED live` | 缺参数 | — | `OLED err=usage` | 否 |
 | 其它子命令 | — | — | `OLED err=usage` | 否 |
 
 说明：
 
-- `ms=` 是整屏 8 页的实际传输耗时（约 98 ms），`col=` 是当前列偏移，
+- `display=` / `live=paused` / `hold=` 是后加的状态字段，只出现在对应回包里；
+  原有 `ms=` / `col=` / `af=` / `berr=` / `to=` 字段与顺序不变。
+- 静态命令在 `live off`（或 `OLED off`）状态下执行时，回包为 `live=off` 且**不带**
+  `hold=`——此时没有 live 可交回，画面就一直停在该图案。
+- `ms=` 是整屏 8 页的实际传输耗时（约 97–98 ms），`col=` 是当前列偏移，
   `af/berr/to=` 是 I2C 错误累计计数（从开机起，不清零）。
 - `frame` 布局：page 0/7 全亮（上下 8 行实心带），page 1..6 在
   x = 0,16,32,48,64,80,96,112,127 处各一条竖线（共 9 条）。
@@ -182,6 +190,8 @@ HELP KEYS=key press counters, clears them
 
 - `live` 期间每 500 ms 刷新一次显示，每 1000 ms 自动发一次 `DIST`；
   测量起点比显示周期偏移 250 ms，两者互不阻塞。
+- 静态图案的 3 s 停留期间（以及 `OLED off` 期间）两者都暂停，恢复 live 后
+  立刻重画一帧（实测 `OLED on` 后 98 ms 内出现首条 `OLED live ok`）。
 - `OLED col` 在 live 期间可用，回 `redraw=live` 并立即重画。
 
 ---
@@ -205,8 +215,9 @@ HELP KEYS=key press counters, clears them
 
 ## 6. 已知限制
 
-- `live` 开启时 `OLED show` 回 `OLED err=busy live`（不自动切换），这是有意选择：
-  live 已显示同样数据，拒绝比隐式改状态更可预测。
+- 上电默认 live，屏会自己按 500 ms 刷新；"静止不动"只可能是 `OLED off`、
+  `OLED live off` 或 live 作业出错。`OLED show` 在 live 期间不再被拒（旧行为是
+  回 `OLED err=busy live`），而是临时接管 3 s 后回 live。
 - 无行尾的命令有 100 ms 判定窗口：最坏 100 ms 才执行；片段间隔 < 100 ms 会被拼接。
 - 单行 47 字符上限，超出部分静默丢弃，没有报错。
 - 空行（只有 `\r`/`\n`）不执行也不回包。
