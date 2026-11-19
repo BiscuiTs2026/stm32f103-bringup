@@ -1,0 +1,295 @@
+﻿# board-bringup 2026-11-19 phase A: manual DIST delay sweep against the 1 Hz live measurement
+# Firmware: build-retest (unchanged, 16480 B). Live measurement left ON. Target must stay untouched.
+# Each trial: wait for a "DIST live" line, wait D ms, send one manual DIST.
+# capture start 2026-11-19 19:09:56.702 local
+[+336ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+426ms] >> OLED live on
+[+431ms] OLED live=on period=500ms<CR>
+[+530ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+[+688ms] DIST live cm=99.4 us=5766<CR>
+[+886ms] hb<CR>
+[+1030ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+1530ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+# --- delay 0 ms ---
+[+1688ms] DIST live cm=99.9 us=5792<CR>
+[+1714ms] >> DIST (delay 0)
+[+1725ms] DIST cm=99.9 us=5794<CR>
+[+1886ms] hb<CR>
+[+2030ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+2530ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+2688ms] DIST live cm=99.9 us=5794<CR>
+[+2720ms] >> DIST (delay 0)
+[+2732ms] DIST cm=99.9 us=5793<CR>
+[+2887ms] hb<CR>
+[+3030ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+3530ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+3688ms] DIST live cm=99.0 us=5741<CR>
+[+3716ms] >> DIST (delay 0)
+[+3727ms] DIST cm=98.5 us=5715<CR>
+[+3886ms] hb<CR>
+[+4029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+4529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+4687ms] DIST live cm=99.4 us=5767<CR>
+[+4714ms] >> DIST (delay 0)
+[+4725ms] DIST cm=99.4 us=5767<CR>
+[+4886ms] hb<CR>
+[+5030ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+5529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+5685ms] DIST live cm=43.3 us=2513<CR>
+[+5719ms] >> DIST (delay 0)
+[+5730ms] DIST cm=99.0 us=5740<CR>
+[+5886ms] hb<CR>
+[+6030ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+6529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+6687ms] DIST live cm=98.6 us=5719<CR>
+[+6715ms] >> DIST (delay 0)
+[+6726ms] DIST cm=99.0 us=5740<CR>
+[+6886ms] hb<CR>
+[+7029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+# --- delay 20 ms ---
+[+7529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+7687ms] DIST live cm=99.4 us=5768<CR>
+[+7740ms] >> DIST (delay 20)
+[+7751ms] DIST cm=99.0 us=5741<CR>
+[+7886ms] hb<CR>
+[+8029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+8529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+8687ms] DIST live cm=99.4 us=5767<CR>
+[+8751ms] >> DIST (delay 20)
+[+8762ms] DIST cm=99.0 us=5742<CR>
+[+8886ms] hb<CR>
+[+9029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+9529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+9687ms] DIST live cm=99.0 us=5742<CR>
+[+9750ms] >> DIST (delay 20)
+[+9761ms] DIST cm=99.4 us=5766<CR>
+[+9886ms] hb<CR>
+[+10029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+10529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+10687ms] DIST live cm=99.4 us=5768<CR>
+[+10742ms] >> DIST (delay 20)
+[+10753ms] DIST cm=99.4 us=5767<CR>
+[+10886ms] hb<CR>
+[+11029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+11529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+11687ms] DIST live cm=99.5 us=5772<CR>
+[+11754ms] >> DIST (delay 20)
+[+11765ms] DIST cm=99.9 us=5794<CR>
+[+11886ms] hb<CR>
+[+12029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+12529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+12687ms] DIST live cm=99.4 us=5766<CR>
+[+12747ms] >> DIST (delay 20)
+[+12759ms] DIST cm=99.9 us=5793<CR>
+[+12886ms] hb<CR>
+[+13029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+# --- delay 50 ms ---
+[+13529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+13687ms] DIST live cm=99.1 us=5745<CR>
+[+13773ms] >> DIST (delay 50)
+[+13784ms] DIST cm=99.4 us=5767<CR>
+[+13886ms] hb<CR>
+[+14029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+14529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+14687ms] DIST live cm=99.9 us=5793<CR>
+[+14780ms] >> DIST (delay 50)
+[+14791ms] DIST cm=99.4 us=5767<CR>
+[+14886ms] hb<CR>
+[+15029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+15529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+15687ms] DIST live cm=99.4 us=5766<CR>
+[+15784ms] >> DIST (delay 50)
+[+15796ms] DIST cm=99.0 us=5741<CR>
+[+15886ms] hb<CR>
+[+16029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+16529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+16687ms] DIST live cm=99.4 us=5768<CR>
+[+16781ms] >> DIST (delay 50)
+[+16792ms] DIST cm=99.4 us=5767<CR>
+[+16886ms] hb<CR>
+[+17029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+17528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+17687ms] DIST live cm=99.4 us=5767<CR>
+[+17776ms] >> DIST (delay 50)
+[+17787ms] DIST cm=99.0 us=5741<CR>
+[+17886ms] hb<CR>
+[+18029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+18528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+18685ms] DIST live cm=59.6 us=3456<CR>
+[+18738ms] >> DIST (delay 50)
+[+18750ms] DIST cm=98.6 us=5719<CR>
+[+18886ms] hb<CR>
+[+19028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+# --- delay 100 ms ---
+[+19528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+19687ms] DIST live cm=99.0 us=5744<CR>
+[+19843ms] >> DIST (delay 100)
+[+19853ms] DIST cm=99.1 us=5745<CR>
+[+19886ms] hb<CR>
+[+20029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+20528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+20687ms] DIST live cm=99.0 us=5744<CR>
+[+20836ms] >> DIST (delay 100)
+[+20848ms] DIST cm=98.6 us=5719<CR>
+[+20886ms] hb<CR>
+[+21029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+21529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+21687ms] DIST live cm=99.4 us=5767<CR>
+[+21844ms] >> DIST (delay 100)
+[+21854ms] DIST cm=84.8 us=4919<CR>
+[+21886ms] hb<CR>
+[+22029ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+22528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+22687ms] DIST live cm=99.4 us=5768<CR>
+[+22838ms] >> DIST (delay 100)
+[+22849ms] DIST cm=99.4 us=5767<CR>
+[+22885ms] hb<CR>
+[+23028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+23528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+23687ms] DIST live cm=99.4 us=5767<CR>
+[+23802ms] >> DIST (delay 100)
+[+23813ms] DIST cm=99.4 us=5767<CR>
+[+23885ms] hb<CR>
+[+24028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+24529ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+24687ms] DIST live cm=99.1 us=5746<CR>
+[+24839ms] >> DIST (delay 100)
+[+24851ms] DIST cm=99.4 us=5768<CR>
+[+24886ms] hb<CR>
+[+25028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+# --- delay 200 ms ---
+[+25528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+25687ms] DIST live cm=99.1 us=5746<CR>
+[+25885ms] hb<CR>
+[+25912ms] >> DIST (delay 200)
+[+25923ms] DIST cm=99.1 us=5747<CR>
+[+26028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+26528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+26687ms] DIST live cm=99.4 us=5767<CR>
+[+26885ms] hb<CR>
+[+26922ms] >> DIST (delay 200)
+[+26941ms] DIST cm=99.9 us=5793<CR>
+[+27028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+27528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+27686ms] DIST live cm=99.5 us=5769<CR>
+[+27885ms] hb<CR>
+[+27917ms] >> DIST (delay 200)
+[+27928ms] DIST cm=99.4 us=5768<CR>
+[+28028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+28528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+28687ms] DIST live cm=99.1 us=5746<CR>
+[+28885ms] hb<CR>
+[+28914ms] >> DIST (delay 200)
+[+28924ms] DIST cm=90.1 us=5224<CR>
+[+29028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+29528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+29687ms] DIST live cm=99.4 us=5768<CR>
+[+29885ms] hb<CR>
+[+29912ms] >> DIST (delay 200)
+[+29923ms] DIST cm=98.6 us=5720<CR>
+[+30028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+30528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+30687ms] DIST live cm=99.9 us=5794<CR>
+[+30885ms] hb<CR>
+[+30919ms] >> DIST (delay 200)
+[+30940ms] DIST cm=57.7 us=3348<CR>
+[+31028ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0<CR>
+# --- delay 500 ms ---
+[+31528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+31687ms] DIST live cm=99.4 us=5767<CR>
+[+31885ms] hb<CR>
+[+32028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+32241ms] >> DIST (delay 500)
+[+32253ms] DIST cm=99.0 us=5741<CR>
+[+32528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+32687ms] DIST live cm=99.4 us=5767<CR>
+[+32885ms] hb<CR>
+[+33028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+33253ms] >> DIST (delay 500)
+[+33265ms] DIST cm=99.9 us=5793<CR>
+[+33528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+33687ms] DIST live cm=99.0 us=5743<CR>
+[+33885ms] hb<CR>
+[+34028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+34247ms] >> DIST (delay 500)
+[+34254ms] DIST cm=31.6 us=1831<CR>
+[+34528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+34687ms] DIST live cm=98.6 us=5719<CR>
+[+34885ms] hb<CR>
+[+35028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+35246ms] >> DIST (delay 500)
+[+35254ms] DIST cm=38.0 us=2202<CR>
+[+35528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+35685ms] DIST live cm=80.8 us=4687<CR>
+[+35885ms] hb<CR>
+[+36028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+36237ms] >> DIST (delay 500)
+[+36245ms] DIST cm=38.7 us=2242<CR>
+[+36528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+36687ms] DIST live cm=99.4 us=5767<CR>
+[+36885ms] hb<CR>
+[+37027ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+37250ms] >> DIST (delay 500)
+[+37261ms] DIST cm=99.4 us=5768<CR>
+[+37528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+# --- delay 1000 ms ---
+[+37687ms] DIST live cm=99.4 us=5768<CR>
+[+37885ms] hb<CR>
+[+38028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+38528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+38686ms] DIST live cm=99.4 us=5767<CR>
+[+38748ms] >> DIST (delay 1000)
+[+38759ms] DIST cm=99.4 us=5766<CR>
+[+38885ms] hb<CR>
+[+39028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+39528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+39686ms] DIST live cm=98.6 us=5717<CR>
+[+39885ms] hb<CR>
+[+40035ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+40528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+40687ms] DIST live cm=99.4 us=5767<CR>
+[+40718ms] >> DIST (delay 1000)
+[+40729ms] DIST cm=99.8 us=5791<CR>
+[+40885ms] hb<CR>
+[+41028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+41527ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+41685ms] DIST live cm=88.3 us=5124<CR>
+[+41885ms] hb<CR>
+[+42028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+42527ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+42686ms] DIST live cm=98.6 us=5719<CR>
+[+42723ms] >> DIST (delay 1000)
+[+42734ms] DIST cm=98.6 us=5719<CR>
+[+42885ms] hb<CR>
+[+43028ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+43528ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+43686ms] DIST live cm=99.4 us=5767<CR>
+[+43884ms] hb<CR>
+[+44027ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+44527ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+44686ms] DIST live cm=99.9 us=5793<CR>
+[+44745ms] >> DIST (delay 1000)
+[+44756ms] DIST cm=99.9 us=5793<CR>
+[+44885ms] hb<CR>
+[+45027ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+45527ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+45685ms] DIST live cm=93.3 us=5412<CR>
+[+45884ms] hb<CR>
+[+46027ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+46527ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+46682ms] DIST live cm=44.2 us=2561<CR>
+[+46742ms] >> DIST (delay 1000)
+[+46752ms] DIST cm=75.3 us=4365<CR>
+[+46884ms] hb<CR>
+[+47027ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+47527ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+47685ms] DIST live cm=96.0 us=5567<CR>
+[+47884ms] hb<CR>
+[+48027ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+48527ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+48686ms] DIST live cm=99.9 us=5793<CR>
+[+48720ms] >> DIST (delay 1000)
+[+48731ms] DIST cm=99.9 us=5793<CR>
+[+48884ms] hb<CR>
+[+49027ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+# capture closed at +49406ms

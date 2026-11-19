@@ -1,0 +1,112 @@
+﻿# board-bringup 2026-11-19 phase B: manual-only DIST, live disabled, two trigger spacings
+# Firmware unchanged (build-retest). Target assumed fixed; nobody should touch the board during the run.
+# capture start 2026-11-19 19:11:23.616 local
+[+122ms] OLED live ok ms=97 col=2 af=0 berr=0 to=0<CR>
+[+439ms] >> OLED live off
+[+444ms] OLED live=off<CR>
+[+970ms] hb<CR>
+# --- block 1: 20 trials, 1000 ms between triggers ---
+[+1000ms] >> DIST
+[+1011ms] DIST cm=98.6 us=5719<CR>
+[+1970ms] hb<CR>
+[+2068ms] >> DIST
+[+2080ms] DIST cm=99.0 us=5742<CR>
+[+2970ms] hb<CR>
+[+3130ms] >> DIST
+[+3141ms] DIST cm=99.0 us=5741<CR>
+[+3970ms] hb<CR>
+[+4157ms] >> DIST
+[+4168ms] DIST cm=99.4 us=5768<CR>
+[+4970ms] hb<CR>
+[+5226ms] >> DIST
+[+5237ms] DIST cm=98.6 us=5719<CR>
+[+5970ms] hb<CR>
+[+6285ms] >> DIST
+[+6297ms] DIST cm=99.0 us=5742<CR>
+[+6970ms] hb<CR>
+[+7311ms] >> DIST
+[+7322ms] DIST cm=99.4 us=5767<CR>
+[+7970ms] hb<CR>
+[+8373ms] >> DIST
+[+8385ms] DIST cm=99.9 us=5794<CR>
+[+8970ms] hb<CR>
+[+9433ms] >> DIST
+[+9444ms] DIST cm=98.5 us=5715<CR>
+[+9970ms] hb<CR>
+[+10503ms] >> DIST
+[+10515ms] DIST cm=99.9 us=5794<CR>
+[+10970ms] hb<CR>
+[+11559ms] >> DIST
+[+11570ms] DIST cm=99.0 us=5742<CR>
+[+11970ms] hb<CR>
+[+12585ms] >> DIST
+[+12597ms] DIST cm=98.5 us=5715<CR>
+[+12970ms] hb<CR>
+[+13652ms] >> DIST
+[+13664ms] DIST cm=98.9 us=5739<CR>
+[+13970ms] hb<CR>
+[+14713ms] >> DIST
+[+14725ms] DIST cm=99.4 us=5768<CR>
+[+14969ms] hb<CR>
+[+15772ms] >> DIST
+[+15783ms] DIST cm=99.4 us=5768<CR>
+[+15969ms] hb<CR>
+[+16847ms] >> DIST
+[+16858ms] DIST cm=99.0 us=5742<CR>
+[+16969ms] hb<CR>
+[+17871ms] >> DIST
+[+17882ms] DIST cm=99.0 us=5741<CR>
+[+17969ms] hb<CR>
+[+18929ms] >> DIST
+[+18938ms] DIST cm=66.0 us=3829<CR>
+[+18969ms] hb<CR>
+[+19969ms] hb<CR>
+[+19970ms] >> DIST
+[+19981ms] DIST cm=99.4 us=5766<CR>
+[+20969ms] hb<CR>
+[+20999ms] >> DIST
+[+21010ms] DIST cm=98.5 us=5715<CR>
+[+21969ms] hb<CR>
+# --- block 2: 20 trials, 30 ms between the reply and the next trigger ---
+[+22058ms] >> DIST
+[+22069ms] DIST cm=99.0 us=5740<CR>
+[+22136ms] >> DIST
+[+22148ms] DIST cm=99.0 us=5742<CR>
+[+22213ms] >> DIST
+[+22224ms] DIST cm=99.0 us=5741<CR>
+[+22290ms] >> DIST
+[+22301ms] DIST cm=98.6 us=5716<CR>
+[+22336ms] >> DIST
+[+22347ms] DIST cm=99.0 us=5744<CR>
+[+22415ms] >> DIST
+[+22423ms] DIST cm=57.7 us=3348<CR>
+[+22491ms] >> DIST
+[+22502ms] DIST cm=99.0 us=5742<CR>
+[+22569ms] >> DIST
+[+22580ms] DIST cm=99.4 us=5766<CR>
+[+22647ms] >> DIST
+[+22658ms] DIST cm=99.0 us=5741<CR>
+[+22725ms] >> DIST
+[+22736ms] DIST cm=98.6 us=5719<CR>
+[+22802ms] >> DIST
+[+22813ms] DIST cm=99.4 us=5767<CR>
+[+22849ms] >> DIST
+[+22860ms] DIST cm=98.6 us=5719<CR>
+[+22895ms] >> DIST
+[+22903ms] DIST cm=55.6 us=3226<CR>
+[+22958ms] >> DIST
+[+22970ms] DIST cm=99.0 us=5741<CR>
+[+22970ms] hb<CR>
+[+23035ms] >> DIST
+[+23046ms] DIST cm=99.0 us=5740<CR>
+[+23113ms] >> DIST
+[+23124ms] DIST cm=99.1 us=5745<CR>
+[+23191ms] >> DIST
+[+23202ms] DIST cm=98.6 us=5716<CR>
+[+23269ms] >> DIST
+[+23280ms] DIST cm=99.0 us=5742<CR>
+[+23346ms] >> DIST
+[+23357ms] DIST cm=98.6 us=5717<CR>
+[+23392ms] >> DIST
+[+23403ms] DIST cm=99.0 us=5742<CR>
+# capture closed at +23780ms

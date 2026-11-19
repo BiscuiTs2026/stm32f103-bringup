@@ -1,0 +1,363 @@
+﻿# board-bringup 2026-11-19 phase D: manual only, trigger spacing A/B/A2 (1000 / 900 / 600 / 1000 ms)
+# Instrumented build; target must stay untouched for the whole run.
+# capture start 2026-11-19 19:16:44.522 local
+[+421ms] >> OLED live off
+[+436ms] OLED live=off<CR>
+[+786ms] hb<CR>
+# --- block A 1000ms ---
+[+967ms] >> DIST
+[+980ms] DIST cm=99.9 us=5792 e=2 d=0 o=0<CR>
+[+1785ms] hb<CR>
+[+2032ms] >> DIST
+[+2045ms] DIST cm=100.3 us=5815 e=2 d=0 o=0<CR>
+[+2785ms] hb<CR>
+[+3089ms] >> DIST
+[+3102ms] DIST cm=98.1 us=5689 e=2 d=0 o=0<CR>
+[+3785ms] hb<CR>
+[+4163ms] >> DIST
+[+4176ms] DIST cm=98.6 us=5716 e=2 d=0 o=0<CR>
+[+4785ms] hb<CR>
+[+5221ms] >> DIST
+[+5234ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+5785ms] hb<CR>
+[+6272ms] >> DIST
+[+6285ms] DIST cm=98.5 us=5714 e=2 d=0 o=0<CR>
+[+6785ms] hb<CR>
+[+7342ms] >> DIST
+[+7355ms] DIST cm=99.4 us=5767 e=2 d=0 o=0<CR>
+[+7785ms] hb<CR>
+[+8401ms] >> DIST
+[+8413ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+8785ms] hb<CR>
+[+9477ms] >> DIST
+[+9490ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+9785ms] hb<CR>
+[+10528ms] >> DIST
+[+10537ms] DIST cm=37.5 us=2174 e=2 d=0 o=0<CR>
+[+10785ms] hb<CR>
+[+11590ms] >> DIST
+[+11602ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+11785ms] hb<CR>
+[+12666ms] >> DIST
+[+12677ms] DIST cm=78.2 us=4534 e=2 d=0 o=0<CR>
+[+12785ms] hb<CR>
+[+13717ms] >> DIST
+[+13726ms] DIST cm=54.6 us=3165 e=2 d=0 o=0<CR>
+[+13785ms] hb<CR>
+[+14779ms] >> DIST
+[+14785ms] hb<CR>
+[+14791ms] DIST cm=98.6 us=5716 e=2 d=0 o=0<CR>
+[+15785ms] hb<CR>
+[+15841ms] >> DIST
+[+15854ms] DIST cm=99.4 us=5767 e=2 d=0 o=0<CR>
+[+16785ms] hb<CR>
+[+16913ms] >> DIST
+[+16926ms] DIST cm=99.0 us=5744 e=2 d=0 o=0<CR>
+[+17785ms] hb<CR>
+[+17973ms] >> DIST
+[+17986ms] DIST cm=99.9 us=5792 e=2 d=0 o=0<CR>
+[+18785ms] hb<CR>
+[+19031ms] >> DIST
+[+19041ms] DIST cm=59.3 us=3438 e=2 d=0 o=0<CR>
+[+19785ms] hb<CR>
+[+20069ms] >> DIST
+[+20082ms] DIST cm=98.2 us=5693 e=2 d=0 o=0<CR>
+[+20785ms] hb<CR>
+[+21124ms] >> DIST
+[+21136ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+21785ms] hb<CR>
+[+22181ms] >> DIST
+[+22194ms] DIST cm=99.4 us=5768 e=2 d=0 o=0<CR>
+[+22784ms] hb<CR>
+[+23255ms] >> DIST
+[+23266ms] DIST cm=58.7 us=3406 e=2 d=0 o=0<CR>
+[+23784ms] hb<CR>
+[+24313ms] >> DIST
+[+24325ms] DIST cm=99.4 us=5768 e=2 d=0 o=0<CR>
+[+24784ms] hb<CR>
+[+25369ms] >> DIST
+[+25381ms] DIST cm=98.1 us=5692 e=2 d=0 o=0<CR>
+[+25784ms] hb<CR>
+[+26435ms] >> DIST
+[+26447ms] DIST cm=90.8 us=5267 e=2 d=0 o=0<CR>
+[+26784ms] hb<CR>
+[+27493ms] >> DIST
+[+27505ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+27784ms] hb<CR>
+[+28565ms] >> DIST
+[+28577ms] DIST cm=81.3 us=4718 e=2 d=0 o=0<CR>
+[+28784ms] hb<CR>
+[+29618ms] >> DIST
+[+29627ms] DIST cm=45.8 us=2655 e=2 d=0 o=0<CR>
+[+29784ms] hb<CR>
+[+30673ms] >> DIST
+[+30686ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+30784ms] hb<CR>
+[+31746ms] >> DIST
+[+31759ms] DIST cm=99.1 us=5746 e=2 d=0 o=0<CR>
+[+31784ms] hb<CR>
+# --- block B 900ms ---
+[+32785ms] >> DIST
+[+32786ms] hb<CR>
+[+32797ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+33722ms] >> DIST
+[+33735ms] DIST cm=98.6 us=5716 e=2 d=0 o=0<CR>
+[+33784ms] hb<CR>
+[+34690ms] >> DIST
+[+34703ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+34784ms] hb<CR>
+[+35654ms] >> DIST
+[+35666ms] DIST cm=99.4 us=5768 e=2 d=0 o=0<CR>
+[+35784ms] hb<CR>
+[+36619ms] >> DIST
+[+36632ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+36784ms] hb<CR>
+[+37573ms] >> DIST
+[+37584ms] DIST cm=93.3 us=5409 e=2 d=0 o=0<CR>
+[+37784ms] hb<CR>
+[+38536ms] >> DIST
+[+38547ms] DIST cm=80.4 us=4663 e=2 d=0 o=0<CR>
+[+38784ms] hb<CR>
+[+39499ms] >> DIST
+[+39511ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+39784ms] hb<CR>
+[+40466ms] >> DIST
+[+40477ms] DIST cm=86.8 us=5035 e=2 d=0 o=0<CR>
+[+40784ms] hb<CR>
+[+41430ms] >> DIST
+[+41443ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+41784ms] hb<CR>
+[+42381ms] >> DIST
+[+42393ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+42784ms] hb<CR>
+[+43344ms] >> DIST
+[+43356ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+43783ms] hb<CR>
+[+44307ms] >> DIST
+[+44319ms] DIST cm=99.4 us=5767 e=2 d=0 o=0<CR>
+[+44783ms] hb<CR>
+[+45255ms] >> DIST
+[+45268ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+45783ms] hb<CR>
+[+46218ms] >> DIST
+[+46227ms] DIST cm=61.0 us=3538 e=2 d=0 o=0<CR>
+[+46784ms] hb<CR>
+[+47149ms] >> DIST
+[+47161ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+47783ms] hb<CR>
+[+48099ms] >> DIST
+[+48112ms] DIST cm=98.2 us=5693 e=2 d=0 o=0<CR>
+[+48783ms] hb<CR>
+[+49062ms] >> DIST
+[+49075ms] DIST cm=98.5 us=5714 e=2 d=0 o=0<CR>
+[+49783ms] hb<CR>
+[+50027ms] >> DIST
+[+50040ms] DIST cm=99.0 us=5740 e=2 d=0 o=0<CR>
+[+50783ms] hb<CR>
+[+50994ms] >> DIST
+[+51006ms] DIST cm=98.6 us=5716 e=2 d=0 o=0<CR>
+[+51783ms] hb<CR>
+[+51944ms] >> DIST
+[+51956ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+52783ms] hb<CR>
+[+52909ms] >> DIST
+[+52921ms] DIST cm=99.0 us=5743 e=2 d=0 o=0<CR>
+[+53783ms] hb<CR>
+[+53874ms] >> DIST
+[+53886ms] DIST cm=99.0 us=5740 e=2 d=0 o=0<CR>
+[+54783ms] hb<CR>
+[+54841ms] >> DIST
+[+54853ms] DIST cm=98.6 us=5720 e=2 d=0 o=0<CR>
+[+55783ms] hb<CR>
+[+55805ms] >> DIST
+[+55817ms] DIST cm=99.4 us=5768 e=2 d=0 o=0<CR>
+[+56753ms] >> DIST
+[+56767ms] DIST cm=99.4 us=5766 e=2 d=0 o=0<CR>
+[+56783ms] hb<CR>
+[+57689ms] >> DIST
+[+57701ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+57783ms] hb<CR>
+[+58650ms] >> DIST
+[+58660ms] DIST cm=50.3 us=2915 e=2 d=0 o=0<CR>
+[+58783ms] hb<CR>
+[+59626ms] >> DIST
+[+59639ms] DIST cm=99.4 us=5766 e=2 d=0 o=0<CR>
+[+59783ms] hb<CR>
+[+60588ms] >> DIST
+[+60599ms] DIST cm=57.0 us=3305 e=2 d=0 o=0<CR>
+[+60783ms] hb<CR>
+# --- block C 600ms ---
+[+61523ms] >> DIST
+[+61535ms] DIST cm=99.9 us=5793 e=2 d=0 o=0<CR>
+[+61783ms] hb<CR>
+[+62192ms] >> DIST
+[+62205ms] DIST cm=99.4 us=5767 e=2 d=0 o=0<CR>
+[+62783ms] hb<CR>
+[+62844ms] >> DIST
+[+62856ms] DIST cm=99.9 us=5795 e=2 d=0 o=0<CR>
+[+63510ms] >> DIST
+[+63523ms] DIST cm=99.9 us=5794 e=2 d=0 o=0<CR>
+[+63783ms] hb<CR>
+[+64161ms] >> DIST
+[+64174ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+64783ms] hb<CR>
+[+64816ms] >> DIST
+[+64828ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+65487ms] >> DIST
+[+65500ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+65783ms] hb<CR>
+[+66159ms] >> DIST
+[+66171ms] DIST cm=98.6 us=5716 e=2 d=0 o=0<CR>
+[+66783ms] hb<CR>
+[+66811ms] >> DIST
+[+66824ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+67481ms] >> DIST
+[+67491ms] DIST cm=51.6 us=2994 e=2 d=0 o=0<CR>
+[+67783ms] hb<CR>
+[+68125ms] >> DIST
+[+68137ms] DIST cm=98.1 us=5689 e=2 d=0 o=0<CR>
+[+68782ms] >> DIST
+[+68784ms] hb<CR>
+[+68792ms] DIST cm=57.0 us=3307 e=2 d=0 o=0<CR>
+[+69452ms] >> DIST
+[+69464ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+69782ms] hb<CR>
+[+70124ms] >> DIST
+[+70136ms] DIST cm=99.4 us=5768 e=2 d=0 o=0<CR>
+[+70783ms] >> DIST
+[+70784ms] hb<CR>
+[+70793ms] DIST cm=57.3 us=3322 e=2 d=0 o=0<CR>
+[+71447ms] >> DIST
+[+71456ms] DIST cm=57.2 us=3315 e=2 d=0 o=0<CR>
+[+71782ms] hb<CR>
+[+72085ms] >> DIST
+[+72098ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+72756ms] >> DIST
+[+72768ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+72782ms] hb<CR>
+[+73409ms] >> DIST
+[+73422ms] DIST cm=99.4 us=5767 e=2 d=0 o=0<CR>
+[+73782ms] hb<CR>
+[+74064ms] >> DIST
+[+74076ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+74738ms] >> DIST
+[+74750ms] DIST cm=98.6 us=5716 e=2 d=0 o=0<CR>
+[+74782ms] hb<CR>
+[+75409ms] >> DIST
+[+75421ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+75782ms] hb<CR>
+[+76033ms] >> DIST
+[+76045ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+76703ms] >> DIST
+[+76715ms] DIST cm=98.1 us=5688 e=2 d=0 o=0<CR>
+[+76782ms] hb<CR>
+[+77370ms] >> DIST
+[+77382ms] DIST cm=99.4 us=5764 e=2 d=0 o=0<CR>
+[+77782ms] hb<CR>
+[+78025ms] >> DIST
+[+78037ms] DIST cm=99.8 us=5788 e=2 d=0 o=0<CR>
+[+78695ms] >> DIST
+[+78707ms] DIST cm=98.6 us=5717 e=2 d=0 o=0<CR>
+[+78782ms] hb<CR>
+[+79367ms] >> DIST
+[+79380ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+79782ms] hb<CR>
+[+80023ms] >> DIST
+[+80035ms] DIST cm=99.8 us=5789 e=2 d=0 o=0<CR>
+[+80692ms] >> DIST
+[+80705ms] DIST cm=99.3 us=5762 e=2 d=0 o=0<CR>
+[+80782ms] hb<CR>
+# --- block D 1000ms ---
+[+81347ms] >> DIST
+[+81359ms] DIST cm=100.3 us=5817 e=2 d=0 o=0<CR>
+[+81782ms] hb<CR>
+[+82408ms] >> DIST
+[+82420ms] DIST cm=99.9 us=5793 e=2 d=0 o=0<CR>
+[+82782ms] hb<CR>
+[+83467ms] >> DIST
+[+83482ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+83782ms] hb<CR>
+[+84529ms] >> DIST
+[+84542ms] DIST cm=99.0 us=5742 e=2 d=0 o=0<CR>
+[+84782ms] hb<CR>
+[+85588ms] >> DIST
+[+85600ms] DIST cm=100.3 us=5815 e=2 d=0 o=0<CR>
+[+85782ms] hb<CR>
+[+86649ms] >> DIST
+[+86659ms] DIST cm=57.4 us=3331 e=2 d=0 o=0<CR>
+[+86782ms] hb<CR>
+[+87708ms] >> DIST
+[+87720ms] DIST cm=98.1 us=5688 e=2 d=0 o=0<CR>
+[+87782ms] hb<CR>
+[+88779ms] >> DIST
+[+88781ms] hb<CR>
+[+88792ms] DIST cm=99.4 us=5763 e=2 d=0 o=0<CR>
+[+89781ms] hb<CR>
+[+89848ms] >> DIST
+[+89861ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+90781ms] hb<CR>
+[+90907ms] >> DIST
+[+90919ms] DIST cm=98.9 us=5739 e=2 d=0 o=0<CR>
+[+91782ms] hb<CR>
+[+91968ms] >> DIST
+[+91981ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+92781ms] hb<CR>
+[+93035ms] >> DIST
+[+93047ms] DIST cm=99.0 us=5740 e=2 d=0 o=0<CR>
+[+93781ms] hb<CR>
+[+94093ms] >> DIST
+[+94106ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+94781ms] hb<CR>
+[+95152ms] >> DIST
+[+95162ms] DIST cm=57.4 us=3331 e=2 d=0 o=0<CR>
+[+95781ms] hb<CR>
+[+96213ms] >> DIST
+[+96225ms] DIST cm=98.5 us=5715 e=2 d=0 o=0<CR>
+[+96781ms] hb<CR>
+[+97283ms] >> DIST
+[+97295ms] DIST cm=98.5 us=5714 e=2 d=0 o=0<CR>
+[+97781ms] hb<CR>
+[+98340ms] >> DIST
+[+98352ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+98781ms] hb<CR>
+[+99393ms] >> DIST
+[+99404ms] DIST cm=57.3 us=3322 e=2 d=0 o=0<CR>
+[+99781ms] hb<CR>
+[+100431ms] >> DIST
+[+100441ms] DIST cm=57.3 us=3324 e=2 d=0 o=0<CR>
+[+100781ms] hb<CR>
+[+101493ms] >> DIST
+[+101504ms] DIST cm=85.3 us=4946 e=2 d=0 o=0<CR>
+[+101781ms] hb<CR>
+[+102566ms] >> DIST
+[+102575ms] DIST cm=50.9 us=2955 e=2 d=0 o=0<CR>
+[+102781ms] hb<CR>
+[+103624ms] >> DIST
+[+103637ms] DIST cm=99.4 us=5767 e=2 d=0 o=0<CR>
+[+103781ms] hb<CR>
+[+104683ms] >> DIST
+[+104698ms] DIST cm=98.5 us=5714 e=2 d=0 o=0<CR>
+[+104781ms] hb<CR>
+[+105740ms] >> DIST
+[+105753ms] DIST cm=98.1 us=5688 e=2 d=0 o=0<CR>
+[+105781ms] hb<CR>
+[+106781ms] >> DIST
+[+106782ms] hb<CR>
+[+106794ms] DIST cm=98.1 us=5689 e=2 d=0 o=0<CR>
+[+107781ms] hb<CR>
+[+107840ms] >> DIST
+[+107852ms] DIST cm=98.5 us=5714 e=2 d=0 o=0<CR>
+[+108781ms] hb<CR>
+[+108897ms] >> DIST
+[+108909ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+109781ms] hb<CR>
+[+109959ms] >> DIST
+[+109972ms] DIST cm=99.0 us=5741 e=2 d=0 o=0<CR>
+[+110780ms] hb<CR>
+[+111034ms] >> DIST
+[+111047ms] DIST cm=99.4 us=5767 e=2 d=0 o=0<CR>
+[+111781ms] hb<CR>
+[+112096ms] >> DIST
+[+112108ms] DIST cm=99.4 us=5766 e=2 d=0 o=0<CR>
+[+112781ms] hb<CR>
+# capture closed at +113466ms
