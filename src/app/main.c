@@ -25,6 +25,7 @@
 #include "pm_platform.h"
 #include "board_f103c8.h"
 #include "oled_ch1116.h"
+#include "oled_ui_page.h"
 #include "aht20_dev.h"
 #include "keypad_dev.h"
 #include "pm_keypad.h"
@@ -477,122 +478,15 @@ static const char *now_job(void)
     return "IDLE";
 }
 
-static const char *oled_mode_name(uint32_t now)
+/* S9a: page content now lives in src/components/oled_ui/oled_ui_page.c. This
+ * temporary view carries the four values the page still reads from the glue;
+ * S9b moves the job state into the component and deletes this helper. */
+static void oled_view(oled_ui_view_t *v)
 {
-    if (s_oled_live == 0u) {
-        return "off";
-    }
-    if ((s_oled_hold_until != 0u) &&
-        ((int32_t)(s_oled_hold_until - now) > 0)) {
-        return "static";
-    }
-    return "live";
-}
-
-/* The live page, 8 rows x 21 columns. Also used by `OLED show`, so a static
- * text page is the same content the panel shows on its own. */
-
-/* Row 1 only; shared with the short-job repaint below. */
-static void oled_stage_now_row(void)
-{
-    char  b[OLED_CH1116_LINE_CHARS + 1u];
-    char *p = pm_cmd_sput_s(b, "NOW : ", 6u);
-
-    p = pm_cmd_sput_s(p, now_job(), 15u);
-    *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 1u, b);
-}
-
-static void oled_stage_live(void)
-{
-    char     b[OLED_CH1116_LINE_CHARS + 1u];
-    char    *p;
-    uint32_t now = pm_osal_now_ms();
-    pm_i2c1_stats_t st;
-    int32_t  rh10 = 0;
-    int32_t  t10  = 0;
-    int      have = aht20_reading(&rh10, &t10);
-    uint16_t ntc  = 0u;
-    uint16_t pot  = 0u;
-    int      adc_ok;
-    uint32_t k1   = 0u;
-    uint32_t k2   = 0u;
-
-    /* Row 0: MODE (8) + UP (8). */
-    p = pm_cmd_sput_s(b, "MODE=", 5u);
-    if (s_oled_live == 0u) {
-        p = pm_cmd_sput_s(p, "OFF", 8u);
-    } else if ((s_oled_hold_until != 0u) &&
-               ((int32_t)(s_oled_hold_until - now) > 0)) {
-        char     m[9];
-        char    *q = m;
-
-        q = pm_cmd_sput_s(q, "STAT", 4u);
-        q = pm_cmd_sput_pad(q, ((s_oled_hold_until - now) + 999u) / 1000u, 2u);
-        *q++ = 'S';
-        *q = '\0';
-        p = pm_cmd_sput_s(p, m, 8u);
-    } else {
-        p = pm_cmd_sput_s(p, "LIVE", 8u);
-    }
-    p = pm_cmd_sput_s(p, "UP=", 3u);
-    p = pm_cmd_sput_pad(p, now / 1000u, 4u);
-    *p++ = 'S';
-    *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 0u, b);
-
-    oled_stage_now_row();
-
-    p = pm_cmd_sput_s(b, "LAST: ", 6u);
-    p = pm_cmd_sput_s(p, pm_cmd_out_last(), 15u);
-    *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 2u, b);
-
-    p = pm_cmd_sput_s(b, "RH=", 3u);
-    p = (have != 0) ? pm_cmd_sput_f1(p, rh10) : pm_cmd_sput_s(p, "--.-", 4u);
-    p = pm_cmd_sput_s(p, " T=", 3u);
-    p = (have != 0) ? pm_cmd_sput_f1(p, t10) : pm_cmd_sput_s(p, "--.-", 4u);
-    *p++ = 'C';
-    *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 3u, b);
-
-    adc_ok = adc_dev_read_now(&ntc, &pot);
-    p = pm_cmd_sput_s(b, "NTC=", 4u);
-    if (adc_ok != 0) {
-        p = pm_cmd_sput_pad(p, ntc, 4u);
-    } else {
-        p = pm_cmd_sput_s(p, "----", 4u);
-    }
-    p = pm_cmd_sput_s(p, " POT=", 5u);
-    if (adc_ok != 0) {
-        p = pm_cmd_sput_pad(p, pot, 4u);
-    } else {
-        p = pm_cmd_sput_s(p, "----", 4u);
-    }
-    *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 4u, b);
-
-    keypad_dev_counts(&k1, &k2);
-    p = pm_cmd_sput_s(b, "K1=", 3u);
-    p = pm_cmd_sput_pad(p, k1, 5u);
-    p = pm_cmd_sput_s(p, " K2=", 4u);
-    p = pm_cmd_sput_pad(p, k2, 5u);
-    *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 5u, b);
-
-    pm_i2c1_stats(&st);
-    p = pm_cmd_sput_s(b, "I2C af=", 7u);
-    p = pm_cmd_sput_pad(p, st.af, 2u);
-    p = pm_cmd_sput_s(p, " berr=", 6u);
-    p = pm_cmd_sput_pad(p, st.berr, 2u);
-    *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 6u, b);
-
-    p = pm_cmd_sput_s(b, "LIVE ms=", 8u);
-    p = (s_oled_last_ms != 0u) ? pm_cmd_sput_pad(p, s_oled_last_ms, 3u)
-                               : pm_cmd_sput_s(p, "---", 3u);
-    *p = '\0';
-    oled_ch1116_stage_line(&s_oled, 7u, b);
+    v->job        = now_job();
+    v->live       = s_oled_live;
+    v->hold_until = s_oled_hold_until;
+    v->last_ms    = s_oled_last_ms;
 }
 
 /* Every screen command paints all 8 pages, so the result never depends on what
@@ -629,6 +523,7 @@ static const char *oled_screen_name(oled_screen_t s)
  * and never in the middle of another panel job. */
 static void oled_now_row_flash(void)
 {
+    oled_ui_view_t v;
     uint32_t now = pm_osal_now_ms();
 
     if ((s_oled_live == 0u) || (s_oled_req != NULL)) {
@@ -640,7 +535,8 @@ static void oled_now_row_flash(void)
     if ((s_oled_hold_until != 0u) && ((int32_t)(s_oled_hold_until - now) > 0)) {
         return;
     }
-    oled_stage_now_row();
+    oled_view(&v);
+    oled_ui_page_now_row(&s_oled, &v);
     if (oled_ch1116_start_text(&s_oled, 1u, 1u) != 0) {
         return;
     }
@@ -654,6 +550,8 @@ static void oled_now_row_flash(void)
 /* Starts a full-screen job; pages 3..7 of a show are written blank. */
 static int oled_start_screen(oled_screen_t s)
 {
+    oled_ui_view_t v;
+
     switch (s) {
     case OLED_SCREEN_CLEAR:
         return oled_ch1116_start_pattern(&s_oled, 0x00u);
@@ -662,7 +560,8 @@ static int oled_start_screen(oled_screen_t s)
     case OLED_SCREEN_FRAME:
         return oled_ch1116_start_frame(&s_oled);
     case OLED_SCREEN_SHOW:
-        oled_stage_live();
+        oled_view(&v);
+        oled_ui_page_live(&s_oled, &v);
         return oled_ch1116_start_text(&s_oled, 0u, (uint8_t)OLED_CH1116_PAGES);
     default:
         return -1;
@@ -674,7 +573,10 @@ static int oled_start_screen(oled_screen_t s)
  * when the job completes, so ms= is the real 8-page transfer time. */
 static int oled_start_live_job(cmd_port_t *port, const char *name, uint32_t now)
 {
-    oled_stage_live();
+    oled_ui_view_t v;
+
+    oled_view(&v);
+    oled_ui_page_live(&s_oled, &v);
     if (oled_ch1116_start_text(&s_oled, 0u, (uint8_t)OLED_CH1116_PAGES) != 0) {
         return -1;
     }
@@ -726,30 +628,12 @@ static void cmd_oled(cmd_port_t *c, const char *arg)
      * only way to read MODE/STATIC/OFF back while the panel is blank or shows
      * a static pattern. */
     if (pm_cmd_ci_equal(arg, "DUMP")) {
-        uint32_t now = pm_osal_now_ms();
-        uint8_t  pg;
+        oled_ui_view_t v;
 
-        pm_cmd_out_tx_str(c, "OLED dump mode=");
-        pm_cmd_out_tx_str(c, oled_mode_name(now));
-        if ((s_oled_live != 0u) && (s_oled_hold_until != 0u) &&
-            ((int32_t)(s_oled_hold_until - now) > 0)) {
-            pm_cmd_out_tx_str(c, " left=");
-            pm_cmd_out_tx_u32(c, ((s_oled_hold_until - now) + 999u) / 1000u);
-            pm_cmd_out_tx_str(c, "s");
-        }
-        pm_cmd_out_tx_str(c, " screen=");
-        pm_cmd_out_tx_str(c, oled_screen_name(s_oled_last));
-        pm_cmd_out_tx_str(c, "\r\n");
-        if ((s_oled_last == OLED_SCREEN_LIVE) ||
-            (s_oled_last == OLED_SCREEN_SHOW)) {
-            for (pg = 0u; pg < (uint8_t)OLED_CH1116_PAGES; pg++) {
-                pm_cmd_out_tx_str(c, "OLED L");
-                pm_cmd_out_tx_u32(c, pg);
-                pm_cmd_out_tx_str(c, "=");
-                pm_cmd_out_tx_str(c, s_oled.line[pg]);
-                pm_cmd_out_tx_str(c, "\r\n");
-            }
-        }
+        oled_view(&v);
+        oled_ui_page_dump(c, &s_oled, &v, oled_screen_name(s_oled_last),
+                          ((s_oled_last == OLED_SCREEN_LIVE) ||
+                           (s_oled_last == OLED_SCREEN_SHOW)) ? 1 : 0);
         pm_cmd_out_last_set("OLED dump");
         return;
     }

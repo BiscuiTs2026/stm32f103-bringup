@@ -1,0 +1,28 @@
+S9a numstat 对照（工作树 vs HEAD a6881f3）
+命令：git diff --cached --numstat / git diff --cached --numstat -w
+
+普通口径
+2	0	CMakeLists.txt
+26	142	src/app/main.c
+166	0	src/components/oled_ui/oled_ui_page.c
+31	0	src/components/oled_ui/oled_ui_page.h
+（evidence/* 10 个日志文件均为新增，未列）
+
+忽略空白（-w）
+2	0	CMakeLists.txt
+25	141	src/app/main.c
+166	0	src/components/oled_ui/oled_ui_page.c
+31	0	src/components/oled_ui/oled_ui_page.h
+
+差异说明
+main.c 两口径差 1 对（26/142 vs 25/141）。逐块（-U3）统计如下，两口径完全相同：
+  @@ -25,6    +25,7    add=1  del=0
+  @@ -477,122 +478,15  add=8  del=102
+  @@ -629,6   +523,7   add=1  del=0
+  @@ -640,7   +535,8   add=2  del=1
+  @@ -654,6   +550,8   add=1  del=0
+  @@ -662,7   +560,8   add=2  del=1
+  @@ -674,7   +573,10  add=3  del=1
+  @@ -726,30  +628,12  add=5  del=23
+差的 1 对是一个空白行：-w 下 git 把它与上下文空白行配对，普通口径记为删除+新增。
+逐块加减结构与非空行数一致，没有“空白行被改写”的行；不构成空白 churn。

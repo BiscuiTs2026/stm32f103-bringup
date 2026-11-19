@@ -1,0 +1,25 @@
+S9 layering scan (one section per commit).
+
+=== 9a before (HEAD a6881f3) ===
+[WARN ] src/app/main.c:1 入口胶水层 962 行代码（上限 200），业务逻辑应下沉到组件层
+[WARN ] src/app/main.c:297 胶水层实现外设驱动：函数 dist_start 有 4 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:332 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
+[WARN ] src/app/main.c:613 胶水层函数 oled_screen_name 有 5 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
+[WARN ] src/app/main.c:655 胶水层函数 oled_start_screen 有 4 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
+[WARN ] src/app/main.c:701 胶水层函数 cmd_oled 有 123 行代码（上限 80）；拆出组件或改成表驱动
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:352 端口层调用组件 ISR 钩子：pm_uart_hw_rx_byte（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:362 端口层调用组件 ISR 钩子：pm_uart_hw_tx_complete（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:374 端口层调用组件 ISR 钩子：pm_uart_hw_error（按 *_hw_* 命名识别，确认仅中断上下文使用）
+合计 0 ERROR / 9 WARN
+
+=== 9a after (working tree) ===
+[WARN ] src/app/main.c:1 入口胶水层 857 行代码（上限 200），业务逻辑应下沉到组件层
+[WARN ] src/app/main.c:298 胶水层实现外设驱动：函数 dist_start 有 4 处外设寄存器访问（>= 3）；驱动应下沉到端口层（init/ISR/故障出口不判）
+[WARN ] src/app/main.c:333 胶水层忙等：while 循环空转等待硬件/标志（应下沉到端口层或改非阻塞）
+[WARN ] src/app/main.c:507 胶水层函数 oled_screen_name 有 5 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
+[WARN ] src/app/main.c:551 胶水层函数 oled_start_screen 有 4 个 switch 分支；多分支判定应下沉到组件层（本函数不一定是状态机）
+[WARN ] src/app/main.c:603 胶水层函数 cmd_oled 有 108 行代码（上限 80）；拆出组件或改成表驱动
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:352 端口层调用组件 ISR 钩子：pm_uart_hw_rx_byte（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:362 端口层调用组件 ISR 钩子：pm_uart_hw_tx_complete（按 *_hw_* 命名识别，确认仅中断上下文使用）
+[WARN ] src/port/stm32f1/pm_port_stm32f1.c:374 端口层调用组件 ISR 钩子：pm_uart_hw_error（按 *_hw_* 命名识别，确认仅中断上下文使用）
+合计 0 ERROR / 9 WARN（同一组 9 条，无新增）

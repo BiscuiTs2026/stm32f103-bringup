@@ -1146,3 +1146,25 @@
 | 不能证明什么 | 表内没有任何 PASS；S8/S8b 的按键功能**未验证** |
 | 局限 | 需要人在板边操作；`FAIL` 需回退到对应提交 |
 | PATCHES 引用 | 未引用（人工验收登记表） |
+
+## 88. S9a 页面搬迁（split-s9-before / split-s9-layering / split-s9-build / split-s9a-after / split-s9a-flash）
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 新增 `src/components/oled_ui/oled_ui_page.c/.h`；`main.c` 物理 1292→1176 行，检查器口径 962→857 |
+| 关键内容 | 搬走 `now_job` 的消费端、`oled_mode_name`、`oled_stage_now_row`、`oled_stage_live` 与 `OLED dump` 文本拼装；页面函数只多收 `oled_ch1116_t *o` 与 `const oled_ui_view_t *v` 两参，逻辑未改；`main.c` 临时用 4 字段 view（作业名/live/hold_until/last_ms）构造 |
+| 扫描 | 0 ERROR / 9 WARN，与 9a 前逐条同组（胶水行数、`dist_start`、TRIG 忙等、`oled_screen_name`、`oled_start_screen`、`cmd_oled` 108 行、三条端口钩子） |
+| 上板 | 烧录 verified；HELP 15 行、dump 8×21 逐行与原文案一致、9 个子命令各 1 条无 ERR、`show` 后 dump `mode=static left=3s screen=show`、3 s 后回 `mode=live screen=live`、`DIST err=disabled`、live 帧 `ms=98 af=0 berr=0 to=0`；FLASH 28108 B / RAM 5024 B |
+| 能证明什么 | 页面搬迁未改变板端可见输出；WARN 集合未扩大 |
+| 不能证明什么 | 屏上观感与按键切页手感（人眼/人手项，不改挂 M 组）；9b 后接口是否收敛 |
+| 局限 | `adc_dev_read_now` 在组件层调用触发厂商前缀误报，按仓库既有做法在调用行加 `// arch-allow: component accessor, not an SPL call` |
+| PATCHES 引用 | 未引用（S9a 拆分证据） |
+
+## 89. split-s9a-diff-numstat.txt
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 30 行；S9a 暂存区 `git diff --cached --numstat` 与 `-w` 对照，附逐块加减表 |
+| 关键内容 | `main.c` 普通 `26/142`，`-w` `25/141`；差 1 对空白行，为 git 在 `-w` 下把空白行当上下文配对；逐块（-U3）加减行数两口径完全相同，无空白改写 |
+| 能证明什么 | S9a 无空白夹带；除新增组件文件与行数下降外无其它夹带 |
+| 不能证明什么 | 不构成"两口径逐字相同"的字面判据，需复核方按逐块表裁决 |
