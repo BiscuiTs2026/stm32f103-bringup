@@ -16,19 +16,18 @@
 #define PM_PWM_SERVO_MIN_DEG10   0
 #define PM_PWM_SERVO_MAX_DEG10   1800
 
+/* Logical PWM channel of the servo in the port registry: TIM2 CH1/CH2 are
+ * 0 and 1, TIM4_CH3 is 2. */
+#define PM_PWM_HW_SERVO          2u
+
 #define PM_PWM_BUZ_MIN_HZ        100u
 #define PM_PWM_BUZ_MAX_HZ        5000u
 #define PM_PWM_BUZ_DUTY_DEFAULT  20u
 
-/* Returns 0 on success, negative if the timer setup failed. */
-int pm_servo_init(void);
-
-/* deg10: 0.1 degree, 0..1800. Returns 0 or -1 when out of range. */
-int pm_pwm_servo_set(int32_t deg10);
-
-/* Pulse width the servo output is currently programmed with, in microseconds. */
-uint32_t pm_pwm_servo_pulse_us(void);
-int32_t  pm_pwm_servo_deg10(void);
+/* Board bring-up for the buzzer side: PB9 as a plain output plus the TIM3
+ * update interrupt. The servo itself opens through pm_pwm_init() with
+ * PM_PWM_HW_SERVO, so its time base is owned by the pm_pwm model. */
+void pm_pwm_board_init(void);
 
 /* hz: 100..5000, duty: 1..99 percent. Returns 0 or -1 when out of range. */
 int pm_pwm_buzzer_set(uint32_t hz, uint8_t duty_pct);

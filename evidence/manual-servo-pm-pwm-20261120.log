@@ -1,0 +1,87 @@
+[       0ms] ===== manual servo acceptance capture 2026-11-20 20:11:09 firmware=build-servo-pwm-on =====
+[       0ms] 来源：网页串口助手 records-2026-11-20-20-14-13.json（附件，只读）；本文件按 JSON 的 write/read 事件逐条转写
+[       0ms] 板上固件：`build-servo-pwm-on/pm_f103_demo.hex`（FLASH 33136 B），对应源码 HEAD `d2ae109` + 本轮提交的舵机 pm_pwm 改动
+[       0ms] 说明：JSON 只记录命令与回包，不含舵机机械角度的人工标注；"是否转动/是否到位"来自用户现场判定
+[       0ms] >> HELP
+[     388ms] HELP HELP=list commands\r\nHELP PING=reply PONG\r\nHELP STAT=clk/up/tick/keys/uart counters\r\nHELP I2C=scan I2C1 bus, list 8-bit addresses\r\nHELP AHT=read AHT20, rh and t in 0.1 units\r\nHELP AHTS=same but read via repeated START\r\nHELP DIST=HC-SR04 PA11/PA10, c
+[     688ms] m/us (DWT base)\r\nHELP ADC=pot PA5 and NTC PA4, raw and mV\r\nHELP OLED=on/off/clear/test/show/frame/col/live/dump\r\nHELP PWM=servo N / buz HZ [duty] / buz off / sweep / dbg / stat\r\nHELP TRACK=raw level of PB14 line sensor\r\nHELP ENC=count/clear, dir, a/b, b
+[     837ms] utton PB15\r\nHELP RELAY=on/off/stat, PB5 relay coil\r\nHELP MOTOR=fwd/rev/stop/brake/duty/stat, PA0/PA1 TIM2 PWM\r\nHELP KEYS=key press counters, clears them\r\n
+[     837ms] # HELP 三段 read 合计 byteLength = 253 + 253 + 154 = 660 B（与源码逐条核算一致）
+[   33845ms] >> DIST
+[   34017ms] DIST cm=111.6 us=6471
+[   65833ms] >> PWM aervo 0
+[   66089ms] PWM err=usage
+[   66089ms] # 用户拼写错误（aervo），非缺陷；`PWM` 子命令按前缀匹配，无 SERVO 前缀即落 usage
+[   74187ms] >> PWM servo 0
+[   74360ms] PWM servo ok deg=0.0 pulse=500us
+[   88431ms] >> PWM servo 90
+[   88619ms] PWM servo ok deg=90.0 pulse=1500us
+[  100890ms] >> PWM servo 180
+[  101099ms] PWM servo ok deg=180.0 pulse=2500us
+[  124669ms] >> PWM stat
+[  124860ms] PWM stat servo=180.0c pulse=2500us buz=off
+[  140886ms] >> PWM sweep
+[  146703ms] PWM sweep deg=0.0 pulse=500us\r\nPWM sweep deg=45.0 pulse=1000us\r\nPWM sweep deg=90.0 pulse=1500us\r\nPWM sweep deg=135.0 pulse=2000us\r\nPWM sweep deg=180.0 pulse=2500us\r\nPWM sweep deg=135.0 pulse=2000us\r\nPWM sweep deg=90.0 pulse=1500us\r\nPWM sweep deg=45.0 pu
+[  146973ms] lse=1000us\r\nPWM sweep deg=0.0 pulse=500us\r\nPWM sweep deg=0.0 pulse=500us\r\nPWM sweep deg=45.0 pulse=1000us\r\nPWM sweep deg=90.0 pulse=1500us\r\nPWM sweep deg=135.0 pulse=2000us\r\nPWM sweep deg=180.0 pulse=2500us\r\nPWM sweep deg=135.0 pulse=2000us\r\nPWM sweep d
+[  147121ms] eg=90.0 pulse=1500us\r\nPWM sweep deg=45.0 pulse=1000us\r\nPWM sweep deg=0.0 pulse=500us\r\nPWM sweep deg=90.0 pulse=1500us\r\nPWM sweep done\r\n
+[  157457ms] >> PWM abg
+[  157620ms] PWM err=usage
+[  157620ms] # 用户拼写错误（abg），非缺陷
+[  164477ms] >> PWM dbg
+[  164868ms] PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000015 arr=0x0000FFAD ccmr2=0x00000068 ccer=0x00000100 ccr3=0x0000132D cnt0=46384 cnt1=46235 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[  164868ms] ===== capture end =====
+
+--------------------------------------------------------------------
+核对 1：脉宽映射（代码 `servo_pulse_from_deg()`，pwm_dev.c:30-35）
+  pulse = 500 + deg10 * 2000 / 1800 = 500 + deg * 2000 / 180（整除）
+  deg=0   -> 500 + 0     = 500  实测 500   PASS
+  deg=45  -> 500 + 500   = 1000 实测 1000  PASS（sweep）
+  deg=90  -> 500 + 1000  = 1500 实测 1500  PASS
+  deg=135 -> 500 + 1500  = 2000 实测 2000  PASS（sweep）
+  deg=180 -> 500 + 2000  = 2500 实测 2500  PASS
+  sweep 顺序：两轮 0/45/90/135/180/135/90/45/0（18 行）+ 终档 90 + done，共 20 行、
+  每行 deg/pulse 与上表吻合，无缺档、无错档。
+
+核对 2：`PWM stat` 与最后一次设置
+  最后一条设置命令：`PWM servo 180` -> deg=180.0 pulse=2500us
+  `PWM stat` 回包：servo=180.0c pulse=2500us buz=off
+  角度 180.0 与脉宽 2500us 均一致，buz=off 与全程未开蜂鸣器一致。 PASS
+
+核对 3：`PWM dbg` 与基线 `evidence/pwm-20261120-a.log:59`（修复后手写驱动的采样）
+  基线采样前最后动作：`PWM servo 180`（该文件 :49-50），ccr3=0x9C4=2500 对应 180°
+  本次采样前最后动作：`PWM sweep` 终档 90°，ccr3=0x132D=4909 对应 90°
+  字段逐条：
+    apb1enr  0x00260007  0x00260007  一致
+    apb2enr  0x0000020D  0x0000020D  一致
+    cr1      0x00000081  0x00000081  一致
+    psc      0x00000047  0x00000015  【不一致】71 -> 21
+    arr      0x00004E1F  0x0000FFAD  【不一致】19999 -> 65453
+    ccmr2    0x00000068  0x00000068  一致（PWM mode 1 + OC3 预装载）
+    ccer     0x00000100  0x00000100  一致（CC3E 使能）
+    ccr3     0x000009C4  0x0000132D  【数值不同，但角度不同，见下】
+    cnt0/1   13719/12986 46384/46235 运行时自由计数，不可比（同 INDEX §129.2 口径）
+    dt       20ms        20ms        一致
+    crh      0x88888B2B  0x88888B2B  一致（PB8 = AF 推挽 50 MHz）
+    mapr     0x00000000  0x00000000  一致（TIM4 无重映射）
+    fpwm     50.0Hz      50.0Hz      一致
+
+  psc/arr 不一致的原因（代码依据，非推测）：
+    `pm_pwm_tim4_stm32f1.c:50-59` 的 open 改为调 `pm_pwm_timing_compute(72 MHz, 50 Hz)`：
+      psc = (72e6/50)/65536 = 21；arr = (72e6/22)/50 - 1 = 65453
+      实际频率 = 72e6 / (22 * 65454) = 50.00017 Hz -> 回包 floor 后 50.0Hz
+    旧手写驱动固定 psc=71（1 MHz 时基）、arr=19999。
+    两者周期同为 20.000 ms，时基分辨率从 1 us/tick 变为 0.3056 us/tick。
+
+  ccr3 换算（按各自时基）：
+    基线 180°：permille = 2500us*50/1000 = 125 -> ccr3 = 20000*125/1000 = 2500 = 0x9C4（占空比 12.5%）
+    本次  90°：permille = 1500us*50/1000 =  75 -> ccr3 = 65454*75/1000  = 4909 = 0x132D（占空比 7.5005%）
+    即 ccr3 数值差异完全由"采样角度不同 + 时基不同"解释，与 90° 指令自洽。
+
+  cnt0/cnt1 增量核对（辅助）：
+    基线 20000-733 = 19267 tick @1 MHz = 19.267 ms
+    本次 65454-149 = 65305 tick @3.2727 MHz = 19.952 ms
+    两者都是"dt=20ms 延时 + 打印抖动"的近似，不作一致性判据。
+
+结论：舵机走 pm_pwm 的人工验收通过（用户判定）；五档脉宽 500/1000/1500/2000/2500us
+      全部与代码公式一致；stat 与最后设置一致；dbg 中 psc/arr 与旧手写驱动基线不同，
+      属切换到模型时基的预期变化，其余字段逐字一致；ccr3 差异由角度不同解释。

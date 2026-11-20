@@ -1,5 +1,7 @@
 /*
- * pm_pwm_stm32f1.c - servo (PB8 / TIM4_CH3) and passive buzzer (PB9) driver.
+ * pm_pwm_stm32f1.c - board PWM wiring: buzzer (PB9 / TIM3), register snapshot
+ * for `PWM dbg`, PB8 test helper, and the dispatch table that routes model
+ * channel ids to the TIM2 (motor) and TIM4 (servo) backends.
  *
  * PB9 can be muxed to TIM4_CH4, but this driver does not use that channel:
  * TIM4 stays on the servo frame (1 MHz tick, ARR 19999) and the buzzer is
@@ -13,21 +15,11 @@
 
 #include "stm32f1xx.h"
 
-#include "pm_timebase.h"
+#include "pm_pwm.h"
+#include "pm_pwm_tim2_stm32f1.h"
+#include "pm_pwm_tim4_stm32f1.h"
 
-#define TIM4_CLK_HZ       72000000u  /* APB1 36 MHz x2 for timers */
-#define SERVO_TICK_HZ     1000000u
-#define SERVO_PSC         ((TIM4_CLK_HZ / SERVO_TICK_HZ) - 1u)
-#define SERVO_FRAME_HZ    50u
-#define SERVO_ARR         ((SERVO_TICK_HZ / SERVO_FRAME_HZ) - 1u)
-#define SERVO_TOL_PERMILLE 10u       /* decision 0018: 10 permille */
-#define SERVO_PULSE_MIN   500u      /* SG90: 0 deg */
-#define SERVO_PULSE_MAX   2500u     /* SG90: 180 deg */
-#define SERVO_PULSE_MID   1500u
 #define BUZ_TICK_HZ       100000u   /* 10 us phase resolution */
-
-static uint32_t s_servo_deg10;
-static uint32_t s_servo_pulse;
 
 static uint16_t s_buz_high;
 static uint16_t s_buz_low;
@@ -36,47 +28,14 @@ static uint8_t  s_buz_duty;
 static uint8_t  s_buz_on;
 static uint8_t  s_buz_phase;       /* 1 = pin high for the current phase */
 
-static uint32_t servo_pulse_from_deg(uint32_t deg10)
+void pm_pwm_board_init(void)
 {
-    uint32_t span = SERVO_PULSE_MAX - SERVO_PULSE_MIN;
-
-    return SERVO_PULSE_MIN + ((deg10 * span) / 1800u);
-}
-
-int pm_servo_init(void)
-{
-    /* Re-check the pair we are about to write against the frame rate it must
-     * produce; the 3.6 kHz accident (PATCHES 32) was a prescaler mistake that
-     * constants alone cannot catch. Registers are only touched on success, and
-     * the PSC/ARR values themselves are not changed. */
-    if (pm_timebase_ok(TIM4_CLK_HZ, SERVO_PSC, SERVO_ARR,
-                       SERVO_FRAME_HZ, SERVO_TOL_PERMILLE) == 0) {
-        return -1;
-    }
-
     RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
-    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM4EN;
+    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 
-    /* PB8: alternate-function push-pull 50 MHz (TIM4_CH3). */
-    GPIOB->CRH = (GPIOB->CRH & ~(0xFu << 0)) | (0xBu << 0);
     /* PB9: plain push-pull output 2 MHz, toggled by the TIM3 ISR. */
     GPIOB->CRH = (GPIOB->CRH & ~(0xFu << 4)) | (0x2u << 4);
     GPIOB->BRR = GPIO_BRR_BR9;
-
-    /* TIM4: 1 MHz tick, 20 ms frame, CH3 PWM mode 1 at 1.5 ms (90 deg). */
-    TIM4->CR1   = 0u;
-    TIM4->PSC   = SERVO_PSC;
-    TIM4->ARR   = SERVO_ARR;
-    TIM4->CCR3  = SERVO_PULSE_MID;
-    TIM4->CCMR2 = (TIM4->CCMR2 & ~(0x7u << 4)) | (0x6u << 4);  /* PWM mode 1 */
-    TIM4->CCMR2 |= (0x1u << 3);                                /* OC3 preload */
-    TIM4->CCER  |= TIM_CCER_CC3E;
-    TIM4->EGR    = TIM_EGR_UG;
-    TIM4->SR     = 0u;
-    TIM4->CR1    = TIM_CR1_ARPE | TIM_CR1_CEN;
-
-    s_servo_deg10 = 900u;
-    s_servo_pulse = SERVO_PULSE_MID;
 
     /* TIM3: 10 us tick, stopped until the buzzer is switched on. */
     TIM3->CR1  = 0u;
@@ -90,29 +49,6 @@ int pm_servo_init(void)
     NVIC_ClearPendingIRQ(TIM3_IRQn);
     NVIC_SetPriority(TIM3_IRQn, 3);
     NVIC_EnableIRQ(TIM3_IRQn);
-
-    return 0;
-}
-
-int pm_pwm_servo_set(int32_t deg10)
-{
-    if ((deg10 < PM_PWM_SERVO_MIN_DEG10) || (deg10 > PM_PWM_SERVO_MAX_DEG10)) {
-        return -1;
-    }
-    s_servo_deg10 = (uint32_t)deg10;
-    s_servo_pulse = servo_pulse_from_deg(s_servo_deg10);
-    TIM4->CCR3    = s_servo_pulse;
-    return 0;
-}
-
-uint32_t pm_pwm_servo_pulse_us(void)
-{
-    return s_servo_pulse;
-}
-
-int32_t pm_pwm_servo_deg10(void)
-{
-    return (int32_t)s_servo_deg10;
 }
 
 int pm_pwm_buzzer_set(uint32_t hz, uint8_t duty_pct)
@@ -196,6 +132,69 @@ void TIM3_IRQHandler(void)
     }
 }
 
+/* --------------------------------------------------------- channel dispatch */
+
+static const pm_pwm_ops_t *ops_for(uint8_t hw_id)
+{
+    if (hw_id < PM_F1_PWM_TIM2_COUNT) {
+        return &pm_f1_tim2_pwm_ops;
+    }
+    if (hw_id == PM_PWM_HW_SERVO) {
+        return &pm_f1_tim4_pwm_ops;
+    }
+    return NULL;
+}
+
+static pm_err_t pwm_open(void *ctx, pm_pwm_t *p, const pm_pwm_cfg_t *cfg,
+                         uint32_t *actual_hz)
+{
+    const pm_pwm_ops_t *ops = (p == NULL) ? NULL : ops_for(p->hw_id);
+
+    return (ops == NULL) ? PM_ERR_RANGE : ops->open(ctx, p, cfg, actual_hz);
+}
+
+static void pwm_close(void *ctx, pm_pwm_t *p)
+{
+    const pm_pwm_ops_t *ops = (p == NULL) ? NULL : ops_for(p->hw_id);
+
+    if (ops != NULL) {
+        ops->close(ctx, p);
+    }
+}
+
+static pm_err_t pwm_set_freq(void *ctx, pm_pwm_t *p, uint32_t freq_hz,
+                             uint32_t *actual_hz)
+{
+    const pm_pwm_ops_t *ops = (p == NULL) ? NULL : ops_for(p->hw_id);
+
+    return (ops == NULL) ? PM_ERR_RANGE
+                         : ops->set_freq(ctx, p, freq_hz, actual_hz);
+}
+
+static pm_err_t pwm_set_duty(void *ctx, pm_pwm_t *p, uint16_t permille)
+{
+    const pm_pwm_ops_t *ops = (p == NULL) ? NULL : ops_for(p->hw_id);
+
+    return (ops == NULL) ? PM_ERR_RANGE : ops->set_duty(ctx, p, permille);
+}
+
+static pm_err_t pwm_enable(void *ctx, pm_pwm_t *p, bool on)
+{
+    const pm_pwm_ops_t *ops = (p == NULL) ? NULL : ops_for(p->hw_id);
+
+    return (ops == NULL) ? PM_ERR_RANGE : ops->enable(ctx, p, on);
+}
+
+const pm_pwm_ops_t pm_f1_pwm_ops = {
+    .open     = pwm_open,
+    .close    = pwm_close,
+    .set_freq = pwm_set_freq,
+    .set_duty = pwm_set_duty,
+    .enable   = pwm_enable,
+};
+
+/* ------------------------------------------------------------- diagnostics */
+
 void pm_pwm_dbg_read(pm_pwm_dbg_t *out)
 {
     uint32_t div;
@@ -213,7 +212,7 @@ void pm_pwm_dbg_read(pm_pwm_dbg_t *out)
 
     /* Frame frequency implied by PSC/ARR; 0.1 Hz units so 50.0 is 500. */
     div = ((TIM4->PSC + 1u) * (TIM4->ARR + 1u));
-    out->frame_hz10 = (div == 0u) ? 0u : (TIM4_CLK_HZ * 10u) / div;
+    out->frame_hz10 = (div == 0u) ? 0u : (72000000u * 10u) / div;
 }
 
 uint32_t pm_pwm_counter(void)
@@ -240,8 +239,6 @@ void pm_pwm_test_level(int high)
 void pm_pwm_test_end(void)
 {
     GPIOB->CRH = (GPIOB->CRH & ~(0xFu << 0)) | (0xBu << 0);
-    s_servo_deg10 = 900u;
-    s_servo_pulse = SERVO_PULSE_MID;
-    TIM4->CCR3    = SERVO_PULSE_MID;
-    TIM4->CCER   |= TIM_CCER_CC3E;
+    TIM4->CCR3 = 1500u;
+    TIM4->CCER |= TIM_CCER_CC3E;
 }

@@ -1856,8 +1856,9 @@
 | 回包 | `evidence/help-brake-20261120.log`：`PING` → `PONG`；`HELP` 15 行，`MOTOR` 行含 `/brake`，`DIST` 行仍为默认 OFF 的 `disabled` 文本 |
 | 未验证 | 蓝牙侧未重新回归（`HELP` 变长 6 B，仍远小于 USART3 的发送路径容量；上一轮 638 B 后的蓝牙回归结论见 §14.1/README） |
 
-> 2026-11-20 晚：`HELP` 的 `PWM` 行改为可直接照敲的关键字形式（`buz`），总字节 644 → **654 B**；
-> 本节 644 B 为当时实测，保留不改，变化原因是关键字可见性修正，不是回包被改坏。
+> 2026-11-20 晚：`HELP` 的 `PWM` 行改为可直接照敲的关键字形式（`buz`），总字节 644 → **660 B**
+> （644 → 650 是 §135 的 `/brake` +6 B，650 → 660 是本轮 `PWM` 行 +10 B；早前此处误写 654，
+> 已按源码逐行字符串与板上三段 read 合计 253+253+154=660 B 更正）；本节 644 B 为当时实测，保留不改。
 
 原始回包（逐字）：
 
@@ -1931,3 +1932,21 @@ HELP KEYS=key press counters, clears them
 | 结果 | `Download verified successfully`，已复位；日志 `evidence/servo-pwm-on-flash.log` |
 | HELP | 15 行 **660 B**（源码逐条核算：每行 `HELP ` + 描述串 + CRLF）；`PWM=servo N / buz HZ [duty] / buz off / sweep / dbg / stat`；`MOTOR=fwd/rev/stop/brake/duty/stat, PA0/PA1 TIM2 PWM` |
 | 未验证 | 舵机五档脉宽、DIST 真实距离、sonar 与编码器并发，均由用户在蓝牙侧测试 |
+
+## 140. 舵机走 `pm_pwm` 上板通过（用户人工验收）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 20:11:09–20:13:54（网页串口助手记录） |
+| 来源 | 用户上传 `records-2026-11-20-20-14-13.json`（附件，只读）；转写为 `evidence/manual-servo-pm-pwm-20261120.log` |
+| 板上固件 | `build-servo-pwm-on/pm_f103_demo.hex`（FLASH 33136 B / RAM 5504 B）；源码 HEAD `d2ae109` + 本条提交的舵机 `pm_pwm` 改动 |
+| 命令序列 | `HELP` → `DIST` → `PWM aervo 0` → `PWM servo 0/90/180` → `PWM stat` → `PWM sweep` → `PWM abg` → `PWM dbg` |
+| 五档脉宽 | 0°→**500us**、45°→**1000us**、90°→**1500us**、135°→**2000us**、180°→**2500us**；与 `servo_pulse_from_deg()` 的 `500 + deg*2000/180` 整除逐条吻合；sweep 两轮 18 行 + 终档 90° + `done`，无缺档 |
+| `PWM stat` | `PWM stat servo=180.0c pulse=2500us buz=off`，与之前最后一条 `PWM servo 180` 的角度/脉宽一致 |
+| `PWM dbg` 一致字段 | `apb1enr=0x00260007`、`apb2enr=0x0000020D`、`cr1=0x00000081`、`ccmr2=0x00000068`、`ccer=0x00000100`、`dt=20ms`、`crh=0x88888B2B`、`mapr=0x00000000`、`fpwm=50.0Hz` 与基线 `pwm-20261120-a.log:59` 逐字一致 |
+| `PWM dbg` **不一致字段** | `psc` **0x47(71) → 0x15(21)**、`arr` **0x4E1F(19999) → 0xFFAD(65453)**。原因：新 port 走 `pm_pwm_timing_compute(72 MHz, 50 Hz)`（`pm_pwm_tim4_stm32f1.c:50-59`），实际 72e6/(22×65454)=50.00017 Hz；周期仍 20.000 ms，分辨率由 1 us/tick 变为 0.3056 us/tick。**不是回包或寄存器被改坏** |
+| `ccr3` | 0x9C4（基线采样时 180°：20000×125/1000=2500）→ 0x132D（本次采样时 sweep 终档 90°：65454×75/1000=4909）。数值不同由"采样角度不同 + 时基不同"共同解释，按各自时基均与指令自洽 |
+| 异常项 | 无功能异常。`PWM aervo 0`、`PWM abg` 是用户拼写错误，固件按设计回 `PWM err=usage` |
+| 证据强度 | 用户判定"舵机人工验收通过"；本记录只能证明串口回包文本与寄存器快照，**机械角度、堵转电流、长时间保持未测量**；`cnt0/cnt1` 为运行时自由计数，不可比 |
+| 结论 | **舵机走 `pm_pwm` 上板通过**（用户判定）；依据 = 本记录 + 五档实测脉宽 + stat/dbg 字段比对 |
+

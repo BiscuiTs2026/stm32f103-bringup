@@ -84,7 +84,7 @@ ERR unknown=<原始行内容>
 | `BUZ`[3] | `hz`，可选 `duty%` | hz 100..5000；duty 1..99 | duty **20** | `PWM buz ok freq=1000Hz duty=20%` | `PWM err=range hz=99` / `PWM err=range duty`（>99，不带数值）/ `PWM err=range`（duty=0 或端口拒绝）/ `PWM err=usage` / `PWM err=init` |
 | `BUZ`[3] + `off`[3] | 无 | — | — | `PWM buz off ok` | `PWM err=init` |
 | `SWEEP`[5] | 无 | — | — | 20 行：`PWM sweep deg=0.0 pulse=500us` ×18 + 终档 90° + `PWM sweep done`（阻塞约 5.7 s） | `PWM err=range` / `PWM err=init` |
-| `DBG`[3] | 无 | — | — | `PWM dbg apb1enr=… apb2enr=… cr1=… psc=71 arr=19999 ccmr2=… ccer=… ccr3=1500 cnt0=… cnt1=… dt=20ms crh=… mapr=… fpwm=50.0Hz` | `PWM err=init` |
+| `DBG`[3] | 无 | — | — | `PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000015 arr=0x0000FFAD ccmr2=0x00000068 ccer=0x00000100 ccr3=0x0000132D cnt0=… cnt1=… dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz`（寄存器一律 `0x%08X`；`psc/arr` 由 `pm_pwm_timing_compute` 按 72 MHz/50 Hz 选定 = 21/65453，**不是**旧手写驱动的 71/19999；`ccr3` 随当前角度变） | `PWM err=init` |
 | `TEST`[4] | 无 | — | — | `PWM test done 1Hz 10s pb8=af servo=90.0 pulse=1500us`（阻塞 10 s） | `PWM err=init` |
 | `STAT`[4] | 无 | — | — | `PWM stat servo=90.0c pulse=1500us buz=off`（注意 `90.0c` 中间**无空格**）；蜂鸣器开时 `buz=1000Hz/20%` | `PWM err=init` |
 

@@ -6,14 +6,52 @@
 #include "pwm_dev.h"
 
 #include "pm_osal.h"
+#include "pm_pwm.h"
 #include "pm_servo.h"
 
 #define PWM_REPLY_MAX 384u
 #define PWM_SWEEP_MAX 768u
 
+#define SERVO_FRAME_HZ    50u
+#define SERVO_PULSE_MIN   500u      /* SG90: 0 deg */
+#define SERVO_PULSE_MAX   2500u     /* SG90: 180 deg */
+#define SERVO_PULSE_MID   1500u
+#define SERVO_DUTY_MID    75u       /* 1500 us of a 20 ms frame, permille */
+
 static char    s_reply[PWM_REPLY_MAX];
 static char    s_sweep[PWM_SWEEP_MAX];
 static uint8_t s_ready;
+
+/* The servo is the second real user of the pm_pwm model: the component owns
+ * the channel object and the model owns the time base and duty. */
+static pm_pwm_t s_servo;
+static uint32_t s_servo_deg10 = 900u;
+static uint32_t s_servo_pulse = SERVO_PULSE_MID;
+
+static uint32_t servo_pulse_from_deg(uint32_t deg10)
+{
+    uint32_t span = SERVO_PULSE_MAX - SERVO_PULSE_MIN;
+
+    return SERVO_PULSE_MIN + ((deg10 * span) / 1800u);
+}
+
+/* deg10: 0.1 degree, 0..1800. Returns 0 or -1 when out of range or the
+ * channel is not open. */
+static int servo_set(int32_t deg10)
+{
+    uint32_t pulse;
+
+    if ((deg10 < PM_PWM_SERVO_MIN_DEG10) || (deg10 > PM_PWM_SERVO_MAX_DEG10)) {
+        return -1;
+    }
+    pulse = servo_pulse_from_deg((uint32_t)deg10);
+    if (pm_pwm_set_pulse_us(&s_servo, (uint16_t)pulse) != PM_OK) {
+        return -1;
+    }
+    s_servo_deg10 = (uint32_t)deg10;
+    s_servo_pulse = pulse;
+    return 0;
+}
 
 static char *put_s(char *p, const char *s)
 {
@@ -147,9 +185,9 @@ static const char *reply_servo(void)
     char *p = s_reply;
 
     p = put_s(p, "PWM servo ok deg=");
-    p = put_deg(p, (uint32_t)pm_pwm_servo_deg10());
+    p = put_deg(p, s_servo_deg10);
     p = put_s(p, " pulse=");
-    p = put_u32(p, pm_pwm_servo_pulse_us());
+    p = put_u32(p, s_servo_pulse);
     p = put_s(p, "us");
     *p = '\0';
     return finish();
@@ -183,7 +221,7 @@ static const char *cmd_servo(const char *p)
         *q = '\0';
         return finish();
     }
-    if (pm_pwm_servo_set((int32_t)(deg * 10u)) != 0) {
+    if (servo_set((int32_t)(deg * 10u)) != 0) {
         return reply_lit("PWM err=range");
     }
     return reply_servo();
@@ -236,20 +274,20 @@ static const char *cmd_sweep(void)
 
     for (round = 0u; round < 2u; round++) {
         for (i = 0u; i < (uint32_t)sizeof(s_sweep_deg); i++) {
-            if (pm_pwm_servo_set((int32_t)s_sweep_deg[i] * 10) != 0) {
+            if (servo_set((int32_t)s_sweep_deg[i] * 10) != 0) {
                 return reply_lit("PWM err=range");
             }
             p = put_s(p, "PWM sweep deg=");
-            p = put_deg(p, (uint32_t)pm_pwm_servo_deg10());
+            p = put_deg(p, s_servo_deg10);
             p = put_s(p, " pulse=");
-            p = put_u32(p, pm_pwm_servo_pulse_us());
+            p = put_u32(p, s_servo_pulse);
             p = put_s(p, "us\r\n");
             pm_osal_delay_ms(300u);
         }
     }
-    (void)pm_pwm_servo_set(900);
+    (void)servo_set(900);
     p = put_s(p, "PWM sweep deg=90.0 pulse=");
-    p = put_u32(p, pm_pwm_servo_pulse_us());
+    p = put_u32(p, s_servo_pulse);
     p = put_s(p, "us\r\nPWM sweep done\r\n");
     *p = '\0';
     return s_sweep;
@@ -309,6 +347,7 @@ static const char *cmd_test(void)
     uint32_t i;
     char    *q;
 
+    (void)pm_pwm_enable(&s_servo, false);
     pm_pwm_test_begin();
     for (i = 0u; i < 10u; i++) {
         pm_pwm_test_level(1);
@@ -317,12 +356,14 @@ static const char *cmd_test(void)
         pm_osal_delay_ms(500u);
     }
     pm_pwm_test_end();
+    (void)servo_set(900);
+    (void)pm_pwm_enable(&s_servo, true);
 
     q = s_reply;
     q = put_s(q, "PWM test done 1Hz 10s pb8=af servo=");
-    q = put_deg(q, (uint32_t)pm_pwm_servo_deg10());
+    q = put_deg(q, s_servo_deg10);
     q = put_s(q, " pulse=");
-    q = put_u32(q, pm_pwm_servo_pulse_us());
+    q = put_u32(q, s_servo_pulse);
     q = put_s(q, "us");
     *q = '\0';
     return finish();
@@ -330,7 +371,14 @@ static const char *cmd_test(void)
 
 void pwm_dev_init(void)
 {
-    s_ready = (pm_servo_init() == 0) ? 1u : 0u;
+    const pm_pwm_cfg_t cfg = {
+        .hw_id         = PM_PWM_HW_SERVO,
+        .freq_hz       = SERVO_FRAME_HZ,
+        .duty_permille = SERVO_DUTY_MID,
+    };
+
+    pm_pwm_board_init();
+    s_ready = (pm_pwm_init(&s_servo, &cfg) == PM_OK) ? 1u : 0u;
 }
 
 const char *pwm_dev_cmd(const char *line)
@@ -368,9 +416,9 @@ const char *pwm_dev_cmd(const char *line)
     if (ci_eq_n(p, "STAT", 4u) != 0) {
         q = s_reply;
         q = put_s(q, "PWM stat servo=");
-        q = put_deg(q, (uint32_t)pm_pwm_servo_deg10());
+        q = put_deg(q, s_servo_deg10);
         q = put_s(q, "c pulse=");
-        q = put_u32(q, pm_pwm_servo_pulse_us());
+        q = put_u32(q, s_servo_pulse);
         q = put_s(q, "us buz=");
         if (pm_pwm_buzzer_on() != 0) {
             q = put_u32(q, pm_pwm_buzzer_hz());

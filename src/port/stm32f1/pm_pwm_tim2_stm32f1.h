@@ -7,6 +7,8 @@
 
 #include "pm_port.h"
 
+#define PM_F1_PWM_TIM2_COUNT 2u   /* CH1 and CH2 share one timer */
+
 extern const pm_pwm_ops_t pm_f1_tim2_pwm_ops;
 
 #endif /* PM_PWM_TIM2_STM32F1_H */

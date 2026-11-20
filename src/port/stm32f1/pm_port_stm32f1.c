@@ -16,6 +16,7 @@
 #include "board_f103c8.h"
 #include "pm_pwm_tim2_stm32f1.h"
 
+extern const pm_pwm_ops_t pm_f1_pwm_ops;   /* dispatch: TIM2 CH1/CH2, TIM4_CH3 */
 extern const pm_track_ops_t pm_f1_track_ops;
 
 #if PM_ENABLE_ENCODER
@@ -408,9 +409,9 @@ static const pm_port_t s_port = {
     .uart           = &s_uart_ops,
     .uart_ctx       = NULL,
     .uart_count     = (uint8_t)PM_F1_UART_COUNT,
-    .pwm            = &pm_f1_tim2_pwm_ops,
+    .pwm            = &pm_f1_pwm_ops,
     .pwm_ctx        = NULL,
-    .pwm_count      = 2u,
+    .pwm_count      = 3u,
     .track          = &pm_f1_track_ops,
     .track_ctx      = NULL,
     .track_count    = 1u,
