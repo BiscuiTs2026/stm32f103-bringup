@@ -449,6 +449,11 @@ PWM dbg ... mapr=0x00000000          <- AFIO->MAPR：TIM2 无重映射
 结论：固件侧寄存器状态全部正确，定时器在计数、通道使能、引脚复用与重映射均无误，
 `ccr1/ccr2` 与占空比换算一致；**MCU 侧没有可再查的软件异常**，问题在 PA0/PA1 之外。
 
+> **更正说明（2026-11-20 补记，不改上面的记录）**：上面 `MOTOR dbg` 的回包是当时那版实现的
+> 原样记录。之后该命令移到 `platform/stm32f103/pm_platform.c` 的 `pm_platform_motor_dbg()`
+> （绑定在 `src/app/main.c`），回包格式变为以 `apb1enr=` 开头、`cnt` 采样由两段改为三段
+> （`cnt=<a>+<b>+<c>`）。上面的回包原文与时间戳保持原样，未删改；判读结论不受影响。
+
 ### M4 起动矩阵与最终结论（2026-11-20 10:39:43–10:40:24，`evidence/manual-m4-startmatrix.log`）
 
 八组均"`MOTOR stop` → 2.0 s → 驱动 → 3 s → `MOTOR stat`"，寄存器全部与命令一致：
