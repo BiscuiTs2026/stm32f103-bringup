@@ -2,9 +2,10 @@
  * pm_pwm.h - PWM outputs used by the KEYSKING learning board.
  *
  * The contract is hardware-free: degrees in 0.1 units, frequency in Hz,
- * duty in percent. Servo is PB8 (TIM4_CH3, 50 Hz); the buzzer is PB9 and is
- * driven by a software phase counter so it can run at its own frequency
- * while the servo keeps its 50 Hz frame (both pins share TIM4).
+ * duty in percent. Servo is PB8 (TIM4_CH3, 50 Hz); the buzzer is PB9, a plain
+ * GPIO toggled by the TIM3 update ISR (10 us phase counter), so it can run at
+ * its own frequency while the servo keeps its 50 Hz frame. Only the servo
+ * uses a TIM4 channel; PB9 merely sits next to it on the header.
  */
 #ifndef PM_PWM_H
 #define PM_PWM_H
