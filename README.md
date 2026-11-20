@@ -2,7 +2,7 @@
 
 ## 定位
 
-本目录是 **上板验证台架**，不是对外交付的库；远程仓为 `BiscuiTs2026/stm32f103-bringup`（**私有**）。
+本目录是 **上板验证台架**，不是对外交付的库；远程仓为 [`BiscuiTs2026/stm32f103-bringup`](https://github.com/BiscuiTs2026/stm32f103-bringup)（**公开**）。
 `pm_*` 源码是 `BiscuiTs2026/stm32-peripheral-model` 某一提交的快照：基线 **`aa342e5`**（v0.1，GPIO + UART）。
 复制发生在该提交成型前的工作树中间态——7 个 GPIO/UART 文件与 `aa342e5` 逐字节相同，
 `include/pm/pm_port.h` 少 167 行 SPI 声明；凡涉及 `pm_*` 契约的漂移，**以模型仓为准**，按 `PATCHES.md` 回同步。
