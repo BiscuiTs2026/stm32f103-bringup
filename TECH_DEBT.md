@@ -47,7 +47,7 @@
 | D22 | `arch-allow` 登记 | `src/components/adc_dev/adc_dev.h`（4 处原型）、`src/app/app_wiring.c`（1 处调用） | `adc_dev_boot`/`adc_dev_cmd` 等 | 检查器把 `adc_` 前缀的本工程组件函数误判为 SPL 调用（前缀正则），不涉及真实越层 | **待检查器补组件名前缀白名单后撤销** |
 | D23 | 主循环实时性（非检查器命中） | `main()` 主循环、`keypad_dev_service()`、`oled_ui_service()` | 每 500 ms 约 98 ms 被 OLED 整页 I2C 占住，期间按键零采样 | 短于约 100–118 ms 的点按可能整段丢失（实测两轮各丢 1–2 记）；建议 EXTI 双边沿采样或整页写拆半插采样 | **待处理，不在本轮范围**（详见下节） |
 | D24 | 诊断命令副作用说明（非检查器命中，非缺陷） | `oled_ch1116_service()`、`oled_ch1116_set_col_offset()`、`OLED col` 处理 | 每次页写只从当前 offset 起写 128 字节，改变 offset 后窗口外的 RAM 列保留旧内容 | **触发条件是主动用 `OLED col n` 切档**；缺省 col=2 时窗口盖满玻璃 RAM2..129，不可能出现；用户已确认不算缺陷 | **已消除（2026-11-20）**：新增 `oled_ch1116_clear_all()`，`OLED col` 切档后先清全 RAM 再重画，竖边不再出现（用户目视确认） |
-| D25 | 检查器版本漂移（工具链，不属代码缺陷） | `tools/CHECKER.lock`、`tools/check_layering.py` | 本仓锁在上游 `7facd2b`（checker-version 3.3.1）；上游已推进到 `3c507b7` | 据派发方 2026-11-20 告知，两版差异仅第 27 项的输出排序，不影响本仓现有判定结论与基线（`0 ERROR / 3 WARN`） | **记录在案，是否升级另行决定**；本轮不动锁，也不改检查器 |
+| D25 | 检查器版本漂移（工具链，不属代码缺陷） | `tools/CHECKER.lock`、`tools/check_layering.py` | 本仓锁已升到上游 `4da1a77`（checker-version 3.4.0），2026-11-20 同步；此前锁在 `7facd2b`（3.3.1） | 3.3.1→3.4.0 只新增第 28 项 `feature_gate`；本仓 `.arch-roles` 无 `feature` 声明，该项报 0；复跑 `--glue-max-lines 86` 仍 `0 ERROR / 3 WARN`，3 条 WARN 与升级前逐条相同（`pm_port_stm32f1.c:352/362/374`） | **已升级（2026-11-20）**：锁、文件、README 同源；是否继续跟随上游按需再定 |
 
 ### D23 按键轮询被 OLED 整页 I2C 阻塞（2026-11-20 登记，待处理）
 
