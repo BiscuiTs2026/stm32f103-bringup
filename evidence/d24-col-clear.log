@@ -1,0 +1,65 @@
+﻿
+[   170ms] ===== D24 col clear 2026-11-20 11:06:50.145 port=COM11 =====
+[   236ms] hb
+[   322ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   404ms] (11:06:50.378) >> OLED col 2
+[   609ms] OLED col=2 ok redraw=live
+[   715ms] OLED redraw ok ms=98 col=2 af=0 berr=0 to=0
+[   1215ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1238ms] hb
+[   1710ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2211ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2237ms] hb
+[   2721ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3210ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3238ms] hb
+[   3421ms] (11:06:53.395) >> OLED frame
+[   3533ms] OLED frame ok ms=98 col=2 live=on hold=3000ms af=0 berr=0 to=0
+[   4227ms] hb
+[   5227ms] hb
+[   6232ms] hb
+[   6415ms] (11:06:56.389) >> OLED col 3
+[   6621ms] OLED col=3 ok redraw=frame
+[   6720ms] OLED redraw ok ms=98 col=3 live=on hold=3000ms af=0 berr=0 to=0
+[   7227ms] hb
+[   8227ms] hb
+[   9226ms] hb
+[   9400ms] (11:06:59.374) >> OLED col 4
+[   9606ms] OLED col=4 ok redraw=frame
+[   9705ms] OLED redraw ok ms=98 col=4 live=on hold=3000ms af=0 berr=0 to=0
+[   10232ms] hb
+[   11232ms] hb
+[   12226ms] hb
+[   12400ms] (11:07:02.374) >> OLED show
+[   12515ms] OLED show ok ms=98 col=4 live=on hold=3000ms af=0 berr=0 to=0
+[   13230ms] hb
+[   14221ms] hb
+[   15226ms] hb
+[   15404ms] (11:07:05.378) >> OLED dump
+[   15421ms] OLED dump mode=static left=1s screen=show
+[   15422ms] OLED L0=MODE=STAT 1S UP=  24S
+[   15422ms] OLED L1=NOW : IDLE           
+[   15431ms] OLED L2=LAST: OLED frame     
+[   15431ms] OLED L3=RH=50.4 T=20.8C
+[   15432ms] OLED L4=NTC=2305 POT=   0
+[   15432ms] OLED L5=K1=    0 K2=    0
+[   15432ms] OLED L6=I2C af= 0 berr= 0
+[   15432ms] OLED L7=LIVE ms= 98
+[   15616ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   16111ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   16233ms] hb
+[   16604ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   17104ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   17227ms] hb
+[   17605ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   18104ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   18232ms] hb
+[   18421ms] (11:07:08.395) >> OLED col 2
+[   18621ms] OLED col=2 ok redraw=live
+[   18733ms] OLED redraw ok ms=98 col=2 af=0 berr=0 to=0
+[   19231ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19232ms] hb
+[   19738ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20233ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20233ms] hb
+[   20508ms] ===== D24 col clear end =====

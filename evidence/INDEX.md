@@ -1473,3 +1473,14 @@
 | 不能证明什么 | 不覆盖 M1–M9 人工项（S10 最终验收仍待人工项全部 PASS） |
 | 局限 | 前两次 push 失败（连接重置 / 443 超时）未留存原始日志，只有会话输出 |
 | PATCHES 引用 | §37 |
+
+## 117. D24 修复（d24-flash.log / d24-col-clear.log）
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | `d24-flash.log`：一次烧录；`d24-col-clear.log`：COM11 115200，11:06:50 起约 20 s 的切档序列 |
+| 关键内容 | 改动：`oled_ch1116.h/.c` 新增 `oled_ch1116_clear_all()`（offset 0 与 4 各推 8 页全黑，覆盖 RAM0..131）、`oled_ui_job.c` 的 `COL` 分支在 `set_col_offset()` 后调用它；文档 `docs/PROTOCOL.md`、`TECH_DEBT.md`（D24 已清除）、`evidence/MANUAL-CHECKS.md`（M9 改判 PASS）。验证：`cmake --build build-split-s10` 通过（FLASH 29096 B / RAM 5312 B）；`check_layering.py --glue-max-lines 87` = **0 ERROR / 3 WARN**（同既有端口层 ISR 钩子）；烧录 `Download verified successfully`；序列 `col 2 → frame → col 3 → col 4 → show → dump → col 2` 回包全 `ok`、`af=0 berr=0 to=0`，`col` 命令延迟 205/206/206 ms（旧约 15 ms，多出 16 页清屏） |
+| 能证明什么 | 切档时整块 132 列 RAM 被清黑，清屏确实执行；固件与验证产物一一对应 |
+| 不能证明什么 | 像素是否干净串口判不了——由用户按复现序列 `OLED col 2 → OLED frame → OLED col 3 → OLED col 4 → OLED show` 目视确认：**最左侧贯 8 行的竖边已消失**，M9 据此由 PASS（带缺陷）改判 PASS |
+| 局限 | 清屏为阻塞操作，`OLED col` 响应从约 15 ms 增至约 205 ms（已在 PROTOCOL 记明）；目视结论无照片 |
+| PATCHES 引用 | 未引用 |

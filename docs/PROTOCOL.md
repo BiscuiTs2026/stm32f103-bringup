@@ -181,7 +181,7 @@ HELP KEYS=key press counters, clears them
 | `OLED test` | 无 | `OLED test ok ms=98 col=2 live=on hold=3000ms ...` | 同上 | **是**：整屏棋盘格，3 s 后回 live |
 | `OLED frame` | 无 | `OLED frame ok ms=98 col=2 live=on hold=3000ms ...` | 同上 | **是**：边框 + 9 条竖线，3 s 后回 live |
 | `OLED show` | 无 | `OLED show ok ms=98 col=2 live=on hold=3000ms ...` | `OLED err=busy pending` / `err=busy i2c` | **是**：把 live 页内容画成静态帧，3 s 后回 live |
-| `OLED col <0..4>` | 列偏移 | `OLED col=2 ok redraw=<图案名>` | `OLED err=usage col=0..4` | **是**：改列偏移并立即重画 |
+| `OLED col <0..4>` | 列偏移 | `OLED col=2 ok redraw=<图案名>` | `OLED err=usage col=0..4` | **是**：改列偏移，整块 RAM 清黑后立即重画（见下方 col 说明） |
 | `OLED live on` | 无 | `OLED live=on period=500ms` | `OLED err=busy pending` / `err=busy i2c` | **是**：进入周期刷新 + 1 Hz 自动测距 |
 | `OLED live off` | 无 | `OLED live=off` | — | **是**：停住一帧静态画面，屏保留最后一帧 |
 | `OLED dump` | 无 | `OLED dump mode=<live\|static\|off> [left=<s>s] screen=<页名>` + 8 行 `OLED L<n>=<21 字符>` | — | 否（只读显存文本，不发 I2C） |
@@ -228,6 +228,9 @@ HELP KEYS=key press counters, clears them
 - 静态图案的 3 s 停留期间（以及 `OLED off` 期间）两者都暂停，恢复 live 后
   立刻重画一帧（实测 `OLED on` 后 98 ms 内出现首条 `OLED live ok`）。
 - `OLED col` 在 live 期间可用，回 `redraw=live` 并立即重画。
+- `OLED col` 的时序（2026-11-20 起）：命令先按 offset 0 与 offset 4 各推 8 页全黑，
+  覆盖 RAM 全部 132 列，再重画当前画面。因此该命令的响应从约 15 ms 变为约 **205 ms**
+  （16 页 × 约 12 ms），这是预期值，不是异常；`ms=` 仍只统计重画那一遍的 8 页。
 
 ### 4.5 ADC（PA5 电位器 / PA4 NTC）
 

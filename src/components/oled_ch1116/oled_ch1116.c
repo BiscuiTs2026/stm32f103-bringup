@@ -287,6 +287,36 @@ uint8_t oled_ch1116_col_offset(const oled_ch1116_t *o)
     return o->col_offset;
 }
 
+int oled_ch1116_clear_all(oled_ch1116_t *o)
+{
+    /* RAM is 132 columns wide, a page write is 128. Two windows (0 and 4)
+     * cover 0..131 without relying on the controller wrapping past 131. */
+    static const uint8_t k_cols[2] = { 0u, 4u };
+    uint8_t page_buf[OLED_CH1116_WIDTH];
+    uint8_t cmds[3];
+    uint8_t ci;
+    uint8_t page;
+    int     rc = 0;
+
+    memset(page_buf, 0, sizeof(page_buf));
+    for (ci = 0u; (ci < 2u) && (rc == 0); ci++) {
+        for (page = 0u; (page < OLED_CH1116_PAGES) && (rc == 0); page++) {
+            cmds[0] = (uint8_t)(0xB0u | page);
+            cmds[1] = (uint8_t)(k_cols[ci] & 0x0Fu);
+            cmds[2] = (uint8_t)(0x10u | ((k_cols[ci] >> 4) & 0x0Fu));
+            rc = o->bus(o->ctx, OLED_CH1116_CTRL_CMD, cmds, 3u);
+            if (rc == 0) {
+                rc = o->bus(o->ctx, OLED_CH1116_CTRL_DATA, page_buf,
+                            (uint16_t)sizeof(page_buf));
+            }
+        }
+    }
+    if (rc != 0) {
+        o->err = rc;
+    }
+    return rc;
+}
+
 int oled_ch1116_service(oled_ch1116_t *o)
 {
     uint8_t cmds[3];

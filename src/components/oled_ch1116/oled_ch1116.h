@@ -83,6 +83,16 @@ int oled_ch1116_start_frame(oled_ch1116_t *o);
 void    oled_ch1116_set_col_offset(oled_ch1116_t *o, uint8_t col);
 uint8_t oled_ch1116_col_offset(const oled_ch1116_t *o);
 
+/* Clears the whole 132-column GDDRAM: black pages pushed twice, once with the
+ * write window at column 0 (RAM 0..127) and once at column 4 (RAM 4..131).
+ * Every normal page write covers only 128 of the 132 columns, so after a
+ * column-offset change the columns outside the new window would keep whatever
+ * the previous offset left there (TECH_DEBT D24). Call it right after
+ * oled_ch1116_set_col_offset() and before the redraw. Blocking: 16 page
+ * writes, about 200 ms at 100 kHz; a running job is not touched, it continues
+ * at the new offset and is overwritten by the following redraw. */
+int oled_ch1116_clear_all(oled_ch1116_t *o);
+
 /* Pushes at most one page (128 data bytes, ~12 ms at 100 kHz) and returns.
  * 1 = more pages remain, 0 = idle or the job just finished (check err). */
 int oled_ch1116_service(oled_ch1116_t *o);

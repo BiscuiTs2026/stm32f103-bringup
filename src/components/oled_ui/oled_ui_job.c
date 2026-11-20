@@ -323,6 +323,9 @@ void oled_ui_cmd(cmd_port_t *c, const char *arg)
             return;
         }
         oled_ch1116_set_col_offset(&s_oled, (uint8_t)v);
+        /* D24: a page write only spans 128 of the 132 RAM columns, so columns
+         * outside the new window would keep the previous offset's pixels. */
+        (void)oled_ch1116_clear_all(&s_oled);
         pm_cmd_out_tx_str(c, "OLED col=");
         pm_cmd_out_tx_u32(c, v);
         pm_cmd_out_tx_str(c, " ok");

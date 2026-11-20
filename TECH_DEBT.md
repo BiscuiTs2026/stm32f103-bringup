@@ -45,6 +45,58 @@
 | D19 | 第 22 项（单函数 ≤ 80 行） | `src/components/oled_ui/oled_ui_job.c`（`oled_ui_cmd`） | 原 123 行命令处理 | 已拆到组件层 | **已清除（S8/S9）** |
 | D21 | S4 已知行为偏差（非检查器命中） | `src/port/stm32f1/pm_i2c1_stm32f1.c` `aht_trigger`/`aht_read` | `AHTS`（rst=1）触发后立即释放总线，80 ms 后的读是普通 START，不再重复 START | AHT20 要等命令被 STOP 终止才开始转换；固定单参数 `pm_i2c1_ops_t` 无法保留拆前"握总线 80 ms"的线序（派发方 2026-11-19 裁决保留接口） | **仍开放**；代码已标注 `repeated_start` 不上线、无假分支；若将来确需真·重复 START，另立任务改接口 |
 | D22 | `arch-allow` 登记 | `src/components/adc_dev/adc_dev.h`（4 处原型）、`src/app/app_wiring.c`（1 处调用） | `adc_dev_boot`/`adc_dev_cmd` 等 | 检查器把 `adc_` 前缀的本工程组件函数误判为 SPL 调用（前缀正则），不涉及真实越层 | **待检查器补组件名前缀白名单后撤销** |
+| D23 | 主循环实时性（非检查器命中） | `main()` 主循环、`keypad_dev_service()`、`oled_ui_service()` | 每 500 ms 约 98 ms 被 OLED 整页 I2C 占住，期间按键零采样 | 短于约 100–118 ms 的点按可能整段丢失（实测两轮各丢 1–2 记）；建议 EXTI 双边沿采样或整页写拆半插采样 | **待处理，不在本轮范围**（详见下节） |
+| D24 | OLED 切档残留（非检查器命中） | `oled_ch1116_service()`、`oled_ch1116_set_col_offset()`、`OLED col` 处理 | 每次页写只从当前 offset 起写 128 字节，无 132 列全 RAM 清除路径 | 改 `OLED col` 后新窗口左右两侧的旧像素残留（10:56:19 照片左侧 2 px 竖线）；缺省 col=2 不出现 | **已清除（2026-11-20）**：新增 `oled_ch1116_clear_all()`，`OLED col` 切档后先清全 RAM 再重画 |
+
+### D23 按键轮询被 OLED 整页 I2C 阻塞（2026-11-20 登记，待处理）
+
+- 条款/归属：非检查器命中，属"主循环实时性"行为缺陷记录（AGENTS 7 验证纪律产物）。
+- 位置（按符号）：`src/app/main.c` 的 `main()` 主循环；`keypad_dev_service()`（`src/components/keypad_dev/keypad_dev.c`）；
+  `oled_ui_service()`（`src/components/oled_ui/oled_ui_job.c`）。
+- 现象：主循环每轮调 `keypad_dev_service(now)` 之后才调 `oled_ui_service()`；后者整页写 I2C，
+  实测整页传输 **`ms=98`**（`OLED live ok ms=98`，`oled_ui_job.c` 注明该值为真实 8 页传输时间），
+  live 模式每 500 ms 触发一次 → **每 500 ms 约 98 ms 主循环被占住，期间按键采样为零**。
+- 消抖门槛：`KEY_DEBOUNCE_MS 20u`（`keypad_dev.c` 顶部宏），判据是"电平保持 ≥20 ms"，
+  且需下一次采样到来才能确认 → 保证可捕获的按压下限约 `20 + 98 ≈ 118 ms`。
+- 后果：**短于约 100–118 ms 的点按可能整段落进 I2C 窗口而完全不被捕获**。实测两轮：
+  M1-e 第二轮人报 21 / 固件 20（丢 1），第三轮人报 20 / 固件 18（丢 2）；两轮丢失都落在
+  1.7–2.2× 中位数的加宽间隔内，且无 <20 ms 伪事件（详见 `evidence/MANUAL-CHECKS.md` M1-e 节）。
+- 建议修法（任选其一，需排期）：
+  1. 按键改 **EXTI 双边沿中断**采样：ISR 只给边沿打时间戳入队，消抖与计数判决仍在主循环做；
+  2. 把 OLED 整页写**拆成两半**，在两半之间插入一次按键采样。
+- 状态：**待处理，不在本轮范围**；M1-e 已按"设计内限制"判 PASS（带限制），本条目用于后续排期。
+
+### D24 `OLED col` 切档后留下窗口外的旧像素（2026-11-20 登记，同日修复并经目视确认）
+
+- 条款/归属：非检查器命中，属面板绘制行为缺陷记录（M9 目视验收发现）。
+- 位置（按符号）：`oled_ch1116_service()`（`src/components/oled_ch1116/oled_ch1116.c`，页写 128 字节处）、
+  `oled_ch1116_set_col_offset()`（同文件）、`OLED col` 处理（`src/components/oled_ui/oled_ui_job.c` 的 `COL` 分支）。
+- 机制：每次页写都把列地址设到**当前** `col_offset`，随后固定写 **128 字节**；因此写入窗口是
+  `[offset, offset+127]`，窗口左右两侧的 RAM 列永远不被清除。固件没有 132 列全 RAM 的清除路径。
+  玻璃可见窗口是 RAM 2..129（`oled_ch1116.c` 的 `build_frame_page()` 注释），所以：
+  - offset=2（缺省）时窗口正好盖满玻璃，**不可能出现残留**；
+  - offset=4 时只覆盖 RAM 4..131，RAM 2..3 保持上一次内容；
+  - offset=0 时只覆盖 RAM 0..127，RAM 128..129 保持上一次内容。
+- 复现：`OLED col 2`（画 frame，左边框落在 RAM2）→ `OLED col 3`（RAM3 再落一列）→ `OLED col 4` →
+  `OLED live on`（live 页从 RAM4 起写）→ 玻璃最左 2 px 依然是 frame 的边框竖线。
+  2026-11-20 10:56:19 照片即此形态（左侧 2 px 竖线紧贴文字，8 行贯通）。
+- 影响：**只出现在用过 `OLED col` 诊断之后**；正常上电即 offset=2 的运行不会出现。
+  另：`OLED col 4` 下右边框落在 RAM131（玻璃外），右边框必然看不见，属同一根因。
+- 建议修法（任选其一，需排期）：
+  1. `OLED col` 切档后先推两遍全黑页（offset 0 与 offset 4 各一次，合起来覆盖 RAM 0..131），再重绘目标画面；
+  2. 让驱动支持 132 字节页写，一次清全 RAM。
+- 文档待改：`evidence/MANUAL-CHECKS.md` M9 第 4 步"col 0 与 col 4 两极值首字符不贴边、末字符不出界"
+  不成立（col 4 右边框必失、col 0 左边缘不在窗口内），有效 A/B 范围实际只有 0..2 附近。
+- **修复（2026-11-20）**：采用修法 1。新增 `oled_ch1116_clear_all()`（`src/components/oled_ch1116/oled_ch1116.c`），
+  按 offset 0 与 offset 4 各推 8 页全黑，覆盖 RAM 0..131；`OLED col` 分支
+  （`src/components/oled_ui/oled_ui_job.c` 的 `COL`）在 `oled_ch1116_set_col_offset()` 之后、重画之前调用它。
+  不新增 job 状态、不改 `oled_ch1116_service()`，运行中的作业不受影响（它随后按新 offset 继续写，被子命令的重画覆盖）。
+- 修复验证（2026-11-20）：编译通过（Flash 29096 B / RAM 5312 B）；3.3.1 分层检查 `0 ERROR / 3 WARN`（仍是原 3 条端口层 ISR 钩子）；
+  `STM32_Programmer_CLI -v` 回读 `Download verified successfully`；
+  `evidence/d24-col-clear.log`：`col 2 / 3 / 4 / show / dump / col 2` 全部 `ok`、`af=0 berr=0 to=0`、无 `err=io`，
+  且 `OLED col` 响应从约 15 ms 变为 **205–206 ms**（3 次实测：205 / 206 / 206），与 16 页 ×12 ms 的清屏开销吻合。
+- 目视确认（2026-11-20）：用户按 `OLED col 2 → OLED frame → OLED col 3 → OLED col 4 → OLED show`
+  复核，确认最左侧贯 8 行的竖边**已消失**；`evidence/MANUAL-CHECKS.md` M9 据此由 PASS（带缺陷）改判 PASS。
 
 ### 附：边界与撤销条件
 
