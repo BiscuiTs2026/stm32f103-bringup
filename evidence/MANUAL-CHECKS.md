@@ -31,7 +31,7 @@
 | M4 | 电机转向与转速 | 目视 | `docs/PROTOCOL.md` §4.9 | PASS | 正反转均能从静止起动；25/50/75/100 八组全部起动（用户感知为"正转较弱/较大、反转较弱/较大"四段）；速度随占空比变化；`MOTOR stat`/`dbg` 寄存器与命令一致（`ccr1/ccr2`=900/1800/2700/3600，`cr1=0x81`、`ccer=0x11`、`crl=0x22008BBB`、`mapr=0x0`）。证据 `evidence/manual-m4-startmatrix.log`、`manual-m4-expD.log`、`manual-m4-dbg.log`。**含观察项：10:35 那轮"动一下就停"未复现**，见 M4 章节 |
 | M5 | 蜂鸣器听感 | 耳听 | `docs/PROTOCOL.md` §4.6 | PASS | 机器侧：1000 Hz / 2000 Hz 精确、2700 反算 2702 Hz（±2 内）、`off` 后 `buz=off`（`evidence/manual-m5-buzzer.log`，10:42:13–10:42:21）。用户听感：1 kHz 可闻、2 kHz 更高更响、2.7 kHz 继续升高、`off` 后完全静音，四段与预期一致 |
 | M6 | 电位器响应（十字螺丝刀） | 手转 + 看数 | `docs/PROTOCOL.md` §4.5、SPLIT-PLAN S7 判据 | PASS | 拧动段 10:48:31 起（`evidence/manual-m6-pot.log` 第二段）：`pot` 0→769→2464→3564→4095→3599→1459→0，**覆盖满量程 0–4095**，两方向单调反向、停手后保持；`pot_mv` 与 `round(pot*3300/4095)` 逐点相符（769→620、3564→2872、4095→3300、1459→1176）；`ntc` 全程 2296–2310（Δ14 LSB）与 `pot` 无关。**局限：两端出现 0/4095 饱和，未测中间任意定位精度；用户未单独复述读数是否跟随**（判据只用串口原文） |
-| M7 | 蓝牙双向镜像（S2 欠账 + S9c 控制台搬迁） | 手机 BLE 发字节 | SPLIT-PLAN §5.4、§8.3 核账 S2 行、§3 S9c | PENDING | — |
+| M7 | 蓝牙双向镜像（S2 欠账 + S9c 控制台搬迁） | 手机 BLE 发字节 | SPLIT-PLAN §5.4、§8.3 核账 S2 行、§3 S9c | PASS | 凭证＝**网页串口助手导出记录、用户操作**（`evidence/manual-m7-bt.json`）：`PING`→`PONG\r\n` 240 ms；`HELP` 15 行 638 B，与 `app_wiring.c` 命令表逐行一致。**COM11 侧 `BT rx/tx` 镜像未抓包**，见 M7 实测记录的局限 |
 | M8 | 编码器按键与手感 | 手转 / 手按 | `docs/PROTOCOL.md` §4.7 | PASS（带限制） | 10:45:05–10:45:50（`evidence/manual-m8-encoder.log` 第二段，每 500 ms）：逆时针 24→−12 递减 36（=9 格×4），顺时针 −12→24 递增 36 精确回零；`a/b` 各出现一次跳变、静止恒 `a=1 b=1`；`btn` 1→0→1 跟随按压约 3.5 s。**限制：① `dir` 停手后不回落 `idle`（实现无时间衰减，作业单第 3 步口径需改）；② `ENC clear` 与手感/卡位未测；③ 用户未报格数，幅度只按计数整数倍判** |
 | M9 | OLED 面板图案与对齐 | 目视 | SPLIT-PLAN §3 S9、`HARDWARE.md` 第 9 条 | PASS | 凭证＝**照片 1 张**（`IMG_20261120_105619.jpg`，10:56:19 文字页，附件路径见下节）+ **用户口述确认**（花格、边框、col 左右平移三项，无照片）；机器判据另记（`manual-m9-oled-rerun.log`）。当时的最左竖边属 `OLED col` 诊断命令副作用；切档清屏已补强，先清全 132 列 RAM 再重画，竖边不再出现（用户目视确认） |
 | M10 | OLED 面板是否点亮（背光/供电） | 目视 | 2026-11-20 09:35 复位抓包 `split-s6a-oled.log` | PASS | 依据：用户 2026-11-20 目视确认屏已点亮（此前黑屏为硬件侧瞬断，已恢复）；**不是固件验证结论**。像素/观感部分 2026-11-20 下午已由 M9 记账（PASS） |
@@ -534,10 +534,28 @@ COM11 开抓包（115200）。蓝牙侧固件是 `build-split-s9`（S9c 提交�
 
 证据：手机侧日志存 `manual-bt-phone.log`，COM11 侧存 `manual-bt-uart2.log`；
 无日志不得只凭记忆判 PASS。
-出处：SPLIT-PLAN §5.4、§8.3 核账表 S2 行、§3 S9c。
 
-**当前状态：PENDING。** 2026-11-20 S9c 上板时本机无 BLE 对端（只有经典蓝牙 SPP 口），
-该项未验证；S9c 其余板端项已通过，见 `split-s9c-frames.log`。
+## M7 实测记录（2026-11-20 11:22，网页串口助手，结论 PASS）
+
+- 工具与固件：网页串口助手（用户操作），连 DX-BT24；板子 USART3 9600 8N1。
+  跑的是当时板上的当前固件（含 D24 修复），控制台代码与 S9c 同源（`pm_cmd_console` 未改）。
+- 凭证：`evidence/manual-m7-bt.json`（网页串口助手导出记录，用户操作），共 6 条，11:22:10–11:22:24。
+- 收发 1：11:22:10.309 写 `PING`（4 B）→ 11:22:10.549 读回 `PONG\r\n`（6 B），**240 ms**。
+- 收发 2：11:22:24.026 写 `HELP`（4 B）→ 11:22:24.919 收满 15 行，**638 B**；因 BLE 分包分 3 段到达
+  （…026 / …519 / …919），拼接后完整。
+- 15 行顺序：HELP、PING、STAT、I2C、AHT、AHTS、DIST、ADC、OLED、PWM、TRACK、ENC、RELAY、MOTOR、KEYS。
+- 与调试串口侧一致性核对（用 `app_wiring.c` 的 `s_cmds[]` 文本逐行程序化比对，非目测）：
+  - 15 行全部匹配，`mismatches=0`，行数与顺序一致，无缺行、无多行；
+  - `HELP DIST=disabled, TIM2 given to motor` 与当前 TIM2 归属相符（TIM2 已给 MOTOR PWM，DIST 停用）；
+  - 代表行：`HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM`、`HELP OLED=on/off/clear/test/show/frame/col/live/dump`。
+- 判据落实：双向通路成立（网页→板子命令被执行、板子→网页回包到达）；`HELP` 行数、文本、字节数与源码一致。
+- 局限：本次未抓 COM11 侧 `BT rx` / `BT tx` 镜像行，S9c 判据里"镜像行在回包之前"未直接验证；
+  一致性用源码比对佐证（回包内容与表全等）。要补 S9c 直接证据需另抓一次 COM11。
+- 出处：SPLIT-PLAN §5.4、§8.3 核账表 S2 行、§3 S9c。
+
+**状态变更：** 2026-11-20 S9c 上板时本机无 BLE 对端（只有经典蓝牙 SPP 口），当时记 PENDING；
+2026-11-20 11:22 用户用网页串口助手连 DX-BT24 完成本项，见上节，结论 **PASS**。
+S9c 其余板端项见 `split-s9c-frames.log`。
 
 ---
 

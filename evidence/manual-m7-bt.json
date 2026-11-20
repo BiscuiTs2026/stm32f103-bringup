@@ -1,0 +1,68 @@
+[
+  {
+    "type": "write",
+    "data": "PING",
+    "timestamp": 1795144930309,
+    "time": "2026-11-20 11:22:10:309",
+    "firstSeenAt": 1795144930309,
+    "lastSeenAt": 1795144930309,
+    "display": "ascii",
+    "fileMeta": null,
+    "byteLength": 4
+  },
+  {
+    "type": "read",
+    "data": "PONG\r\n",
+    "timestamp": 1795144930549,
+    "time": "2026-11-20 11:22:10:549",
+    "firstSeenAt": 1795144930549,
+    "lastSeenAt": 1795144930549,
+    "display": "ascii",
+    "fileMeta": null,
+    "byteLength": 6
+  },
+  {
+    "type": "write",
+    "data": "HELP",
+    "timestamp": 1795144944026,
+    "time": "2026-11-20 11:22:24:026",
+    "firstSeenAt": 1795144944026,
+    "lastSeenAt": 1795144944026,
+    "display": "ascii",
+    "fileMeta": null,
+    "byteLength": 4
+  },
+  {
+    "type": "read",
+    "data": "HELP HELP=list commands\r\nHELP PING=reply PONG\r\nHELP STAT=clk/up/tick/keys/uart counters\r\nHELP I2C=scan I2C1 bus, list 8-bit addresses\r\nHELP AHT=read AHT20, rh and t in 0.1 units\r\nHELP AHTS=same but read via repeated START\r\nHELP DIST=disabled, TIM2 given",
+    "timestamp": 1795144944531,
+    "time": "2026-11-20 11:22:24:531",
+    "firstSeenAt": 1795144944531,
+    "lastSeenAt": 1795144944531,
+    "display": "ascii",
+    "fileMeta": null,
+    "byteLength": 253
+  },
+  {
+    "type": "read",
+    "data": " to motor\r\nHELP ADC=pot PA5 and NTC PA4, raw and mV\r\nHELP OLED=on/off/clear/test/show/frame/col/live/dump\r\nHELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep\r\nHELP TRACK=raw level of PB14 line sensor\r\nHELP ENC=count/clear, dir, a/b, button PB15\r\nHELP",
+    "timestamp": 1795144944785,
+    "time": "2026-11-20 11:22:24:785",
+    "firstSeenAt": 1795144944785,
+    "lastSeenAt": 1795144944785,
+    "display": "ascii",
+    "fileMeta": null,
+    "byteLength": 253
+  },
+  {
+    "type": "read",
+    "data": " RELAY=on/off/stat, PB5 relay coil\r\nHELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM\r\nHELP KEYS=key press counters, clears them\r\n",
+    "timestamp": 1795144944919,
+    "time": "2026-11-20 11:22:24:919",
+    "firstSeenAt": 1795144944919,
+    "lastSeenAt": 1795144944919,
+    "display": "ascii",
+    "fileMeta": null,
+    "byteLength": 132
+  }
+]
