@@ -18,7 +18,6 @@
 #include "pm_gpio.h"
 #include "pm_cmd_out.h"
 #include "pm_cmd_console.h"
-#include "pm_sonar.h"
 #include "sonar_dev.h"
 #include "adc_dev.h"
 #include "pm_platform.h"
@@ -66,7 +65,12 @@ static void error_loop(void)
  * The job (DIST command, reply formatting, last-good value) lives in
  * src/components/sonar_dev; the pins, the EXTI10 handler and the TIM2 time
  * stamp live in src/port/stm32f1/pm_sonar_stm32f1.c. This layer only wires
- * them to the command table and the main loop. */
+ * them to the command table and the main loop.
+ *
+ * pm_sonar_init() is deliberately NOT called: DIST is disabled (its 1 us time
+ * base, TIM2, belongs to the motor PWM), so arming EXTI10 would only add an
+ * interrupt nobody consumes. See the header comment of the port file before
+ * calling it again. */
 
 /* The screen component reaches the measurement job through two hooks; both
  * are thin adapters over sonar_dev. */
@@ -114,7 +118,6 @@ int main(void)
     pm_cmd_out_uart_write_str(" Hz\r\nUSART2 115200 8N1, command channel ready\r\n");
 
     pm_cmd_console_init_bt();
-    pm_sonar_init();
     adc_dev_boot();
     oled_ui_boot(&s_oled_hooks, s_console.debug_port);
     aht20_init(&s_aht_hooks);

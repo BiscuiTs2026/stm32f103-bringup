@@ -11,6 +11,12 @@
  * configure the counter; DIST stays disabled in the caller
  * (DIST_TIME_BASE_READY 0). Pins and edge logic are kept as-is so a future
  * time source can re-enable them.
+ *
+ * 2026-11-20: pm_sonar_init() is no longer called from the entry layer while
+ * DIST is disabled. Its EXTI/NVIC arming below must be revisited before it is
+ * called again: it enables EXTI15_10_IRQn without setting a priority, so the
+ * IRQ would run at the reset priority 0 (higher than UART 1, TIM3 3 and the
+ * encoder's EXTI9_5 at 4). No other peripheral shares that vector today.
  */
 #include "pm_sonar.h"
 

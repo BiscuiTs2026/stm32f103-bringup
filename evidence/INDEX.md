@@ -1527,3 +1527,19 @@
 | 内容扫描 | 逐文件匹配本机路径（`C:\Users`）、用户名、邮箱、`http(s)://`、IP、`token/password/secret/key=` 等模式；仅命中 `port=COM11` 与时间戳，无敏感信息 |
 | 能证明什么 | 索引里引用的原始抓包与烧录日志与索引同仓，凭证可复核 |
 | 局限 | 日志是本机串口工具的落盘格式，含毫秒时间戳与本机端口号；不含个人信息，但也因此不能直接当机器可解析的格式 |
+
+## 121. 停用 sonar 初始化、撤销 EXTI10 布防（契约对齐第 7 条）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 12:15–12:45 |
+| 事实核查 | ① sonar 的测距原理是 EXTI10 双边沿 + TIM2 打时间戳，功能本身确实依赖 EXTI；但 TIM2 已划给电机 PWM，`DIST_TIME_BASE_READY` 为 0，`sonar_dev_start()` 在进端口层之前就回 `err=disabled`，该路径不可达。② `pm_sonar_init()` 是全仓唯一写 `EXTI->IMR/RTSR/FTSR` 与 `NVIC_EnableIRQ(EXTI15_10_IRQn)` 的地方，且**从不设优先级**，复位默认 0，高于 UART 1 / TIM3 3 / 编码器 EXTI9_5 的 4。③ `EXTI15_10` 向量上只有 sonar 一家，没有别的外设共用 |
+| 结论 | 该关的是布防，不是调优先级；调优先级既缺实测依据，也会让一段不可达代码看起来"已验证" |
+| 改法 | `main.c` 删除 `pm_sonar_init()` 调用与 `pm_sonar.h` 引用，注释写明原因；端口层函数保留（将来换时间源可复用），文件头补记"重开前必须先处理 EXTI 优先级"。未加编译期守卫：开关在组件层 `DIST_TIME_BASE_READY`，端口层再复制一份会变成两个真相源 |
+| 编译 | FLASH 29076 B (44.37%) / RAM 5320 B (25.98%)。FLASH 比上版少 108 B：`pm_sonar_pulse`/`pm_sonar_clear_edge` 失去引用后被 `--gc-sections` 回收；ISR 仍在向量表里，故目标文件本身仍被链接 |
+| 静态检查 | `0 ERROR / 3 WARN`，与基线一致；胶水层 86 行（上限 87） |
+| 烧录 | `Download verified successfully`，`evidence/exti10-off-flash.log` |
+| 板端-寄存器 | hotplug 读：`EXTI_IMR(0x40010400)=0x00000300`（仅 8/9 线，bit10=0）、`NVIC_ISER1(0xE000E104)=0x000000C0`（bit8=IRQ40 为 0）。同一次会话读到 `APB1ENR=0x00260007`、`GPIOA_CRL=0x22008BBB`，证明是运行态；复位态这两个值分别是 `0x00000000` / `0x44444444`，已实测排除误读。`evidence/exti10-off-regs.log` |
+| 板端-串口 | `DIST`→`DIST err=disabled`、`PING`→`PONG`、`MOTOR stat`→`dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0`。`evidence/exti10-off-serial.log` |
+| 能证明什么 | `DIST` 回包文本未变；EXTI10 与 EXTI15_10 中断确实未布防；控制台与电机无回归 |
+| 不能证明什么 | 改动前的 `IMR`/`ISER` 没实测（烧录前未读），"改前 bit10=1"是从代码推的；"优先级 0 会带来多大抖动"没有量化，只能说 ISR 短、影响有界 |

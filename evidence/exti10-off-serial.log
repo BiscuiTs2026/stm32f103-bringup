@@ -1,0 +1,17 @@
+﻿[   156ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[   560ms] hb\r\n
+[   654ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1152ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1215ms] <<< DIST >>>
+[  1244ms] DIST err=disabled\r\n
+[  1568ms] hb\r\n
+[  1662ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  2154ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  2432ms] <<< PING >>>
+[  2464ms] PONG\r\n
+[  2573ms] hb\r\n
+[  2652ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  3041ms] <<< MOTOR stat >>>
+[  3057ms] MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0\r\n
+[  3150ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  3570ms] hb\r\n

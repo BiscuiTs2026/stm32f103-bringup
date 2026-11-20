@@ -37,7 +37,7 @@
 | D11 | 第 18 项 | `src/components/oled_ch1116/oled_ch1116.c` | 同上 | 同上 | **已清除（S3）** |
 | D12 | 第 18 项（忙等） | `src/port/stm32f1/pm_i2c1_stm32f1.c` | 空转等硬件标志 | 同上 | **已清除（S4）** |
 | D13 | 第 18 项（忙等） | `src/components/aht20_dev/aht20_dev.c` | 原 80 ms 转换等待 | 改为 `pm_osal_now_ms()` 计时，非阻塞 | **已清除（S5）** |
-| D14 | 第 18 项（忙等） | `src/port/stm32f1/pm_sonar_stm32f1.c` | 回波等待 | 测距已停用（`DIST_TIME_BASE_READY` 0） | **已清除（S6）** |
+| D14 | 第 18 项（忙等） | `src/port/stm32f1/pm_sonar_stm32f1.c`（`pm_sonar_pulse()` 的 TRIG 高电平等待，第 50 行附近） | 空转凑 10 µs 的 TRIG 脉宽 | 忙等代码仍在，没有改成非阻塞；只是 S6 把文件从 glue 迁到 bsp 后，第 18 项（只扫胶水层）不再覆盖它；且 `DIST_TIME_BASE_READY` 为 0，`sonar_dev_start()` 在调用前就返回，该函数当前不可达 | **规则口径外、代码不可达**（非已修复）；重开测距时须换成非阻塞实现 |
 | D15 | 第 19 项（硬编码引脚） | `src/port/stm32f1/pm_adc1_stm32f1.c` | `GPIO_PIN_4` | 引脚映射归端口层 | **已清除（S7）** |
 | D16 | 第 19 项 | `src/port/stm32f1/pm_adc1_stm32f1.c` | `GPIOA` | 同上 | **已清除（S7）** |
 | D17 | G3 胶水层多分支判定 | `src/components/oled_ui/oled_ui_page.c` | 页面名映射分支 | 已下沉组件层 | **已清除（S8）** |
@@ -47,6 +47,7 @@
 | D22 | `arch-allow` 登记 | `src/components/adc_dev/adc_dev.h`（4 处原型）、`src/app/app_wiring.c`（1 处调用） | `adc_dev_boot`/`adc_dev_cmd` 等 | 检查器把 `adc_` 前缀的本工程组件函数误判为 SPL 调用（前缀正则），不涉及真实越层 | **待检查器补组件名前缀白名单后撤销** |
 | D23 | 主循环实时性（非检查器命中） | `main()` 主循环、`keypad_dev_service()`、`oled_ui_service()` | 每 500 ms 约 98 ms 被 OLED 整页 I2C 占住，期间按键零采样 | 短于约 100–118 ms 的点按可能整段丢失（实测两轮各丢 1–2 记）；建议 EXTI 双边沿采样或整页写拆半插采样 | **待处理，不在本轮范围**（详见下节） |
 | D24 | 诊断命令副作用说明（非检查器命中，非缺陷） | `oled_ch1116_service()`、`oled_ch1116_set_col_offset()`、`OLED col` 处理 | 每次页写只从当前 offset 起写 128 字节，改变 offset 后窗口外的 RAM 列保留旧内容 | **触发条件是主动用 `OLED col n` 切档**；缺省 col=2 时窗口盖满玻璃 RAM2..129，不可能出现；用户已确认不算缺陷 | **已消除（2026-11-20）**：新增 `oled_ch1116_clear_all()`，`OLED col` 切档后先清全 RAM 再重画，竖边不再出现（用户目视确认） |
+| D25 | 检查器版本漂移（工具链，不属代码缺陷） | `tools/CHECKER.lock`、`tools/check_layering.py` | 本仓锁在上游 `7facd2b`（checker-version 3.3.1）；上游已推进到 `3c507b7` | 据派发方 2026-11-20 告知，两版差异仅第 27 项的输出排序，不影响本仓现有判定结论与基线（`0 ERROR / 3 WARN`） | **记录在案，是否升级另行决定**；本轮不动锁，也不改检查器 |
 
 ### D23 按键轮询被 OLED 整页 I2C 阻塞（2026-11-20 登记，待处理）
 
