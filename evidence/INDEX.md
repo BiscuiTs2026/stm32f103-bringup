@@ -2062,3 +2062,4 @@ HELP KEYS=key press counters, clears them
 | ON 实测 | `HELP` **15 行 / 660 B**，`DIST` 行为 `HC-SR04 PA11/PA10, cm/us (DWT base)`；`DIST err=timeout`（`DIST` 已启用，当前超声无回波，属接线/器件观察，不是固件失败）；`STAT clk=72000000 up=11095 tick=1 key1=0 key2=0 uart_rx=23 uart_tx=2209`（`evidence/v1.0.0-on-help-serial.log`） |
 | 计字节方法 | 逐行累加实际收到的 `HELP ` 行长度 + 2（CRLF），剔除 `hb`/`OLED live` 等旁路行；不按气泡个数 |
 | 结论 | OFF 654 B 与 §146 核算值逐字节一致，D26 结清；最终板上为 v1.0.0 **ON** 发布版（35968 / 6048） |
+| 后续（用户现场观察） | 追加于 2026-11-20：`v1.0.0` ON 版刚烧完时 `DIST` 回 `err=timeout`（见上，保留原记录）；用户重新插紧超声模块后再次发 `DIST`，恢复正常读数。据此判定当时的超时是模块接触/前方无反射所致，**不是 v1.0.0 固件的缺陷**。**本条为用户口述的现场观察，不是本会话的串口取证；未记录具体读数（用户未提供数值）。** |
