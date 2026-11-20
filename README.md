@@ -113,7 +113,7 @@ cmake --build build-host --config Debug
 
 ## 静态分层检查（CI 门禁）
 
-`tools/check_layering.py` 是**从 `firmware-four-layer-architecture` skill 拷来的**四层检查器，不是本仓原创代码。当前同步到上游 **`7facd2b`（checker 3.3.1，2026-11-19 升锁）**，用 `git worktree add --detach` 取干净内容，**代码逐字未改**，只按上游规定把文件头 `SOURCE_COMMIT` 一行改成上游提交哈希。身份记录在 [tools/CHECKER.lock](tools/CHECKER.lock)：`checker-version` / `source-repo` / `source-commit` 三项由检查器自己比对，`source-blob` 是上游该提交里该文件的 git blob 哈希（人工核对用，检查器不读）。
+`tools/check_layering.py` 是**从 `firmware-four-layer-architecture` skill 拷来的**四层检查器，不是本仓原创代码。当前同步到上游 **`4da1a77`（checker 3.4.0，2026-11-20 升锁）**，用 `git worktree add --detach` 取干净内容，**代码逐字未改**，只按上游规定把文件头 `SOURCE_COMMIT` 一行改成上游提交哈希。身份记录在 [tools/CHECKER.lock](tools/CHECKER.lock)：`checker-version` / `source-repo` / `source-commit` 三项由检查器自己比对，`source-blob` 是上游该提交里该文件的 git blob 哈希（人工核对用，检查器不读）。
 
 升级步骤：`git worktree add --detach <临时目录> <新提交>` → 覆盖 `tools/check_layering.py` → 改 `SOURCE_COMMIT` → 同步 `tools/CHECKER.lock` 四行 → 跑下面两条命令，确认锁校验通过、ERROR 仍为 0，并逐条解释 WARN 的变化。
 
@@ -248,7 +248,7 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 - live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间静态命令（`clear`/`test`/`show`/`frame`）照常接管，3 s 后自动交回；
 - **测距已停用**：TIM2 的 1 µs 自由运行计时与电机 PWM 共用 `PSC/ARR` 无法共存，TIM2 已整颗划给电机；`DIST` 固定回 `DIST err=disabled`，TRIG/ECHO 引脚与 EXTI 逻辑保留，重新启用前必须先确定独立计时源（`docs/TIM2-CONFLICT.md`）；
 - 电机：TIM2 `PSC=0 / ARR=3599` → 20 kHz，只有一路通道出 PWM、另一路恒 0（DRV8833 单向驱动）；`duty 0` 与 `stop` 电气等价（两路 CCR=0、全低滑行），`dir` 字段只是状态记忆；`fwd/rev` 只表示选了哪路通道，**对应轴的哪个方向未验证**；电机未接时只能验证寄存器与回包；
-- 分层检查：本仓用 `tools/check_layering.py`（3.3.1，`tools/CHECKER.lock` 固定 `7facd2b`）扫描，当前 0 ERROR / 3 WARN（2026-11-20，`--glue-max-lines 86`）；从 3.3.0 升到 3.3.1 的差异只有第 27 项输出排序，细节与"是否继续跟随上游"的待定项记在 `TECH_DEBT.md` D25；
+- 分层检查：本仓用 `tools/check_layering.py`（3.4.0，`tools/CHECKER.lock` 固定 `4da1a77`）扫描，当前 0 ERROR / 3 WARN（2026-11-20，`--glue-max-lines 86`）；从 3.3.1 升到 3.4.0 只新增第 28 项 `feature_gate`（本仓 `.arch-roles` 无 `feature` 声明，该项报 0），其余输出不变，细节与"是否继续跟随上游"的待定项记在 `TECH_DEBT.md` D25；
 - 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；
 - 测距停用期间 `DIST` 在启动前就返回 `err=disabled`，不会进入测量。停用前的现象保留在案：自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`，是 HC-SR04 余振，不是故障；输入侧抓包里未发任何 PWM/BUZ 命令也出现过 3.9–45.8 cm 短读数与一次 `err=timeout`（与手/黑物靠近超声视场时间重合，归因未确认，§31.6）；
 - 没有 CMake presets；CI 只有静态分层检查一步（`.github/workflows/layering.yml`）；对象结构体布局不承诺 ABI 稳定。

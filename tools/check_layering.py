@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # source-repo: https://github.com/BiscuiTs2026/firmware-four-layer-architecture
-# checker-version: 3.3.1
-# source-commit: 7facd2b0039acd407d91c96ee043ef95dfc4b446    ← 使用方拷贝：上游提交哈希，须与 tools/CHECKER.lock 一致
-"""check_layering.py — 四层架构启发式静态检查（v3.3.1）。
+# checker-version: 3.4.0
+# source-commit: 4da1a77ebec3661945722959bf8398800b66dbb3    ← 使用方拷贝：上游提交哈希，须与 tools/CHECKER.lock 一致
+"""check_layering.py — 四层架构启发式静态检查（v3.4.0）。
 
 用法：
     python3 check_layering.py <工程根目录> [选项]
@@ -24,11 +24,16 @@
     --version           打印版本与来源，供单文件拷出使用时核对
     --lock PATH         与使用方的锁文件比对版本/来源提交，不一致退出 1
 
-角色清单除 "模式 = 层" 外支持三种指令（写在清单顶部）：
+角色清单除 "模式 = 层" 外支持以下指令（写在清单顶部）：
     alias <层名> = <内建层>   把工程自己的层名映射到内建层，如 alias hal = bsp
     layers = <层名>, ...      声明工程实际使用的层；未声明的层不参与判定，
                               且没有 components 层时 APP 直调 BSP 放行（两层工程）
     ignore = <相对路径/模式>  跳过厂商 SDK、生成目录、单测桩（可多行）
+
+另有三条可选的特性声明（只供第 28 项使用，未声明就不判）：
+    feature <名> = on|off            特性开关的静态声明
+    feature-symbol <名> = <函数>, ... 该特性的初始化/入口函数
+    feature-irq <名> = <IRQn>, ...  该特性使能的中断号
 
 本文件可单独拷到其它工程（tools/check_layering.py）使用：只依赖 Python 3.8+ 标准库，
 不读本仓库任何其它文件，不需要安装，也不需要整仓检出。
@@ -85,6 +90,9 @@
         大写标识符->成员 的解引用 → WARN（可能是纯数据聚合）
     27. 共享契约符号：common 头声明、且 common 里确有实现的函数，全仓带函数体的定义必须恰好 1 处
         → ERROR（声明、函数指针赋值、宏包装不计；实现只落在 bsp/osal/components 的公共 API 头不判）
+    28. 停用功能一致性：.arch-roles 显式声明为 off 的特性，其 feature-symbol 仍在无条件编译路径
+        被调用 → ERROR；feature-irq 仍被 NVIC_EnableIRQ / HAL_NVIC_EnableIRQ 使能、且该特性至少有
+        一个活跃 feature-symbol 调用点 → ERROR。条件编译块内不判；未声明 feature 的工程不受影响
 
 豁免：
     - 行尾 `// arch-allow` 跳过该行全部检查；
@@ -101,9 +109,9 @@ import os
 import re
 import sys
 
-CHECKER_VERSION = "3.3.1"
+CHECKER_VERSION = "3.4.0"
 SOURCE_REPO = "https://github.com/BiscuiTs2026/firmware-four-layer-architecture"
-SOURCE_COMMIT = "7facd2b0039acd407d91c96ee043ef95dfc4b446"  # 使用方拷贝：上游提交哈希，须与 tools/CHECKER.lock 一致
+SOURCE_COMMIT = "4da1a77ebec3661945722959bf8398800b66dbb3"  # 使用方拷贝：上游提交哈希；上游仓库内为 self
 
 ROLES = ("bsp", "osal", "components", "app", "glue", "common")
 LAYER_DEPTH = {"common": -1, "bsp": 0, "osal": 1, "components": 2, "app": 3}
@@ -119,7 +127,8 @@ GLUE_NAME = re.compile(r"(^main\.c$|^startup_.*|^system_.*|.*_it\.c$|.*_irq\.c$|
 CMSIS_WHITELIST = {"SystemCoreClock", "uwTick", "uwTickPrio", "uwTickFreq"}
 
 ROLE_FILE_NAMES = (".arch-roles", "arch-roles.txt")
-DIRECTIVE = re.compile(r"^(alias|layers|ignore)(?:\s+(.*?))?\s*=\s*(.*)$", re.I)
+DIRECTIVE = re.compile(
+    r"^(feature-symbol|feature-irq|feature|alias|layers|ignore)(?:\s+(.*?))?\s*=\s*(.*)$", re.I)
 
 # 由 load_roles 注入的忽略路径（厂商 SDK、生成目录、单测桩）
 _IGNORE_GLOBS = []
@@ -326,6 +335,7 @@ class RoleConfig:
         self.aliases = {}        # 工程自己的层名 → 内建层
         self.layers = None       # 工程实际使用的内建层集合；None = 不限定
         self.ignores = []        # 忽略的相对路径或模式
+        self.features = {}       # 名称 → {"state": "on"/"off", "symbols": [...], "irqs": [...]}
 
     def resolve_name(self, role):
         return self.aliases.get(role, role)
@@ -360,6 +370,32 @@ def load_roles(root: str, roles_path: str | None):
                 key = directive.group(1).lower()
                 arg = (directive.group(2) or "").strip()
                 value = directive.group(3).strip()
+                if key.startswith("feature"):
+                    if not arg:
+                        raise SystemExit(
+                            f"{path}:{no} {key} 缺少特性名，写法：{key} <名称> = <值>")
+                    if not re.fullmatch(r"[A-Za-z_]\w*", arg):
+                        raise SystemExit(f"{path}:{no} 特性名 {arg!r} 不是合法标识符")
+                    if key == "feature":
+                        state = value.lower()
+                        if state not in ("on", "off"):
+                            raise SystemExit(
+                                f"{path}:{no} feature 状态只能是 on/off，收到 {value!r}")
+                        cfg.features[arg] = {"state": state, "symbols": [], "irqs": []}
+                        continue
+                    if arg not in cfg.features:
+                        raise SystemExit(
+                            f"{path}:{no} {key} 引用了未声明的特性 {arg!r}；"
+                            f"先写 feature {arg} = on|off")
+                    field = "symbols" if key == "feature-symbol" else "irqs"
+                    for item in re.split(r"[,;]", value):
+                        item = item.strip()
+                        if not item:
+                            continue
+                        if not re.fullmatch(r"[A-Za-z_]\w*", item):
+                            raise SystemExit(f"{path}:{no} {key} 里的 {item!r} 不是合法标识符")
+                        cfg.features[arg][field].append(item)
+                    continue
                 if key == "alias":
                     if not arg:
                         raise SystemExit(f"{path}:{no} alias 缺少层名，写法：alias <层名> = <内建层>")
@@ -1238,6 +1274,8 @@ def check_common_contracts(root: str, cfg):
         if not any(s[0] == "common" for s in sites):
             continue  # 公共 API 头：实现落在具体层，不属于仲裁唯一性
         if len(sites) != 1:
+            # os.walk 的目录遍历顺序随平台变化；排序后再拼消息，保证跨平台输出一致
+            sites = sorted(sites, key=lambda s: (s[1], s[2]))
             where = "；".join(f"{s[1]}:{s[2]}" for s in sites)
             findings.append((hrel, hline,
                              f"共享契约符号 {name} 应有且仅有一处带函数体的定义，实际 {len(sites)} 处（{where}）"))
@@ -1386,6 +1424,105 @@ def check_linker(root: str, c_sections, errors, warns):
             continue
         errors.append((rel, line,
                        f"固定地址段 {name} 未在链接脚本定义（会被通配吞掉或落到默认段）"))
+
+
+def _conditional_lines(masked: str) -> set:
+    """返回处于条件编译块内的行号（含 #if/#ifdef/#ifndef ... #endif 与 #else/#elif 分支）。
+
+    检查器不展开预处理条件；只要一行位于任何条件块内，就不把它当作“无条件编译”
+    的证据。这样合法修复（用 #if 包住停用功能的调用或中断使能）不会被误报。
+    """
+    inside = set()
+    depth = 0
+    for no, line in enumerate(masked.splitlines(), 1):
+        m = re.match(r"\s*#\s*(if|ifdef|ifndef|elif|else|endif)\b", line)
+        if m:
+            if m.group(1) in ("if", "ifdef", "ifndef"):
+                depth += 1
+            inside.add(no)
+            if m.group(1) == "endif":
+                depth = max(0, depth - 1)
+            continue
+        if depth:
+            inside.add(no)
+    return inside
+
+
+def check_feature_gate(root: str, cfg):
+    """第 28 项：显式声明为 off 的特性仍在初始化或使能中断。
+
+    只认 .arch-roles 的显式声明，未声明就不判，不按函数名或前缀猜：
+        feature <名称> = off
+        feature-symbol <名称> = <初始化/入口函数>, ...
+        feature-irq <名称> = <IRQn>, ...
+
+    feature-irq 只在同一特性至少有一个活跃的 feature-symbol 调用点时上报：
+    初始化函数都没人调用，说明功能已停用，函数体里的 NVIC_EnableIRQ 文本即使
+    还在也不会执行。没有声明 feature-symbol 的特性无法证明停用，按活跃处理。
+    条件编译块内的调用/使能一律不判（不展开 #if）。
+    """
+    findings = []
+    if not cfg or not cfg.features:
+        return findings
+    off = {name: feat for name, feat in cfg.features.items() if feat["state"] == "off"}
+    if not off:
+        return findings
+
+    symbol_features = {}
+    irq_features = {}
+    active = set()
+    for name, feat in off.items():
+        if not feat["symbols"]:
+            active.add(name)  # 只有 feature-irq，无法证明停用，保守按活跃处理
+        for sym in sorted(set(feat["symbols"])):
+            symbol_features.setdefault(sym, set()).add(name)
+        for irq in sorted(set(feat["irqs"])):
+            irq_features.setdefault(irq, set()).add(name)
+
+    irq_sites = []
+    for path in sorted(iter_c_files(root)):
+        if not path.endswith(".c"):
+            continue
+        rel = os.path.relpath(path, root).replace("\\", "/")
+        _raw, masked, raw_lines = read_source(path)
+        conditional = _conditional_lines(masked)
+        def_lines = {}
+        for name, def_line, _body, _body_line in iter_functions(masked):
+            if name in symbol_features:
+                def_lines[def_line] = name
+        for no, line in enumerate(masked.splitlines(), 1):
+            if no in conditional:
+                continue
+            raw_line = raw_lines[no - 1] if no <= len(raw_lines) else ""
+            if "arch-allow" in raw_line or line.lstrip().startswith("#"):
+                continue
+            if DECL_ONLY_LINE.match(line):
+                continue
+            for match in CALL_NAME.finditer(line):
+                name = match.group(1)
+                feats = symbol_features.get(name)
+                if not feats:
+                    continue
+                if def_lines.get(no) == name:
+                    continue  # 函数定义本身不是调用
+                for feat in sorted(feats):
+                    active.add(feat)
+                    findings.append((
+                        rel, no,
+                        f"功能 {feat} 已声明停用，但仍调用 {name}（feature-symbol）",
+                    ))
+            for irq, feats in irq_features.items():
+                pattern = r"\b(?:HAL_)?NVIC_EnableIRQ\s*\(\s*" + re.escape(irq) + r"\s*\)"
+                if re.search(pattern, line):
+                    irq_sites.append((rel, no, irq, sorted(feats)))
+    for rel, no, irq, feats in irq_sites:
+        for feat in feats:
+            if feat in active:
+                findings.append((
+                    rel, no,
+                    f"功能 {feat} 已声明停用，但仍使能中断 {irq}（feature-irq）",
+                ))
+    return findings
 
 
 # ---------------------------------------------------------------- 主流程
@@ -1749,6 +1886,7 @@ def main():
         check_linker(root, c_sections, errors, warns)
 
     errors.extend(check_common_contracts(root, cfg))
+    errors.extend(check_feature_gate(root, cfg))
 
     errors.sort(key=lambda x: (x[0], x[1]))
     warns.sort(key=lambda x: (x[0], x[1]))

@@ -1633,3 +1633,18 @@
 | 当前实测 | 2026-11-20 `python tools/check_layering.py . --glue-max-lines 86` → 0 ERROR / 3 WARN；压到 85 时提示 `入口胶水层 86 行代码（上限 85）` |
 | 闸门 | CI 与本地统一为 `--glue-max-lines 86`：**86 是实测值、无余量，再增一行即红**；§111/§119 的 87 保留为历史时点值，不回改 |
 | 结论 | 87 与 86 不冲突，是同一文件在两个时点的检查器口径；当前以 86 为准 |
+
+## 128. 检查器锁升级：3.3.1（`7facd2b`）→ 3.4.0（`4da1a77`）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 12:45–13:05 |
+| 触发 | 上游 repo-hardening PR #7 合并后 `main` = `4da1a77ebec3661945722959bf8398800b66dbb3`，CI run `44676405717` 绿；上游 `checker-version` 3.4.0 |
+| 改动 | ①`tools/check_layering.py` 覆盖为上游该提交原文（blob `8e584fa355640adeaa8d667a97665334c939bf10`），仅按上游规定改文件头 `source-commit` 注释与 `SOURCE_COMMIT` 常量 ②`tools/CHECKER.lock` 改 checker-version / source-commit / source-blob / synced-at 四行 ③README 两处 3.3.1 / `7facd2b` 同步为 3.4.0 / `4da1a77` |
+| 取文件方式 | 本机 `%TEMP%\checker-src-331` 完整克隆 `git fetch origin main` 后 `git -c core.autocrlf=false archive 4da1a77 …` 取 LF 原文；直接拷克隆工作树会带 CRLF（该克隆 `core.autocrlf=true`），字节不等，未采用 |
+| 锁校验 | `python tools/check_layering.py --version --lock tools/CHECKER.lock` → `checker-version: 3.4.0`、`source-commit: 4da1a77…`、`[LOCK] 与 tools/CHECKER.lock 一致`，退出码 0 |
+| 复跑 | `python tools/check_layering.py . --glue-max-lines 86` → `合计 0 ERROR / 3 WARN`；日志逐行计数 ERROR=0、WARN=3，三条均为 `src/port/stm32f1/pm_port_stm32f1.c:352/362/374` 的 UART ISR 钩子，与升级前逐条相同 |
+| 第 28 项 `feature_gate` | 本仓 `.arch-roles` 未声明 `feature` / `feature-symbol` / `feature-irq`；检查器在该配置下 `cfg.features` 为空直接返回，**报 0**，输出中无任何 feature 相关行。**未**改 `.arch-roles`、未改代码 |
+| 证据 | `evidence/checker-lock-340-layering.log`（3.4.0 全量输出） |
+| 能证明什么 | 锁、文件、README 三者同源；新版本在本仓的判定口径不变（0 ERROR / 3 WARN 且逐条一致） |
+| 不能证明什么 | 第 28 项在"有 feature 声明"工程上的行为；板端无此场景，未构造 |
