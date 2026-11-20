@@ -86,8 +86,10 @@
 - 补强方式（已实施，原列两条，取第 1 条）：
   1. `OLED col` 切档后先推两遍全黑页（offset 0 与 offset 4 各一次，合起来覆盖 RAM 0..131），再重绘目标画面；
   2. 让驱动支持 132 字节页写，一次清全 RAM。
-- 文档待改：`evidence/MANUAL-CHECKS.md` M9 第 4 步"col 0 与 col 4 两极值首字符不贴边、末字符不出界"
-  不成立（col 4 右边框必失、col 0 左边缘不在窗口内），有效 A/B 范围实际只有 0..2 附近。
+- 文档已改（2026-11-20）：`evidence/MANUAL-CHECKS.md` M9 第 4 步原判据"col 0 与 col 4
+  两极值首字符不贴边、末字符不出界"不成立（col 4 右边框必失、col 0 左边缘不在窗口内），
+  有效 A/B 范围实际只有 0..2 附近。该步已按此改写为"0..2 为有效档、极端档只比左右位移
+  方向"；当时的实测记录与照片文件名保持原样，只在记录旁追加了更正说明。
 - **补强（2026-11-20）**：采用方式 1。新增 `oled_ch1116_clear_all()`（`src/components/oled_ch1116/oled_ch1116.c`），
   按 offset 0 与 offset 4 各推 8 页全黑，覆盖 RAM 0..131；`OLED col` 分支
   （`src/components/oled_ui/oled_ui_job.c` 的 `COL`）在 `oled_ch1116_set_col_offset()` 之后、重画之前调用它。

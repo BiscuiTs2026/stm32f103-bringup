@@ -3,9 +3,12 @@
 面向以后接手的人或另一个 AI。本文描述的是**实际烧在板上的行为**（2026-11-18 版本），
 与 `PATCHES.md` 里的上板实测一致。改协议时必须同步改这份文件。
 
-实现位置：`src/app/main.c` 的 `cmd_feed()` / `cmd_execute()` / `cmd_flush_idle()`；
-`PWM` 分支在 `cmd_execute()` 末尾交给 `src/components/pwm_dev/pwm_dev.c` 的
-`pwm_dev_cmd()`，胶水层只做一次登记与转发。
+实现位置（S10 拆分后的现状）：串口收字节与空闲帧判定在
+`src/components/pm_cmd/pm_cmd_console.c`（`pm_cmd_console_service_debug()` /
+`pm_cmd_console_service_bt()` / `pm_cmd_console_flush_idle()`）；命令表与各命令的
+适配器在 `src/app/app_wiring.c`（`s_cmds[]`、`app_cmd_execute()`）；`HELP` / `PING` /
+`STAT` / `I2C` 的回包在 `src/components/sys_cmds/sys_cmds.c`；设备命令转发给
+`src/components/*_dev/`。`src/app/main.c` 只剩初始化、主循环与钩子绑定，不含解析逻辑。
 
 ---
 
@@ -223,8 +226,10 @@ HELP KEYS=key press counters, clears them
     卡住刷新节拍。
   - `NTC`/`POT` 每帧现读（两次单次转换，成本低），读失败显示 `----`。
   - `LIVE ms=` 是最近一次整屏推送耗时，反映 I2C 健康度；还没推过显示 `---`。
-- `live` 期间每 500 ms 刷新一次显示，每 1000 ms 自动发一次 `DIST`；
-  测量起点比显示周期偏移 250 ms，两者互不阻塞。
+- `live` 期间每 500 ms 刷新一次显示；显示节拍里每 1000 ms 仍会请求一次自动测距
+  （起点比显示周期偏移 250 ms，两者互不阻塞）。但 `DIST` 已停用（§4.3）：
+  `sonar_dev_start(auto_live=1)` 在 `DIST_TIME_BASE_READY==0` 时**静默返回**，
+  不发命令、不发回包、`LAST` 行也不会出现 `DIST ok`。重新启用测距后该节拍才恢复。
 - 静态图案的 3 s 停留期间（以及 `OLED off` 期间）两者都暂停，恢复 live 后
   立刻重画一帧（实测 `OLED on` 后 98 ms 内出现首条 `OLED live ok`）。
 - `OLED col` 在 live 期间可用，回 `redraw=live` 并立即重画。
@@ -297,8 +302,11 @@ PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是
   阻塞 10 s。该命令已编译进固件，但**没有上板运行过**（`PATCHES.md` §32.4）。
 - 慢扫期间主循环停摆约 5.4 s：OLED 刷新、`DIST live`、`hb` 都暂停，结束后 `hb`
   会补发几条（同一秒内到达），这是预期现象，不是卡死。
-- `PWM err=init` 只在 `pm_pwm_init()` 失败时出现；当前实现恒成功，该分支没有
-  现场回包证据（`PATCHES.md` §30.3）。
+- `PWM err=init` 只在 `pm_pwm_init()` 返回非 0 时出现。当前有两个失败入口：
+  ①时基复核 `pm_timebase_ok(72 MHz, PSC 71, ARR 19999, 50 Hz, 10‰)` 不通过——
+  预分频/ARR 常量与 50 Hz 对不上时拒绝初始化，不写任何寄存器；②GPIO/寄存器
+  初始化失败（现有实现没有这种返回路径）。当前常量下复核恒通过，因此该分支
+  **没有现场回包证据**（`PATCHES.md` §30.3）。
 - 舵机"有动作"已由用户目视确认（`PATCHES.md` §32.4），但角度精度、到位抖动/回弹、
   带负载表现与蜂鸣器听感**不在串口可证范围内**，回包只说明配置值与脉宽。
 
@@ -330,8 +338,11 @@ A/B 相，EXTI8/EXTI9 双边沿 + 软件四倍频（x4）；PB15 是编码器按
   `cw`/`ccw`，只有从未动过才是 `idle`。
 - `a=`/`b=` 是查询瞬间 PA8/PA9 的电平，`btn=` 是 PB15：`1`=松开，`0`=按下。
 - `ENC clear` 只清计数，不清 `dir`（下一格转动前仍显示上次方向）与 a/b/btn。
-- `TRACK err=init` / `ENC err=init` 只在端口层初始化失败时出现；当前实现恒成功，
-  没有现场回包证据。
+- `ENC err=init` 有两个来源：①`pm_encoder_init()` 返回非 0（端口层初始化失败，
+  当前实现没有这种返回路径）；②固件以 `-DPM_ENABLE_ENCODER=OFF` 构建时
+  `pm_encoder_stm32f1.c` 不进构建，组件恒为未就绪（默认构建为 ON，不受影响）。
+- `TRACK err=init` 只在 `pm_track_init()` 失败时出现；当前实现恒成功，没有现场
+  回包证据。
 - 串口只能证明电平与计数；轮子是否打滑、转向是否与计数符号一致，不在串口可证范围内。
 
 ### 4.8 继电器（PB5）
@@ -374,9 +385,15 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
 - `duty=100` 时 CCR = 3600 = `ARR+1`，PWM 模式 1 下输出恒有效（满速），不是错误。
 - **`duty 0` 与 `stop` 电气等价**：都是两路 CCR=0、两路全低滑行。区别只在
   `dir` 字段的记忆（`fwd 0` 记住方向，之后 `duty 60` 直接续跑）；驱动板行为相同。
-- `MOTOR err=timer` 的判据是 `TIM2->CR1.CEN` 已置位（别人已在计数）；
-  `MOTOR err=remap` 是 `AFIO->MAPR.TIM2_REMAP` bit0 已置位（CH1/CH2 被移出 PA0/PA1）。
-  不看任何软件占用标记，因此不会因状态变量失步而误报。
+- 初始化失败按下列顺序判定，回包与判据：
+  1. `MOTOR err=timer`，时基复核不通过：`pm_timebase_ok(72 MHz, PSC 0, ARR 3599,
+     20 kHz, 10‰)` 判假，说明 PSC/ARR 常量与目标频率对不上；直接拒绝，不写任何
+     寄存器。
+  2. `MOTOR err=timer`，TIM2 已在计数：占用探测 `pm_timer_probe(PM_TIMER_T2)`
+     读到 `TIM2->CR1.CEN` 已置位（别人已占用）。与第 3 条同时成立时按本条优先。
+  3. `MOTOR err=remap`，通道已被移走：`AFIO->MAPR` 的 `TIM2_REMAP` **2 位字段**
+     （掩码 `0x300`）非 0，即 CH1/CH2 不在 PA0/PA1（完全重映射与部分重映射都算）。
+  判据只读寄存器，不看任何软件占用标记，因此不会因状态变量失步而误报。
 - 测距停用期间 TIM2 不再有第二个使用者；重新启用 HC-SR04 前必须先解决计时源
   （`docs/TIM2-CONFLICT.md`）。
 
