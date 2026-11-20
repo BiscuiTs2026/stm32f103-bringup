@@ -23,8 +23,8 @@
 | 项目 | 状态 | 证据 / 数字 |
 | --- | --- | --- |
 | 交叉编译 | 通过 | `arm-none-eabi-gcc 14.3.1`，`-Wall -Wextra -Wshadow`，项目代码无警告 |
-| 尺寸 | 通过 | Flash **29152 B / 64 KB（44.48%）**，RAM **5320 B / 20 KB（25.98%）**（来源：2026-11-20 `build-split-s10` 构建输出） |
-| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（29152 B）、`.hex`、`.map` |
+| 尺寸 | 通过 | Flash **28644 B / 64 KB（43.71%）**，RAM **5296 B / 20 KB（25.86%）**（默认配置 `PM_ENABLE_SONAR=OFF`，来源：2026-11-20 `build-sonar-off` 构建输出；`-DPM_ENABLE_SONAR=ON` 时为 29152 B / 5320 B，来源 `build-sonar-on`） |
+| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（28644 B）、`.hex`、`.map` |
 | 主机单测 | 通过 | 175 项断言，0 失败（MSVC 19.51，C11；来源：`evidence/timebase-hosttest.log`，2026-11-20） |
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
@@ -87,7 +87,7 @@ cmake -S . -B build-arm -G Ninja `
 cmake --build build-arm
 ```
 
-换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（29152 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（当前 29152 B / 5320 B，来源：2026-11-20 `build-split-s10`）。
+换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（28644 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（默认 `PM_ENABLE_SONAR=OFF` 时 28644 B / 5296 B，来源：2026-11-20 `build-sonar-off`；`-DPM_ENABLE_SONAR=ON` 时为 29152 B / 5320 B，来源：同日 `build-sonar-on`）。
 
 烧录（ST-Link，带校验、烧完复位）：
 
