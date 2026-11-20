@@ -1,0 +1,14 @@
+#include "pm_timebase.h"
+int case_motor_20k(void)       { return pm_timebase_ok(72000000u, 0u, 3599u, 20000u, 10u); }
+int case_motor_bad_psc71(void) { return pm_timebase_ok(72000000u, 71u, 3599u, 20000u, 10u); }
+int case_motor_as_servo(void)  { return pm_timebase_ok(72000000u, 0u, 3599u, 50u, 10u); }
+int case_motor_1k(void)        { return pm_timebase_ok(72000000u, 0u, 3599u, 1000u, 10u); }
+=== arm-none-eabi-gcc -O2 -S (pm_timebase_ok, motor cases) ===
+case_motor_20k:
+mov	r0, #1
+case_motor_bad_psc71:
+mov	r0, #0
+case_motor_as_servo:
+mov	r0, #0
+case_motor_1k:
+mov	r0, #0

@@ -1,0 +1,26 @@
+﻿[    75ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[   486ms] hb\r\n
+[   576ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1075ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1212ms] <<< MOTOR fwd 50 >>>
+[  1224ms] MOTOR fwd ok dir=fwd duty=50% hz=20000 arr=3599 ccr1=1800 ccr2=0\r\n
+[  1490ms] hb\r\n
+[  1576ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1920ms] <<< MOTOR stat >>>
+[  1937ms] MOTOR stat dir=fwd duty=50% hz=20000 arr=3599 ccr1=1800 ccr2=0\r\n
+[  2086ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  2480ms] hb\r\n
+[  2564ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  2626ms] <<< MOTOR duty 80 >>>
+[  2642ms] MOTOR duty ok dir=fwd duty=80% hz=20000 arr=3599 ccr1=2880 ccr2=0\r\n
+[  3063ms] O
+[  3064ms] LED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  3348ms] <<< MOTOR stop >>>
+[  3356ms] MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0\r\n
+[  3485ms] hb\r\n
+[  3576ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  4064ms] <<< PWM servo 90 >>>
+[  4065ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  4076ms] PWM servo ok deg=90.0 pulse=1500us\r\n
+[  4483ms] hb\r\n
+[  4575ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n

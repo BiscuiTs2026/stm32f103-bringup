@@ -14,9 +14,12 @@
 #include "stm32f1xx.h"
 
 #include "pm_timer.h"
+#include "pm_timebase.h"
 
 #define MOTOR_TIM_CLK_HZ  72000000u
+#define MOTOR_PSC         0u
 #define MOTOR_ARR         ((MOTOR_TIM_CLK_HZ / PM_MOTOR_FREQ_HZ) - 1u)  /* 3599 */
+#define MOTOR_TOL_PERMILLE 10u       /* decision 0018: 10 permille */
 #define MOTOR_CCMR1_PWM   ((0x6u << 4) | (0x1u << 3) | (0x6u << 12) | (0x1u << 11))
 
 static pm_motor_dir_t s_dir;
@@ -29,6 +32,16 @@ static uint32_t duty_to_ccr(uint8_t pct)
 
 int pm_motor_init(void)
 {
+    /* Same 10 permille re-check as the servo: a wrong prescaler or a wrong
+     * clock assumption must stop here instead of producing an audible frame.
+     * Nothing is written on failure and PSC/ARR are not changed. A failure
+     * means the constants are wrong, so it reports as err=timer (-1); this
+     * round does not add a new error code to the component mapping. */
+    if (pm_timebase_ok(MOTOR_TIM_CLK_HZ, MOTOR_PSC, MOTOR_ARR,
+                       PM_MOTOR_FREQ_HZ, MOTOR_TOL_PERMILLE) == 0) {
+        return -1;
+    }
+
     /* "Occupied" means someone else's time base, decided by two register
      * facts only: TIM2 already counting (CR1.CEN) or CH1/CH2 moved away from
      * PA0/PA1 (AFIO_MAPR.TIM2_REMAP). No software owner flags. The probe is
@@ -50,7 +63,7 @@ int pm_motor_init(void)
                | (0xBu << 0) | (0xBu << 4);
 
     TIM2->CR1   = 0u;
-    TIM2->PSC   = 0u;
+    TIM2->PSC   = MOTOR_PSC;
     TIM2->ARR   = MOTOR_ARR;
     TIM2->CCR1  = 0u;
     TIM2->CCR2  = 0u;

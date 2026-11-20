@@ -1572,3 +1572,19 @@
 | 板端证据 | `evidence/timer-probe-serial.log`：`MOTOR fwd 30` → `dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0`，`MOTOR stop` → 全零；全程无 `err=timer`/`err=remap`，说明探测未把自家通道误判为占用 |
 | 能证明什么 | 探测在真实板上对空闲 TIM2 返回空闲；电机初始化行为与回包文本未变 |
 | 不能证明什么 | 占用分支（CEN/REMAP 命中、未知 hw_id）没有在板上触发过——没有第二方去占用 TIM2；只能靠代码审查与哨兵映射确认，未实测 |
+
+## 124. 电机 20 kHz 时基 10‰ 复核（契约对齐第 4 轮）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 14:05–14:25 |
+| 依据 | 决策 0018 第二条；与第 2 轮同一口径（10‰） |
+| 改动 | 只动 `src/port/stm32f1/pm_motor_stm32f1.c`：引入第 2 轮抽出的 `pm_timebase.h`，`pm_motor_init()` 开头用 `pm_timebase_ok(72 MHz, 0, 3599, 20000, 10)` 复核，不通过返回 -1 且不碰寄存器；新增 `MOTOR_PSC` 宏（值仍为 0），`TIM2->ARR` 继续用 `MOTOR_ARR`。**没有复制第二份换算代码** |
+| 错误码 | 复核失败复用 -1（`MOTOR err=timer`），本轮不新增错误码、不改组件映射；常量正确时该分支不可达 |
+| 编译 | FLASH 29152 B (44.48%) / RAM 5320 B (25.98%)，与第 3 轮相同（常量折叠，复核无运行期成本） |
+| 静态检查 | `0 ERROR / 3 WARN`，与基线一致 |
+| 判据证据 | `evidence/motor-timebase-fold.log`：同一份 `pm_timebase_ok()` 折叠结果 (0/3599→20 kHz)→`1`；(71/3599→20 kHz)→`0`；(0/3599→50 Hz)→`0`；(0/3599→1 kHz)→`0` |
+| 烧录 | `Download verified successfully`，`evidence/motor-timebase-flash.log` |
+| 板端证据 | `evidence/motor-timebase-serial.log`：`MOTOR fwd 50` → `ccr1=1800`；`MOTOR duty 80` → `ccr1=2880`；`MOTOR stop` → 全零；`PWM servo 90` → `pulse=1500us`（舵机侧无回归） |
+| 能证明什么 | 电机现行寄存器对在 10‰ 内确实是 20 kHz；判据能拒绝错误 PSC/目标频率；电机与舵机回包均无回归 |
+| 不能证明什么 | 同第 2 轮：折叠验证，未在主机运行；复核失败路径未触发 |
