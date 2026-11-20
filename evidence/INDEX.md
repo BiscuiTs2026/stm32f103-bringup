@@ -1810,3 +1810,35 @@
 | 能证明什么 | `PM_ENABLE_SONAR=ON` 能编、能烧、能校验；DWT 时基在板端确为 72 MHz；EXTI15_10 能进中断并产出稳定宽度；sonar 运行时编码器无假计数；`HELP`/`DIST` 回包形状符合契约；两构建体积差已按板端整机口径记录 |
 | 不能证明什么 | 读数对应的物理遮挡物未由人现场确认（6 cm 属近场，不能排除模块自反射；11-19 的 TIM2 版本同一位置曾读到 ~99 cm，环境是否变化未知）。**编码器与 sonar 并发时的"不丢计数"未验证**：本轮无人转轮，只能证明无假触发。"电机是否真的制动"与本条无关，见下一任务 |
 | 遗留 | 读数绝对值未与米尺对过；`build-sonar-on/` 为一次性构建目录，按规则不在工程树内长期保留（待批准后清理） |
+
+## 134. `MOTOR brake`：把模型里已有的刹车路径接到板上
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 15:3x–15:5x |
+| 触发 | 派发方要求 brake 从纸面变成实现；契约三条（brake 期间 `set()` 立即退出且不残留 1000‰、只做快衰减、`MOTOR stop` 是否走 brake 由执行方判断但回包语义不能改） |
+| 现状核查 | 模型 core `src/core/pm_motor.c` **已经有** `motor_brake()` 与 `pm_motor_stop(BRAKE)`：两路写 `PM_PWM_DUTY_MAX=1000`；任何 `set()` 先 `motor_coast()` 把两路写 0 再驱动目标通道，天然满足"立即退出、不残留"。模型仓本轮**未改一行** |
+| 改动 | 只改组件 `src/components/motor_dev/motor_dev.c`：新增 `MOTOR brake` 子命令，调 `pm_motor_stop(PM_MOTOR_STOP_BRAKE)`，回包沿用 `reply_state()` 的 `MOTOR brake ok dir=stop duty=0% hz=.. arr=.. ccr1=.. ccr2=..` |
+| 判断 | **`MOTOR stop` 保持滑行（COAST），不改走 brake**：改成 brake 会让 `MOTOR stop` 的 `ccr1/ccr2` 从 0/0 变成 3600/3600，直接推翻 M4 验收基线。brake 用独立子命令表达；`brake` 不进 `HELP` 的 `MOTOR` 行，保持 `HELP` 638 B 基线 |
+| 编译 | `build-relay-track`（默认 OFF）：0 error、0 项目代码警告；FLASH **31316 B / 47.78%**、RAM **5448 B / 26.60%**（较 relay/track 轮 +68 B，语法/字符串开销；日志 `evidence/brake-build.log`） |
+| 静态检查 | `--glue-max-lines 86` → **0 ERROR / 4 WARN**，与 §133 相同（`evidence/brake-checker.log`） |
+| 烧录 | `-w build-relay-track/pm_f103_demo.hex -v -rst` → `Download verified successfully` + `MCU Reset`（`evidence/brake-flash.log`） |
+
+| 命令 | 本轮回包（寄存器读回） |
+| --- | --- |
+| `MOTOR stat`（上电） | `MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0` |
+| `MOTOR fwd 30` | `MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0` |
+| `MOTOR brake` | `MOTOR brake ok dir=stop duty=0% hz=20000 arr=3599 ccr1=3600 ccr2=3600` |
+| `MOTOR stat`（brake 后） | `MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=3600 ccr2=3600` |
+| `MOTOR rev 40`（退出 brake） | `MOTOR rev ok dir=rev duty=40% hz=20000 arr=3599 ccr1=0 ccr2=1440` |
+| `MOTOR brake` → `MOTOR fwd`（默认 50） | `ccr1=1800 ccr2=0`，无 1000‰ 残留 |
+| `MOTOR brake x` | `MOTOR err=usage` |
+| `MOTOR stop`（基线不变） | `MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0` |
+| `MOTOR duty 50`（stop 后） | `MOTOR err=idle`（与既有语义一致） |
+| `PING` / `HELP` | `PONG`；`HELP` 15 行文本与改动前一致（`DIST` 行仍为默认 OFF 的 disabled 文本） |
+
+| 项 | 内容 |
+| --- | --- |
+| 能证明什么 | `pm_motor_stop(PM_MOTOR_STOP_BRAKE)` 在板端可达；两路 CCR 精确到 `ARR+1=3600`（1000‰，PWM 模式 1 恒高）；随后 `fwd/rev` 立即把两路移出 1000‰ 并只驱动目标通道；`MOTOR stop` 的滑行基线与 `duty` 的 `err=idle` 语义逐字未变 |
+| 不能证明什么 | **"电机是否真的制动、制动多快"未验证**：本轮电机未接/无人观察转子，只到寄存器层；快衰减的电气效果、刹车时间常数、DRV8833 实际低边双开都需人上板看。`brake` 不在 `HELP` 中，发现性靠文档 |
+| 遗留 | 无代码遗留；若后续要把 `MOTOR stop` 改为 brake，必须先改 M4 基线并获得批准 |

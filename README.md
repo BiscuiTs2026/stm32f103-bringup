@@ -28,8 +28,8 @@
 | 项目 | 状态 | 证据 / 数字 |
 | --- | --- | --- |
 | 交叉编译 | 通过 | `arm-none-eabi-gcc 14.3.1`，`-Wall -Wextra -Wshadow`，项目代码无警告 |
-| 尺寸 | 通过 | Flash **31248 B / 64 KB（47.68%）**，RAM **5448 B / 20 KB（26.60%）**（**接入模型 `pm_pwm` / `pm_motor` / `pm_encoder` / `pm_relay` / `pm_track` core 后的默认配置实测**，`PM_ENABLE_SONAR=OFF`，来源：2026-11-20 `build-relay-track` 构建输出；较仅接电机时 30168 B / 5376 B 为 **+1080 B / +72 B**；较接入模型前 28644 B / 5296 B 为 **+2604 B / +152 B**）。**`-DPM_ENABLE_SONAR=ON`：Flash 32084 B / 48.96%，RAM 5472 B / 26.72%**（较默认 **+836 B / +24 B**，来源 `evidence/sonar-on-build.log`） |
-| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（31248 B）、`.hex`、`.map` |
+| 尺寸 | 通过 | Flash **31316 B / 64 KB（47.78%）**，RAM **5448 B / 20 KB（26.60%）**（**接入模型 core 并新增 `MOTOR brake` 后的默认配置实测**，`PM_ENABLE_SONAR=OFF`，来源：2026-11-20 `build-relay-track` 构建输出；较 relay/track 轮 31248 B 为 **+68 B**（brake 命令），RAM 不变；较仅接电机时 30168 B / 5376 B 为 **+1148 B / +72 B**）。**`-DPM_ENABLE_SONAR=ON`：Flash 32084 B / 48.96%，RAM 5472 B / 26.72%**（较默认 **+768 B / +24 B**，来源 `evidence/sonar-on-build.log`） |
+| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（31316 B）、`.hex`、`.map` |
 | 主机单测 | 通过 | 175 项断言，0 失败（MSVC 19.51，C11；来源：`evidence/timebase-hosttest.log`，2026-11-20） |
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
@@ -161,8 +161,8 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 | `TRACK` | 读 PB14 循迹模块的原始电平（`raw=1` 未遮挡 / `raw=0` 黑物或遮挡） |
 | `ENC` | 读编码器 32 位计数、最后方向、A/B 电平与 PB15 按键（`1`=松开）；`ENC clear` 清零 |
 | `RELAY` | `on` / `off` 驱动 PB5 继电器线圈，`stat` 读回 PB5 实际电平（`pb5=0\|1`） |
-| `MOTOR` | `fwd [duty]` / `rev [duty]` / `stop` / `duty <0..100>` / `stat`；PA0/PA1 = TIM2_CH1/CH2，20 kHz，回包带 `hz/arr/ccr1/ccr2` 寄存器读回 |
-| `OLED on\|off\|clear\|test\|show\|frame\|col\|live\|dump` | 显示开关、清屏、测试页、静态文字、边框图案、列偏移、500 ms live（live 期间的自动测距已随 DIST 停用） |
+| `MOTOR` | `fwd [duty]` / `rev [duty]` / `stop` / `brake` / `duty <0..100>` / `stat`；PA0/PA1 = TIM2_CH1/CH2，20 kHz，回包带 `hz/arr/ccr1/ccr2` 寄存器读回；`brake` 不进 `HELP`（保持 638 B 基线） |
+| `OLED on\|off\|clear\|test\|show\|frame\|col\|live\|dump` | 显示开关、清屏、测试页、静态文字、边框图案、列偏移、500 ms live（live 期间 1 Hz 自动测距仅在 `PM_ENABLE_SONAR=ON` 时启用） |
 
 参数、成功/失败回包原文、是否改变设备状态、蓝牙端的判读陷阱（回包被拆成多个气泡等），见 **[docs/PROTOCOL.md](docs/PROTOCOL.md)**。
 
@@ -252,7 +252,7 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 - UART 是逐字节中断，没有 DMA + 空闲中断的接收路径；TX 环 512 B，超长回包靠"边发边等"（`tx_bytes_all`）；
 - live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间静态命令（`clear`/`test`/`show`/`frame`）照常接管，3 s 后自动交回；
 - **测距默认关闭、可编译启用**：默认 `PM_ENABLE_SONAR=OFF`，`DIST` 回 `DIST err=disabled`；`-DPM_ENABLE_SONAR=ON` 时 1 µs 时基换成 `DWT->CYCCNT`（不再占用 TIM2），`EXTI15_10` 优先级 5 低于编码器 `EXTI9_5` 的 4（决策 0020）。ON 构建的绝对距离未与物理尺子对过，且编码器与 sonar 并发时的“不丢计数”未在有人转轮的情况下复测（§133）；
-- 电机：TIM2 `PSC=0 / ARR=3599` → 20 kHz，只有一路通道出 PWM、另一路恒 0（DRV8833 单向驱动）；`duty 0` 与 `stop` 电气等价（两路 CCR=0、全低滑行），`dir` 字段只是状态记忆；`fwd/rev` 只表示选了哪路通道，**对应轴的哪个方向未验证**；电机未接时只能验证寄存器与回包；
+- 电机：TIM2 `PSC=0 / ARR=3599` → 20 kHz，只有一路通道出 PWM、另一路恒 0（DRV8833 单向驱动）；`duty 0` 与 `stop` 电气等价（两路 CCR=0、全低滑行），`dir` 字段只是状态记忆；`MOTOR brake` 是新增的独立命令（两路 1000‰ → CCR=3600/3600，低边双开），`stop` 仍是滑行、回包不变（M4 基线）；brake 后 `fwd/rev/duty` 会立即退出且不残留 1000‰；**"电机是否真的制动、制动多快"未验证**（需人看转子），`fwd/rev` 对应轴的哪个方向也未验证；电机未接时只能验证寄存器与回包；
 - 分层检查：本仓用 `tools/check_layering.py`（3.4.0，`tools/CHECKER.lock` 固定 `4da1a77`）扫描，当前 0 ERROR / 4 WARN（2026-11-20，`--glue-max-lines 86`；第 4 条为编码器 EXTI 钩子，与 UART 三条同类）；从 3.3.1 升到 3.4.0 只新增第 28 项 `feature_gate`；本仓已在 `.arch-roles` 声明 `feature sonar = off` 并挂 `pm_sonar_init` / `EXTI15_10_IRQn`，该项复跑报 0、无误报（INDEX §131），其余输出不变，升级细节、复跑结果与"是否继续跟随上游"记在 `TECH_DEBT.md` D25；
 - 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；
 - 默认（OFF）构建里 `DIST` 在启动前就返回 `err=disabled`，不会进入测量。ON 构建的可达现象保留在案：自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`，是 HC-SR04 余振，不是故障；输入侧抓包里未发任何 PWM/BUZ 命令也出现过 3.9–45.8 cm 短读数与一次 `err=timeout`（与手/黑物靠近超声视场时间重合，归因未确认，§31.6）；

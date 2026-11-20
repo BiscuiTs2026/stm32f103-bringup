@@ -384,6 +384,7 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
 | `MOTOR fwd [0..100]` | 占空比，缺省 50 | `MOTOR fwd ok dir=fwd duty=60% hz=20000 arr=3599 ccr1=2160 ccr2=0` | `MOTOR err=range duty=<n>` / `MOTOR err=usage` / `MOTOR err=timer` / `MOTOR err=remap` | **是**：CH1 出 PWM、CH2 低 |
 | `MOTOR rev [0..100]` | 同上 | 同上，`dir=rev`、`ccr1=0 ccr2=<n>` | 同上 | **是**：CH2 出 PWM、CH1 低 |
 | `MOTOR stop` | 无 | `MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0` | 同上 | **是**：两路全低（滑行） |
+| `MOTOR brake` | 无 | `MOTOR brake ok dir=stop duty=0% hz=20000 arr=3599 ccr1=3600 ccr2=3600` | `MOTOR err=usage`（带多余参数）/ 同上 | **是**：两路 1000‰（CCR=ARR+1，恒高，低边双开） |
 | `MOTOR duty <0..100>` | 占空比 | `MOTOR duty ok dir=fwd duty=80% ...` | `MOTOR err=idle`（还没给过方向）/ 同上 | **是**：保持方向改占空比 |
 | `MOTOR` / `MOTOR stat` | 无 | `MOTOR stat dir=<fwd\|rev\|stop> duty=<n>% hz=<n> arr=<n> ccr1=<n> ccr2=<n>` | 同上 | 否（只读） |
 | `MOTOR dbg` | 无 | `MOTOR dbg apb1enr=<hex> cr1=<hex> ccer=<hex> ccmr1=<hex> arr=<n> psc=<n> cnt=<a>+<b>+<c> crl=<hex>` | `MOTOR err=usage`（带多余参数）/ `MOTOR err=unsupported`（固件未绑实现） | 否（只读） |
@@ -394,6 +395,11 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
 - `duty=100` 时 CCR = 3600 = `ARR+1`，PWM 模式 1 下输出恒有效（满速），不是错误。
 - **`duty 0` 与 `stop` 电气等价**：都是两路 CCR=0、两路全低滑行。区别只在
   `dir` 字段的记忆（`fwd 0` 记住方向，之后 `duty 60` 直接续跑）；驱动板行为相同。
+- **`MOTOR brake` 是独立的刹车命令，`MOTOR stop` 仍是滑行**（保持 M4 基线：
+  `stop` 回 `ccr1=0 ccr2=0` 不变）。brake 期间再发 `fwd/rev/duty`，模型会先把两路
+  写 0 再驱动目标通道，因此会立即退出 brake、寄存器里不会残留 1000‰。
+  只实现快衰减（一路 PWM、另一路低），不提供慢衰减。
+  `brake` 未加入 `HELP` 的 `MOTOR` 行，以保持 `HELP` 638 B 基线不变；这是有意的取舍。
 - 初始化失败按下列顺序判定，回包与判据：
   1. `MOTOR err=timer`，时基复核不通过：`pm_timebase_ok(72 MHz, PSC 0, ARR 3599,
      20 kHz, 10‰)` 判假，说明 PSC/ARR 常量与目标频率对不上；直接拒绝，不写任何
@@ -404,8 +410,8 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
      （掩码 `0x300`）非 0 即判占用。其中 `01`/`11` 把 CH1/CH2 移出 PA0/PA1；`10`
      （partial remap 2）保留 CH1/CH2，但字段非 0 说明 AFIO 已被配置，按保守策略同样拒绝。
   判据只读寄存器，不看任何软件占用标记，因此不会因状态变量失步而误报。
-- 测距停用期间 TIM2 不再有第二个使用者；重新启用 HC-SR04 前必须先解决计时源
-  （`docs/TIM2-CONFLICT.md`）。
+- TIM2 仍只服务电机；HC-SR04 的可选构建已改用 `DWT->CYCCNT` 时基，不再申请 TIM2
+  （决策 0020、`docs/TIM2-CONFLICT.md`）。
 
 #### `MOTOR dbg`（临时诊断，不进 HELP）
 

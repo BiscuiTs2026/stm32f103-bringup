@@ -244,6 +244,17 @@ const char *motor_dev_cmd(const char *line)
         s_stopped = 1u;
         return reply_state("MOTOR stop ok");
     }
+    if (is_word(p, "BRAKE", 5u) != 0) {
+        if (p[5] != '\0') {
+            return reply_lit("MOTOR err=usage");
+        }
+        /* Both DRV8833 inputs to 1000 permille (L/L). The model already
+         * coasts both channels before any later set(), so a following
+         * fwd/rev leaves the brake with no residual 1000. */
+        (void)pm_motor_stop(&s_motor, PM_MOTOR_STOP_BRAKE);
+        s_stopped = 1u;
+        return reply_state("MOTOR brake ok");
+    }
     if (is_word(p, "DUTY", 4u) != 0) {
         uint32_t duty;
 
