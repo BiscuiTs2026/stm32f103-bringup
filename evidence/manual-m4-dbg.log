@@ -1,0 +1,66 @@
+﻿
+[   202ms] ===== M4 dbg start 2026-11-20 10:29:39.183 port=COM11 =====
+[   256ms] hb
+[   323ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   501ms] >> MOTOR stat
+[   515ms] MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[   834ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1207ms] >> MOTOR dbg
+[   1229ms] MOTOR dbg cr1=0x00000081 ccer=0x00000011 ccmr1=0x00006868 arr=3599 psc=0 cnt=505+1049 crl=0x22008BBB
+[   1246ms] hb
+[   1323ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1829ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1916ms] >> MOTOR fwd
+[   1934ms] MOTOR fwd ok dir=fwd duty=50% hz=20000 arr=3599 ccr1=1800 ccr2=0
+[   2234ms] hb
+[   2332ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2606ms] >> MOTOR dbg
+[   2623ms] MOTOR dbg cr1=0x00000081 ccer=0x00000011 ccmr1=0x00006868 arr=3599 psc=0 cnt=1269+1751 crl=0x22008BBB
+[   2824ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3234ms] hb
+[   3309ms] >> MOTOR stat
+[   3340ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3340ms] MOTOR stat dir=fwd duty=50% hz=20000 arr=3599 ccr1=1800 ccr2=0
+[   3829ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4013ms] >> MOTOR rev
+[   4029ms] MOTOR rev ok dir=rev duty=50% hz=20000 arr=3599 ccr1=0 ccr2=1800
+[   4251ms] hb
+[   4324ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4729ms] >> MOTOR dbg
+[   4746ms] MOTOR dbg cr1=0x00000081 ccer=0x00000011 ccmr1=0x00006868 arr=3599 psc=0 cnt=3027+3029 crl=0x22008BBB
+[   4831ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5223ms] hb
+[   5324ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5407ms] >> MOTOR stat
+[   5424ms] MOTOR stat dir=rev duty=50% hz=20000 arr=3599 ccr1=0 ccr2=1800
+[   5824ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6101ms] >> MOTOR stop
+[   6110ms] MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[   6235ms] hb
+[   6335ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6805ms] >> MOTOR stat
+[   6829ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6830ms] MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[   7232ms] hb
+[   7323ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7513ms] >> MOTOR dbg
+[   7538ms] MOTOR dbg cr1=0x00000081 ccer=0x00000011 ccmr1=0x00006868 arr=3599 psc=0 cnt=365+845 crl=0x22008BBB
+[   7834ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8234ms] hb
+[   8330ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8827ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9001ms] ===== M4 dbg end =====
+[   159ms] ===== M4 mapr probe 2026-11-20 10:30:09.015 =====
+[   365ms] hb
+[   404ms] >> PWM dbg
+[   466ms] PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000047 arr=0x00004E1F ccmr2=0x00000068 ccer=0x00000100 ccr3=0x000005DC cnt0=12780 cnt1=12085 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[   466ms] OLED live ok ms=117 col=2 af=0 berr=0 to=0
+[   951ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1205ms] >> MOTOR dbg
+[   1232ms] MOTOR dbg cr1=0x00000081 ccer=0x00000011 ccmr1=0x00006868 arr=3599 psc=0 cnt=3131+11 crl=0x22008BBB
+[   1356ms] hb
+[   1448ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1955ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2366ms] hb
+[   2453ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2501ms] ===== M4 mapr probe end =====

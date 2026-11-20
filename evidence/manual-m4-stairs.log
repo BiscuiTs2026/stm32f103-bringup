@@ -1,0 +1,115 @@
+﻿
+[   176ms] ===== M4 duty stairs start 2026-11-20 10:38:05.924 port=COM11 (no power cycle) =====
+[   309ms] (10:38:06.057) >> MOTOR fwd 100
+[   333ms] MOTOR fwd ok dir=fwd duty=100% hz=20000 arr=3599 ccr1=3600 ccr2=0
+[   439ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   839ms] hb
+[   926ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1435ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1839ms] hb
+[   1929ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2433ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2844ms] hb
+[   2926ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3435ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3844ms] hb
+[   3939ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4439ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4836ms] hb
+[   4939ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5311ms] (10:38:11.060) >> MOTOR stat
+[   5328ms] MOTOR stat dir=fwd duty=100% hz=20000 arr=3599 ccr1=3600 ccr2=0
+[   5429ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5845ms] hb
+[   5931ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6000ms] (10:38:11.749) >> MOTOR fwd 50
+[   6017ms] MOTOR fwd ok dir=fwd duty=50% hz=20000 arr=3599 ccr1=1800 ccr2=0
+[   6439ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6839ms] hb
+[   6926ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7439ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7845ms] hb
+[   7926ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8435ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8845ms] hb
+[   8933ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9434ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9845ms] hb
+[   9939ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10430ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10841ms] hb
+[   10933ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11017ms] (10:38:16.766) >> MOTOR stat
+[   11028ms] MOTOR stat dir=fwd duty=50% hz=20000 arr=3599 ccr1=1800 ccr2=0
+[   11445ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11712ms] (10:38:17.461) >> MOTOR fwd 25
+[   11727ms] MOTOR fwd ok dir=fwd duty=25% hz=20000 arr=3599 ccr1=900 ccr2=0
+[   11844ms] hb
+[   11933ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12439ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12835ms] hb
+[   12940ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13431ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13845ms] hb
+[   13934ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14434ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14843ms] hb
+[   14939ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15434ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15845ms] hb
+[   15939ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16435ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16700ms] (10:38:22.450) >> MOTOR stat
+[   16712ms] MOTOR stat dir=fwd duty=25% hz=20000 arr=3599 ccr1=900 ccr2=0
+[   16840ms] hb
+[   16927ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17401ms] (10:38:23.150) >> MOTOR fwd 10
+[   17417ms] MOTOR fwd ok dir=fwd duty=10% hz=20000 arr=3599 ccr1=360 ccr2=0
+[   17433ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17845ms] hb
+[   17927ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18428ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18850ms] hb
+[   18939ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19433ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19846ms] hb
+[   19935ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20430ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20838ms] hb
+[   20930ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   21430ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   21839ms] hb
+[   21935ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   22406ms] (10:38:28.156) >> MOTOR stat
+[   22440ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   22440ms] MOTOR stat dir=fwd duty=10% hz=20000 arr=3599 ccr1=360 ccr2=0
+[   22845ms] hb
+[   22934ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   23117ms] (10:38:28.866) >> MOTOR fwd 5
+[   23134ms] MOTOR fwd ok dir=fwd duty=5% hz=20000 arr=3599 ccr1=180 ccr2=0
+[   23434ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   23836ms] hb
+[   23934ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   24435ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   24840ms] hb
+[   24940ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   25434ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   25845ms] hb
+[   25927ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   26440ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   26845ms] hb
+[   26934ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   27440ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   27841ms] hb
+[   27934ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   28103ms] (10:38:33.852) >> MOTOR stat
+[   28118ms] MOTOR stat dir=fwd duty=5% hz=20000 arr=3599 ccr1=180 ccr2=0
+[   28435ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   28812ms] (10:38:34.561) >> MOTOR stop
+[   28829ms] MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[   28840ms] hb
+[   28931ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   29429ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   29841ms] hb
+[   29934ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   30017ms] ===== M4 duty stairs end =====

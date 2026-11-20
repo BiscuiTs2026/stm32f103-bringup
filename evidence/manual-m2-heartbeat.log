@@ -1,0 +1,131 @@
+﻿
+[   178ms] ===== M2 heartbeat capture start 2026-11-20 10:12:54.591 port=COM11 (no reset, 30 s, passive) =====
+[   679ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1078ms] hb
+[   1171ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1670ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2087ms] hb
+[   2178ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2675ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3079ms] hb
+[   3172ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3668ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4086ms] hb
+[   4178ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4672ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5092ms] hb
+[   5170ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5668ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6089ms] hb
+[   6182ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6678ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7080ms] hb
+[   7173ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7668ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8098ms] hb
+[   8192ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8670ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9088ms] hb
+[   9182ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9674ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10078ms] hb
+[   10172ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10681ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11080ms] hb
+[   11172ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11668ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12070ms] hb
+[   12179ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12677ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13079ms] hb
+[   13172ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13670ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14072ms] hb
+[   14181ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14242ms] KEY1 pressed
+[   14412ms] KEY1 released
+[   14677ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14677ms] KEY1 pressed
+[   14755ms] KEY1 released
+[   14939ms] KEY1 pressed
+[   15032ms] KEY1 released
+[   15078ms] hb
+[   15171ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15263ms] KEY1 pressed
+[   15357ms] KEY1 released
+[   15576ms] KEY1 pressed
+[   15671ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15672ms] KEY1 released
+[   15871ms] KEY1 pressed
+[   15964ms] KEY1 released
+[   16088ms] hb
+[   16166ms] KEY1 pressed
+[   16181ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16228ms] KEY1 released
+[   16429ms] KEY1 pressed
+[   16553ms] KEY1 released
+[   16675ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16737ms] KEY1 pressed
+[   16830ms] KEY1 released
+[   16986ms] KEY1 pressed
+[   17080ms] hb
+[   17080ms] KEY1 released
+[   17173ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17265ms] KEY1 pressed
+[   17342ms] KEY1 released
+[   17669ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17700ms] KEY1 pressed
+[   17795ms] KEY1 released
+[   17982ms] KEY1 pressed
+[   18089ms] hb
+[   18106ms] KEY1 released
+[   18167ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18307ms] KEY1 pressed
+[   18400ms] KEY1 released
+[   18619ms] KEY1 pressed
+[   18666ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18697ms] KEY1 released
+[   18915ms] KEY1 pressed
+[   19007ms] KEY1 released
+[   19085ms] hb
+[   19177ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19224ms] KEY1 pressed
+[   19318ms] KEY1 released
+[   19519ms] KEY1 pressed
+[   19597ms] KEY1 released
+[   19675ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19802ms] KEY1 pressed
+[   19880ms] KEY1 released
+[   20080ms] hb
+[   20111ms] KEY1 pressed
+[   20173ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20220ms] KEY1 released
+[   20667ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   21087ms] hb
+[   21180ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   21676ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   22082ms] hb
+[   22175ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   22672ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   23088ms] hb
+[   23180ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   23677ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   24081ms] hb
+[   24173ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   24672ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   25078ms] hb
+[   25170ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   25667ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   26085ms] hb
+[   26178ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   26672ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   27091ms] hb
+[   27169ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   27680ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   28082ms] hb
+[   28174ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   28671ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   29086ms] hb
+[   29179ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   29681ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   30010ms] ===== M2 heartbeat capture end =====

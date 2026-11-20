@@ -1,0 +1,93 @@
+﻿
+[   181ms] ===== M3 relay start 2026-11-20 10:21:15.579 port=COM11 (no reset) =====
+[   197ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   520ms] >> RELAY stat
+[   532ms] RELAY stat pb5=0
+[   687ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1098ms] hb
+[   1197ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1687ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2014ms] >> RELAY on
+[   2031ms] RELAY on ok pb5=1
+[   2098ms] hb
+[   2187ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2692ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3082ms] hb
+[   3191ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3693ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4093ms] hb
+[   4187ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4504ms] >> RELAY off
+[   4520ms] RELAY off ok pb5=0
+[   4687ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5097ms] hb
+[   5184ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5687ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6004ms] >> RELAY stat
+[   6020ms] RELAY stat pb5=0
+[   6098ms] hb
+[   6197ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6687ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7094ms] hb
+[   7187ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7693ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8098ms] hb
+[   8187ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8693ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9000ms] ===== M3 relay end =====
+[   142ms] ===== M3 listen round start 2026-11-20 10:22:00.650 (stat, on, 3s, off, 3s, on, 3s, off, 3s, stat) =====
+[   304ms] >> RELAY stat
+[   324ms] RELAY stat pb5=0
+[   585ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   600ms] >> RELAY on
+[   616ms] RELAY on ok pb5=1
+[   989ms] hb
+[   1082ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1580ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1998ms] hb
+[   2076ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2574ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2993ms] hb
+[   3086ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3579ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3611ms] >> RELAY off
+[   3626ms] RELAY off ok pb5=0
+[   3985ms] hb
+[   4077ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4573ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4986ms] hb
+[   5080ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5581ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5984ms] hb
+[   6082ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6586ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6614ms] >> RELAY on
+[   6636ms] RELAY on ok pb5=1
+[   6991ms] hb
+[   7081ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7591ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7986ms] hb
+[   8081ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8574ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8987ms] hb
+[   9086ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9577ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9609ms] >> RELAY off
+[   9636ms] RELAY off ok pb5=0
+[   9986ms] hb
+[   10081ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10580ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10986ms] hb
+[   11076ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11581ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11988ms] hb
+[   12076ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12580ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12608ms] >> RELAY stat
+[   12631ms] RELAY stat pb5=0
+[   12986ms] hb
+[   13086ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13581ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13986ms] hb
+[   14091ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14508ms] ===== M3 listen round end =====

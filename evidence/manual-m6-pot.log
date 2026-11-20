@@ -1,0 +1,585 @@
+﻿
+[   168ms] ===== M6 pot start 2026-11-20 10:46:27.279 port=COM11 (3 baseline, 20 s @0.5 s, 3 tail) =====
+[   313ms] (10:46:27.423) >> ADC
+[   335ms] ADC pot=1975 pot_mv=1592 ntc=2308 ntc_mv=1860 vref=3300
+[   473ms] hb
+[   558ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1068ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1303ms] (10:46:28.413) >> ADC
+[   1318ms] ADC pot=1976 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   1476ms] hb
+[   1558ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2069ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2305ms] (10:46:29.415) >> ADC
+[   2329ms] ADC pot=1975 pot_mv=1592 ntc=2300 ntc_mv=1853 vref=3300
+[   2480ms] hb
+[   2569ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3057ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3304ms] (10:46:30.415) >> ADC
+[   3319ms] ADC pot=1976 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   3468ms] hb
+[   3563ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3808ms] (10:46:30.918) >> ADC
+[   3819ms] ADC pot=1976 pot_mv=1592 ntc=2303 ntc_mv=1856 vref=3300
+[   4063ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4302ms] (10:46:31.413) >> ADC
+[   4319ms] ADC pot=1975 pot_mv=1592 ntc=2303 ntc_mv=1856 vref=3300
+[   4468ms] hb
+[   4567ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4808ms] (10:46:31.918) >> ADC
+[   4824ms] ADC pot=1976 pot_mv=1592 ntc=2304 ntc_mv=1857 vref=3300
+[   5058ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5303ms] (10:46:32.413) >> ADC
+[   5319ms] ADC pot=1976 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   5475ms] hb
+[   5558ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5808ms] (10:46:32.918) >> ADC
+[   5829ms] ADC pot=1976 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   6070ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6302ms] (10:46:33.413) >> ADC
+[   6319ms] ADC pot=1976 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   6465ms] hb
+[   6576ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6805ms] (10:46:33.916) >> ADC
+[   6819ms] ADC pot=1976 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   7064ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7302ms] (10:46:34.413) >> ADC
+[   7324ms] ADC pot=1976 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   7468ms] hb
+[   7580ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7808ms] (10:46:34.918) >> ADC
+[   7823ms] ADC pot=1976 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   8080ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8308ms] (10:46:35.418) >> ADC
+[   8329ms] ADC pot=1977 pot_mv=1593 ntc=2302 ntc_mv=1855 vref=3300
+[   8479ms] hb
+[   8564ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8802ms] (10:46:35.913) >> ADC
+[   8831ms] ADC pot=1976 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   9070ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9303ms] (10:46:36.413) >> ADC
+[   9330ms] ADC pot=1976 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   9480ms] hb
+[   9558ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9808ms] (10:46:36.919) >> ADC
+[   9824ms] ADC pot=1976 pot_mv=1592 ntc=2305 ntc_mv=1858 vref=3300
+[   10054ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10301ms] (10:46:37.412) >> ADC
+[   10317ms] ADC pot=1976 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   10469ms] hb
+[   10554ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10803ms] (10:46:37.913) >> ADC
+[   10830ms] ADC pot=1975 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   11058ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11308ms] (10:46:38.419) >> ADC
+[   11325ms] ADC pot=1976 pot_mv=1592 ntc=2303 ntc_mv=1856 vref=3300
+[   11479ms] hb
+[   11568ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11807ms] (10:46:38.917) >> ADC
+[   11823ms] ADC pot=1977 pot_mv=1593 ntc=2303 ntc_mv=1856 vref=3300
+[   12069ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12303ms] (10:46:39.413) >> ADC
+[   12318ms] ADC pot=1976 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   12464ms] hb
+[   12562ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12803ms] (10:46:39.913) >> ADC
+[   12825ms] ADC pot=1976 pot_mv=1592 ntc=2300 ntc_mv=1853 vref=3300
+[   13063ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13308ms] (10:46:40.419) >> ADC
+[   13325ms] ADC pot=1976 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   13479ms] hb
+[   13569ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13803ms] (10:46:40.913) >> ADC
+[   13819ms] ADC pot=1976 pot_mv=1592 ntc=2304 ntc_mv=1857 vref=3300
+[   14070ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14307ms] (10:46:41.418) >> ADC
+[   14319ms] ADC pot=1975 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   14469ms] hb
+[   14575ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14803ms] (10:46:41.913) >> ADC
+[   14820ms] ADC pot=1976 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   15070ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15303ms] (10:46:42.413) >> ADC
+[   15325ms] ADC pot=1976 pot_mv=1592 ntc=2304 ntc_mv=1857 vref=3300
+[   15485ms] hb
+[   15575ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15804ms] (10:46:42.915) >> ADC
+[   15819ms] ADC pot=1976 pot_mv=1592 ntc=2300 ntc_mv=1853 vref=3300
+[   16069ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16303ms] (10:46:43.413) >> ADC
+[   16319ms] ADC pot=1976 pot_mv=1592 ntc=2303 ntc_mv=1856 vref=3300
+[   16453ms] hb
+[   16569ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16814ms] (10:46:43.925) >> ADC
+[   16829ms] ADC pot=1976 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   17070ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17314ms] (10:46:44.424) >> ADC
+[   17326ms] ADC pot=1976 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   17486ms] hb
+[   17554ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17803ms] (10:46:44.913) >> ADC
+[   17821ms] ADC pot=1974 pot_mv=1591 ntc=2302 ntc_mv=1855 vref=3300
+[   18053ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18315ms] (10:46:45.425) >> ADC
+[   18331ms] ADC pot=1976 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   18471ms] hb
+[   18553ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18804ms] (10:46:45.915) >> ADC
+[   18819ms] ADC pot=1973 pot_mv=1590 ntc=2304 ntc_mv=1857 vref=3300
+[   19060ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19313ms] (10:46:46.423) >> ADC
+[   19328ms] ADC pot=1975 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   19466ms] hb
+[   19560ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19809ms] (10:46:46.919) >> ADC
+[   19820ms] ADC pot=1974 pot_mv=1591 ntc=2304 ntc_mv=1857 vref=3300
+[   20058ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20314ms] (10:46:47.424) >> ADC
+[   20324ms] ADC pot=1976 pot_mv=1592 ntc=2304 ntc_mv=1857 vref=3300
+[   20464ms] hb
+[   20563ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20806ms] (10:46:47.917) >> ADC
+[   20819ms] ADC pot=1975 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   21055ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   21304ms] (10:46:48.415) >> ADC
+[   21319ms] ADC pot=1976 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   21487ms] hb
+[   21559ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   21802ms] (10:46:48.912) >> ADC
+[   21825ms] ADC pot=1976 pot_mv=1592 ntc=2305 ntc_mv=1858 vref=3300
+[   22065ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   22309ms] (10:46:49.420) >> ADC
+[   22325ms] ADC pot=1976 pot_mv=1592 ntc=2300 ntc_mv=1853 vref=3300
+[   22466ms] hb
+[   22560ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   22811ms] (10:46:49.922) >> ADC
+[   22827ms] ADC pot=1976 pot_mv=1592 ntc=2303 ntc_mv=1856 vref=3300
+[   23064ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   23300ms] (10:46:50.410) >> ADC
+[   23316ms] ADC pot=1976 pot_mv=1592 ntc=2302 ntc_mv=1855 vref=3300
+[   23474ms] hb
+[   23560ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   24067ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   24303ms] (10:46:51.414) >> ADC
+[   24319ms] ADC pot=1976 pot_mv=1592 ntc=2301 ntc_mv=1854 vref=3300
+[   24477ms] hb
+[   24561ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   25065ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   25302ms] (10:46:52.413) >> ADC
+[   25318ms] ADC pot=1976 pot_mv=1592 ntc=2298 ntc_mv=1852 vref=3300
+[   25476ms] hb
+[   25560ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   26080ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   26301ms] (10:46:53.412) >> ADC
+[   26316ms] ADC pot=1976 pot_mv=1592 ntc=2303 ntc_mv=1856 vref=3300
+[   26472ms] hb
+[   26565ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   27064ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   27487ms] hb
+[   27501ms] ===== M6 pot end =====
+
+[   151ms] ===== M6 pot retry 2026-11-20 10:48:31.463 port=COM11 (80 s @1 s, turn now) =====
+[   277ms] hb
+[   307ms] (10:48:31.618) >> ADC
+[   346ms] ADC pot=0 pot_mv=0 ntc=2306 ntc_mv=1858 vref=3300
+[   353ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   862ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1273ms] hb
+[   1311ms] (10:48:32.623) >> ADC
+[   1332ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   1357ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1851ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2273ms] hb
+[   2306ms] (10:48:33.618) >> ADC
+[   2323ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   2360ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3266ms] hb
+[   3306ms] (10:48:34.618) >> ADC
+[   3323ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   3349ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3862ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4273ms] hb
+[   4306ms] (10:48:35.619) >> ADC
+[   4323ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   4351ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4851ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5273ms] hb
+[   5307ms] (10:48:36.619) >> ADC
+[   5323ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   5357ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6256ms] hb
+[   6307ms] (10:48:37.619) >> ADC
+[   6330ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   6351ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6851ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7279ms] hb
+[   7306ms] (10:48:38.619) >> ADC
+[   7324ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   7356ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7851ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8262ms] hb
+[   8306ms] (10:48:39.619) >> ADC
+[   8324ms] ADC pot=0 pot_mv=0 ntc=2303 ntc_mv=1856 vref=3300
+[   8357ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9273ms] hb
+[   9305ms] (10:48:40.617) >> ADC
+[   9323ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   9357ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10279ms] hb
+[   10312ms] (10:48:41.625) >> ADC
+[   10329ms] ADC pot=0 pot_mv=0 ntc=2301 ntc_mv=1854 vref=3300
+[   10355ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10851ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11261ms] hb
+[   11312ms] (10:48:42.624) >> ADC
+[   11333ms] ADC pot=0 pot_mv=0 ntc=2302 ntc_mv=1855 vref=3300
+[   11360ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12268ms] hb
+[   12306ms] (10:48:43.619) >> ADC
+[   12326ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   12351ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13274ms] hb
+[   13307ms] (10:48:44.619) >> ADC
+[   13339ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   13351ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14274ms] hb
+[   14307ms] (10:48:45.619) >> ADC
+[   14335ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   14352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14853ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15262ms] hb
+[   15312ms] (10:48:46.624) >> ADC
+[   15335ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   15351ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15851ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16274ms] hb
+[   16315ms] (10:48:47.627) >> ADC
+[   16336ms] ADC pot=0 pot_mv=0 ntc=2303 ntc_mv=1856 vref=3300
+[   16368ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16851ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17263ms] hb
+[   17313ms] (10:48:48.626) >> ADC
+[   17329ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   17352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18258ms] hb
+[   18301ms] (10:48:49.613) >> ADC
+[   18317ms] ADC pot=0 pot_mv=0 ntc=2310 ntc_mv=1862 vref=3300
+[   18355ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19272ms] hb
+[   19303ms] (10:48:50.615) >> ADC
+[   19323ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   19354ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20261ms] hb
+[   20308ms] (10:48:51.621) >> ADC
+[   20340ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   20356ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20853ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   21265ms] hb
+[   21313ms] (10:48:52.625) >> ADC
+[   21329ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   21361ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   21860ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   22268ms] hb
+[   22302ms] (10:48:53.615) >> ADC
+[   22327ms] ADC pot=0 pot_mv=0 ntc=2296 ntc_mv=1850 vref=3300
+[   22359ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   22860ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   23272ms] hb
+[   23303ms] (10:48:54.616) >> ADC
+[   23320ms] ADC pot=769 pot_mv=620 ntc=2304 ntc_mv=1857 vref=3300
+[   23351ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   23859ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   24270ms] hb
+[   24302ms] (10:48:55.615) >> ADC
+[   24318ms] ADC pot=2464 pot_mv=1986 ntc=2304 ntc_mv=1857 vref=3300
+[   24350ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   24858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   25269ms] hb
+[   25300ms] (10:48:56.613) >> ADC
+[   25316ms] ADC pot=3564 pot_mv=2872 ntc=2300 ntc_mv=1853 vref=3300
+[   25363ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   25859ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   26271ms] hb
+[   26302ms] (10:48:57.615) >> ADC
+[   26319ms] ADC pot=4095 pot_mv=3300 ntc=2305 ntc_mv=1858 vref=3300
+[   26350ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   26861ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   27273ms] hb
+[   27304ms] (10:48:58.616) >> ADC
+[   27320ms] ADC pot=4095 pot_mv=3300 ntc=2304 ntc_mv=1857 vref=3300
+[   27352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   27850ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   28259ms] hb
+[   28306ms] (10:48:59.619) >> ADC
+[   28338ms] ADC pot=3599 pot_mv=2900 ntc=2304 ntc_mv=1857 vref=3300
+[   28354ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   28849ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   29260ms] hb
+[   29307ms] (10:49:00.619) >> ADC
+[   29338ms] ADC pot=1459 pot_mv=1176 ntc=2304 ntc_mv=1857 vref=3300
+[   29354ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   29855ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   30265ms] hb
+[   30312ms] (10:49:01.624) >> ADC
+[   30328ms] ADC pot=0 pot_mv=0 ntc=2307 ntc_mv=1859 vref=3300
+[   30359ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   30853ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   31262ms] hb
+[   31309ms] (10:49:02.622) >> ADC
+[   31325ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   31357ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   31852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   32261ms] hb
+[   32308ms] (10:49:03.620) >> ADC
+[   32339ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   32355ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   32852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   33259ms] hb
+[   33308ms] (10:49:04.621) >> ADC
+[   33330ms] ADC pot=0 pot_mv=0 ntc=2307 ntc_mv=1859 vref=3300
+[   33361ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   33862ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   34257ms] hb
+[   34304ms] (10:49:05.616) >> ADC
+[   34319ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   34350ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   34850ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   35270ms] hb
+[   35301ms] (10:49:06.614) >> ADC
+[   35317ms] ADC pot=0 pot_mv=0 ntc=2302 ntc_mv=1855 vref=3300
+[   35348ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   35847ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   36274ms] hb
+[   36307ms] (10:49:07.620) >> ADC
+[   36324ms] ADC pot=0 pot_mv=0 ntc=2303 ntc_mv=1856 vref=3300
+[   36352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   36856ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   37261ms] hb
+[   37307ms] (10:49:08.620) >> ADC
+[   37324ms] ADC pot=0 pot_mv=0 ntc=2303 ntc_mv=1856 vref=3300
+[   37352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   37856ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   38258ms] hb
+[   38307ms] (10:49:09.620) >> ADC
+[   38324ms] ADC pot=0 pot_mv=0 ntc=2307 ntc_mv=1859 vref=3300
+[   38356ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   38852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   39263ms] hb
+[   39311ms] (10:49:10.624) >> ADC
+[   39324ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   39357ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   39858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   40263ms] hb
+[   40305ms] (10:49:11.618) >> ADC
+[   40320ms] ADC pot=0 pot_mv=0 ntc=2301 ntc_mv=1854 vref=3300
+[   40352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   40852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   41263ms] hb
+[   41307ms] (10:49:12.620) >> ADC
+[   41336ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   41352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   41853ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   42273ms] hb
+[   42312ms] (10:49:13.625) >> ADC
+[   42330ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   42358ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   42852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   43269ms] hb
+[   43307ms] (10:49:14.620) >> ADC
+[   43336ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   43353ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   43852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   44263ms] hb
+[   44312ms] (10:49:15.625) >> ADC
+[   44336ms] ADC pot=0 pot_mv=0 ntc=2302 ntc_mv=1855 vref=3300
+[   44358ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   44858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   45274ms] hb
+[   45306ms] (10:49:16.619) >> ADC
+[   45330ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   45352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   45848ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   46274ms] hb
+[   46313ms] (10:49:17.626) >> ADC
+[   46324ms] ADC pot=0 pot_mv=0 ntc=2303 ntc_mv=1856 vref=3300
+[   46352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   46856ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   47280ms] hb
+[   47317ms] (10:49:18.630) >> ADC
+[   47324ms] ADC pot=0 pot_mv=0 ntc=2299 ntc_mv=1853 vref=3300
+[   47357ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   47852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   48260ms] hb
+[   48317ms] (10:49:19.631) >> ADC
+[   48357ms] ADC pot=0 pot_mv=0 ntc=2299 ntc_mv=1853 vref=3300
+[   48358ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   48852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   49274ms] hb
+[   49307ms] (10:49:20.620) >> ADC
+[   49335ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   49351ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   49857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   50258ms] hb
+[   50307ms] (10:49:21.620) >> ADC
+[   50332ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   50358ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   50858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   51263ms] hb
+[   51308ms] (10:49:22.621) >> ADC
+[   51324ms] ADC pot=0 pot_mv=0 ntc=2302 ntc_mv=1855 vref=3300
+[   51352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   51858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   52258ms] hb
+[   52313ms] (10:49:23.626) >> ADC
+[   52324ms] ADC pot=0 pot_mv=0 ntc=2298 ntc_mv=1852 vref=3300
+[   52352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   52858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   53260ms] hb
+[   53308ms] (10:49:24.621) >> ADC
+[   53323ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   53353ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   53852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   54258ms] hb
+[   54317ms] (10:49:25.630) >> ADC
+[   54346ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   54362ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   54853ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   55258ms] hb
+[   55307ms] (10:49:26.620) >> ADC
+[   55323ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   55356ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   55858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   56257ms] hb
+[   56301ms] (10:49:27.614) >> ADC
+[   56317ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   56348ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   56854ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   57267ms] hb
+[   57319ms] (10:49:28.632) >> ADC
+[   57341ms] ADC pot=0 pot_mv=0 ntc=2303 ntc_mv=1856 vref=3300
+[   57357ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   57857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   58263ms] hb
+[   58308ms] (10:49:29.621) >> ADC
+[   58330ms] ADC pot=0 pot_mv=0 ntc=2306 ntc_mv=1858 vref=3300
+[   58352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   58858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   59266ms] hb
+[   59301ms] (10:49:30.615) >> ADC
+[   59317ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   59358ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   59851ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   60247ms] hb
+[   60314ms] (10:49:31.627) >> ADC
+[   60324ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   60355ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   60863ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   61258ms] hb
+[   61318ms] (10:49:32.631) >> ADC
+[   61347ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   61347ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   61858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   62268ms] hb
+[   62305ms] (10:49:33.619) >> ADC
+[   62329ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   62351ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   62857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   63265ms] hb
+[   63313ms] (10:49:34.627) >> ADC
+[   63329ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   63353ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   63852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   64259ms] hb
+[   64319ms] (10:49:35.632) >> ADC
+[   64341ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   64357ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   64854ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   65257ms] hb
+[   65302ms] (10:49:36.615) >> ADC
+[   65323ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   65363ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   65858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   66264ms] hb
+[   66307ms] (10:49:37.621) >> ADC
+[   66341ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   66352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   66858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   67258ms] hb
+[   67312ms] (10:49:38.625) >> ADC
+[   67336ms] ADC pot=0 pot_mv=0 ntc=2306 ntc_mv=1858 vref=3300
+[   67353ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   67853ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   68270ms] hb
+[   68307ms] (10:49:39.621) >> ADC
+[   68347ms] ADC pot=0 pot_mv=0 ntc=2306 ntc_mv=1858 vref=3300
+[   68347ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   68846ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   69258ms] hb
+[   69308ms] (10:49:40.622) >> ADC
+[   69337ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   69352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   69858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   70264ms] hb
+[   70306ms] (10:49:41.620) >> ADC
+[   70341ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   70353ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   70853ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   71258ms] hb
+[   71302ms] (10:49:42.616) >> ADC
+[   71319ms] ADC pot=0 pot_mv=0 ntc=2311 ntc_mv=1862 vref=3300
+[   71362ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   71853ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   72270ms] hb
+[   72302ms] (10:49:43.616) >> ADC
+[   72314ms] ADC pot=0 pot_mv=0 ntc=2306 ntc_mv=1858 vref=3300
+[   72346ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   72854ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   73261ms] hb
+[   73309ms] (10:49:44.623) >> ADC
+[   73325ms] ADC pot=0 pot_mv=0 ntc=2296 ntc_mv=1850 vref=3300
+[   73358ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   73858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   74265ms] hb
+[   74307ms] (10:49:45.620) >> ADC
+[   74323ms] ADC pot=0 pot_mv=0 ntc=2307 ntc_mv=1859 vref=3300
+[   74353ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   74857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   75259ms] hb
+[   75307ms] (10:49:46.620) >> ADC
+[   75325ms] ADC pot=0 pot_mv=0 ntc=2305 ntc_mv=1858 vref=3300
+[   75359ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   75858ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   76261ms] hb
+[   76309ms] (10:49:47.622) >> ADC
+[   76335ms] ADC pot=0 pot_mv=0 ntc=2306 ntc_mv=1858 vref=3300
+[   76350ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   76852ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   77258ms] hb
+[   77304ms] (10:49:48.618) >> ADC
+[   77337ms] ADC pot=0 pot_mv=0 ntc=2318 ntc_mv=1868 vref=3300
+[   77352ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   77859ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   78258ms] hb
+[   78312ms] (10:49:49.626) >> ADC
+[   78329ms] ADC pot=0 pot_mv=0 ntc=2304 ntc_mv=1857 vref=3300
+[   78353ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   78857ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   79258ms] hb
+[   79308ms] (10:49:50.622) >> ADC
+[   79336ms] ADC pot=0 pot_mv=0 ntc=2306 ntc_mv=1858 vref=3300
+[   79353ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   79846ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   80258ms] hb
+[   80353ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   80853ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   81008ms] ===== M6 pot retry end =====

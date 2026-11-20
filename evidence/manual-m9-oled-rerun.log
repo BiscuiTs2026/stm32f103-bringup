@@ -1,0 +1,146 @@
+﻿
+[   168ms] ===== M9 oled rerun 2026-11-20 10:54:50.728 port=COM11 (9 s per pattern, 10 s live) =====
+[   317ms] (10:54:50.877) >> OLED test
+[   431ms] OLED test ok ms=98 col=4 live=off af=0 berr=0 to=0
+[   992ms] hb
+[   2004ms] hb
+[   3010ms] hb
+[   4001ms] hb
+[   5004ms] hb
+[   5993ms] hb
+[   7004ms] hb
+[   7991ms] hb
+[   9004ms] hb
+[   9308ms] (10:54:59.868) >> OLED show
+[   9427ms] OLED show ok ms=98 col=4 live=off af=0 berr=0 to=0
+[   9993ms] hb
+[   10998ms] hb
+[   11998ms] hb
+[   13010ms] hb
+[   14010ms] hb
+[   15010ms] hb
+[   16006ms] hb
+[   17010ms] hb
+[   18015ms] hb
+[   18300ms] (10:55:08.860) >> OLED frame
+[   18415ms] OLED frame ok ms=98 col=4 live=off af=0 berr=0 to=0
+[   19003ms] hb
+[   20004ms] hb
+[   20992ms] hb
+[   21993ms] hb
+[   23019ms] hb
+[   24004ms] hb
+[   24992ms] hb
+[   26014ms] hb
+[   27006ms] hb
+[   27301ms] (10:55:17.862) >> OLED col 0
+[   27317ms] OLED col=0 ok redraw=frame
+[   27416ms] OLED redraw ok ms=98 col=0 live=off af=0 berr=0 to=0
+[   27990ms] hb
+[   29004ms] hb
+[   29993ms] hb
+[   30998ms] hb
+[   32005ms] hb
+[   33005ms] hb
+[   33994ms] hb
+[   35002ms] hb
+[   36010ms] hb
+[   36316ms] (10:55:26.877) >> OLED col 1
+[   36330ms] OLED col=1 ok redraw=frame
+[   36423ms] OLED redraw ok ms=98 col=1 live=off af=0 berr=0 to=0
+[   36991ms] hb
+[   37994ms] hb
+[   38989ms] hb
+[   40006ms] hb
+[   41006ms] hb
+[   41994ms] hb
+[   42999ms] hb
+[   43994ms] hb
+[   45006ms] hb
+[   45322ms] (10:55:35.883) >> OLED col 2
+[   45338ms] OLED col=2 ok redraw=frame
+[   45428ms] OLED redraw ok ms=98 col=2 live=off af=0 berr=0 to=0
+[   45994ms] hb
+[   46989ms] hb
+[   47994ms] hb
+[   48994ms] hb
+[   49989ms] hb
+[   51005ms] hb
+[   51994ms] hb
+[   52994ms] hb
+[   53989ms] hb
+[   54300ms] (10:55:44.861) >> OLED col 3
+[   54322ms] OLED col=3 ok redraw=frame
+[   54411ms] OLED redraw ok ms=98 col=3 live=off af=0 berr=0 to=0
+[   54989ms] hb
+[   55999ms] hb
+[   56994ms] hb
+[   57989ms] hb
+[   58993ms] hb
+[   59991ms] hb
+[   60993ms] hb
+[   61989ms] hb
+[   62994ms] hb
+[   63317ms] (10:55:53.878) >> OLED col 4
+[   63333ms] OLED col=4 ok redraw=frame
+[   63438ms] OLED redraw ok ms=98 col=4 live=off af=0 berr=0 to=0
+[   63993ms] hb
+[   65005ms] hb
+[   66000ms] hb
+[   66990ms] hb
+[   67989ms] hb
+[   68988ms] hb
+[   70006ms] hb
+[   71000ms] hb
+[   71994ms] hb
+[   72300ms] (10:56:02.862) >> OLED live on
+[   72317ms] OLED live=on period=500ms
+[   72417ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   72912ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   72989ms] hb
+[   73416ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   73911ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   73988ms] hb
+[   74409ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   74918ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   74990ms] hb
+[   75411ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   75908ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   76000ms] hb
+[   76412ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   76905ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   76989ms] hb
+[   77422ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   77917ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   77994ms] hb
+[   78411ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   78911ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   78993ms] hb
+[   79413ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   79911ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   79989ms] hb
+[   80405ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   80907ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   80989ms] hb
+[   81416ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   81911ms] OLED live ok ms=98 col=4 af=0 berr=0 to=0
+[   82000ms] hb
+[   82306ms] (10:56:12.868) >> OLED live off
+[   82328ms] OLED live=off
+[   82989ms] hb
+[   83993ms] hb
+[   84991ms] hb
+[   85995ms] hb
+[   86300ms] (10:56:16.863) >> OLED dump
+[   86326ms] OLED dump mode=off screen=live
+[   86327ms] OLED L0=MODE=LIVE    UP=1480S
+[   86327ms] OLED L1=NOW : IDLE           
+[   86327ms] OLED L2=LAST: OLED frame     
+[   86327ms] OLED L3=RH=50.9 T=20.8C
+[   86328ms] OLED L4=NTC=2306 POT=   0
+[   86328ms] OLED L5=K1=    0 K2=    0
+[   86328ms] OLED L6=I2C af= 0 berr= 0
+[   86328ms] OLED L7=LIVE ms= 98
+[   87002ms] hb
+[   87990ms] hb
+[   88511ms] ===== M9 oled rerun end =====

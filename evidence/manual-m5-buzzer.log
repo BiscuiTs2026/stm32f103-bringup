@@ -1,0 +1,39 @@
+﻿
+[   173ms] ===== M5 buzzer start 2026-11-20 10:42:13.630 port=COM11 (1000, 2000@50, 2700, off, stat) =====
+[   223ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   311ms] (10:42:13.767) >> PWM buz 1000
+[   328ms] PWM buz ok freq=1000Hz duty=20%
+[   722ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1140ms] hb
+[   1221ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1714ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2144ms] hb
+[   2216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2311ms] (10:42:15.767) >> PWM buz 2000 50
+[   2324ms] PWM buz ok freq=2000Hz duty=50%
+[   2722ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3145ms] hb
+[   3221ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3726ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4131ms] hb
+[   4227ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4315ms] (10:42:17.772) >> PWM buz 2700
+[   4331ms] PWM buz ok freq=2702Hz duty=20%
+[   4722ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5133ms] hb
+[   5217ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5722ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6144ms] hb
+[   6221ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6312ms] (10:42:19.768) >> PWM buz off
+[   6328ms] PWM buz off ok
+[   6723ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7141ms] hb
+[   7218ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7717ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7801ms] (10:42:21.257) >> PWM stat
+[   7812ms] PWM stat servo=90.0c pulse=1500us buz=off
+[   8129ms] hb
+[   8216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8718ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9022ms] ===== M5 buzzer end =====
