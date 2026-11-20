@@ -1779,7 +1779,7 @@
 | --- | --- |
 | 能证明什么 | 模型 core 与板端 port 打通；编译、链接、烧录校验通过；检查器无新增；`RELAY` / `TRACK` 的命令文本与历史日志逐字一致 |
 | 不能证明什么 | relay 的物理吸合声、触点通断与极性**未验证**；track 的遮挡动态**本轮未复测**。relay/track 本轮没有独立实测，验收只到"编译通过、检查器通过、原有命令行为不变" |
-| 遗留 | `src/port/stm32f1/pm_relay_stm32f1.c` 已移出构建但**未删除**（无本轮删除授权，文件内仍是旧 `pm_relay_init(void)` API）；待批准后清理 |
+| 遗留 | `src/port/stm32f1/pm_relay_stm32f1.c` 曾移出构建但未删除；**2026-11-20 已按授权删除**（§136，回收站可恢复）。relay 当前实现为 `src/core/pm_relay.c` + `pm_gpio` 的 `BOARD_GPIO_RELAY`（PB5） |
 ## 133. sonar 真正上板（PM_ENABLE_SONAR=ON）：DWT 时基、优先级 5、DIST/ENC 并发
 
 | 项 | 内容 |
@@ -1878,3 +1878,17 @@ HELP RELAY=on/off/stat, PB5 relay coil
 HELP MOTOR=fwd/rev/stop/brake/duty/stat, PA0/PA1 TIM2 PWM
 HELP KEYS=key press counters, clears them
 ```
+
+## 136. 删除旧 relay port `pm_relay_stm32f1.c`
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 16:3x |
+| 授权 | 用户明确授权删除（"该不该删你自己决定…完全有益且并非不可撤回"）；文件进回收站，可恢复 |
+| 删前核查 | `git status` 干净（HEAD `997b38a`）；全仓仅 `PATCHES.md`（历史表）、`INDEX.md`（§132 遗留行）、`evidence/s10-stale-refs*.txt`（历史扫描输出）提到该文件；`CMakeLists.txt` 与 `.arch-roles` 无引用；`#include` 无；旧 API `pm_relay_get()` 无调用者，`pm_relay_set(int)` 只在该文件内，模型侧同名 `pm_relay_set(pm_relay_t*,bool)` 由 `pm_relay.c` 提供且无冲突 |
+| 现状路径 | relay 当前实现：`src/core/pm_relay.c`（模型 core）+ `pm_gpio` 逻辑引脚 `BOARD_GPIO_RELAY`（PB5，active high）；旧文件里的寄存器写法不再保留 |
+| 重建 | 新目录 `build-clean-final2`（不复用 `build-motor-integ*`）：Ninja **64/64 步全部通过**（57 个 C 对象 + 1 个 ASM 对象 + 链接/产物步骤），0 error；警告只有 libc_nano 的 `_close/_lseek/_read/_write` 与 RWX LOAD（存量） |
+| 体积 | **FLASH 31324 B（47.80%）/ RAM 5448 B（26.60%）**，与删除前逐字节相同（该文件本就不在构建里），未增 |
+| 检查器 | `--version --lock tools/CHECKER.lock` → 3.4.0 / `4da1a77` / `[LOCK] 一致`；`--glue-max-lines 86` → **0 ERROR / 4 WARN**（存量） |
+| 文档 | `INDEX.md` §132 遗留行改为"已删除"；`PATCHES.md` 与历史扫描输出按史实保留；README 的 `build-arm` 示例尺寸同步为 31324/5448，并修正"DIST 已停用"旧表述 |
+| 遗留 | `build-clean-final/` 是首次配置失败留下的空目录（相对路径 toolchain 写法问题），未删除；有效构建在 `build-clean-final2/` |

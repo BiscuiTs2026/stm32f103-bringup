@@ -17,7 +17,7 @@
 
 一套按"接口契约优先"方式组织的 STM32F1 外设代码：上层只依赖 `include/pm/` 里的公共 API，芯片相关的一切都收敛在 port 层。目标是换板子只改一张引脚表，换芯片只换一个 port 目录，核心逻辑永远能在主机上跑单测。
 
-当前处于 **上板验证阶段**：`pm_*` 契约层覆盖 GPIO、UART、PWM、输入侧、继电器与电机（`pm_pwm.h`、`pm_track.h`、`pm_encoder.h`、`pm_relay.h`、`pm_motor.h`）。原先留在 APP 胶水里的部分已在 S3–S10 拆分中下沉：USART2/USART3 共享解析与空闲帧判定在 `src/components/pm_cmd/`，`HELP`/`PING`/`STAT`/`I2C` 回包在 `src/components/sys_cmds/`，AHT20 在 `src/components/aht20_dev/`，OLED 调度与显示在 `src/components/oled_ui/`、`oled_ch1116/`，测距作业在 `src/components/sonar_dev/`（DIST 已停用，见验证状态表）；`src/app/main.c` 只剩初始化、主循环与钩子绑定。
+当前处于 **上板验证阶段**：`pm_*` 契约层覆盖 GPIO、UART、PWM、输入侧、继电器与电机（`pm_pwm.h`、`pm_track.h`、`pm_encoder.h`、`pm_relay.h`、`pm_motor.h`）。原先留在 APP 胶水里的部分已在 S3–S10 拆分中下沉：USART2/USART3 共享解析与空闲帧判定在 `src/components/pm_cmd/`，`HELP`/`PING`/`STAT`/`I2C` 回包在 `src/components/sys_cmds/`，AHT20 在 `src/components/aht20_dev/`，OLED 调度与显示在 `src/components/oled_ui/`、`oled_ch1116/`，测距作业在 `src/components/sonar_dev/`（默认 OFF、`DIST` 回 `disabled`；`PM_ENABLE_SONAR=ON` 时可用，见验证状态表）；`src/app/main.c` 只剩初始化、主循环与钩子绑定。
 
 ---
 
@@ -92,7 +92,7 @@ cmake -S . -B build-arm -G Ninja `
 cmake --build build-arm
 ```
 
-换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（31248 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（默认 `PM_ENABLE_SONAR=OFF` 时 **31248 B / 5448 B**，来源：2026-11-20 `build-relay-track`，接入模型 `pm_pwm`/`pm_motor`/`pm_encoder`/`pm_relay`/`pm_track` core 后的实测；较仅接电机时 30168 B / 5376 B 为 +1080 B / +72 B，较接入模型前 28644 B / 5296 B 为 +2604 B / +152 B。`-DPM_ENABLE_SONAR=ON` 的旧口径本轮未复测）。
+换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（31324 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（默认 `PM_ENABLE_SONAR=OFF` 时 **31324 B / 5448 B**，来源：2026-11-20 `build-relay-track`，接入模型 core、新增 `MOTOR brake` 与 `HELP` 644 B 后的实测；`-DPM_ENABLE_SONAR=ON` 为 **32084 B / 5472 B**，未含 `brake`/HELP 的 +8 B）。
 
 烧录（ST-Link，带校验、烧完复位）：
 
