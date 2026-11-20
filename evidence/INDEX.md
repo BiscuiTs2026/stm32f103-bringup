@@ -1,7 +1,7 @@
 ﻿# 上板抓包证据登记表
 
 本目录是 `2026-11-18/board-bringup/work` 这一轮上板验证留下的串口抓包归档。
-登记表按 §1–§147 编号（正文逐条给出）：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
+登记表按 §1–§148 编号（正文逐条给出）：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
 根目录原件保留（`PATCHES.md` 里的路径引用仍然有效），但根目录副本被 `.gitignore` 忽略，
 只有本目录的副本进版本库；第 10–23 个（`retest-20261119*.log`、`dist-probe-20261119-*.log`、
 `autolive-20261119*.log`、`adc-20261119-*.log`）是 2026-11-19 复测与排查时**直接写在本目录**的，
@@ -18,7 +18,7 @@
 60 s live 窗口（含 RH/T 行变化与忙态两例）；第 66 项是同一固件的烧录回读校验。
 第 67–145 项继续登记 S6–S10 拆分、契约对齐、模型 core 接入、sonar/舵机人工验收、
 v0.8.0 claim 表与最终固件的构建/烧录/诊断取证；第 146 项是文档对齐任务新建的 HEAD OFF 构建（构建核算，见文末），第 147 项是同一 OFF 构建的
-上板烧录与 `HELP` 串口实测（结清 `TECH_DEBT.md` D26）。
+上板烧录与 `HELP` 串口实测（结清 `TECH_DEBT.md` D26）；第 148 项是 `MOTOR force` 运行中注入与 `err=precond`/`err=restore` 的板端取证（后两条未能构造）。
 
 ## 怎么读这些日志
 
@@ -2063,3 +2063,18 @@ HELP KEYS=key press counters, clears them
 | 计字节方法 | 逐行累加实际收到的 `HELP ` 行长度 + 2（CRLF），剔除 `hb`/`OLED live` 等旁路行；不按气泡个数 |
 | 结论 | OFF 654 B 与 §146 核算值逐字节一致，D26 结清；最终板上为 v1.0.0 **ON** 发布版（35968 / 6048） |
 | 后续（用户现场观察） | 追加于 2026-11-20：`v1.0.0` ON 版刚烧完时 `DIST` 回 `err=timeout`（见上，保留原记录）；用户重新插紧超声模块后再次发 `DIST`，恢复正常读数。据此判定当时的超时是模块接触/前方无反射所致，**不是 v1.0.0 固件的缺陷**。**本条为用户口述的现场观察，不是本会话的串口取证；未记录具体读数（用户未提供数值）。** |
+
+## 148. `MOTOR force` 运行中注入与 `err=precond` / `err=restore` 板端取证（2026-11-20 23:47）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 23:47（COM11 115200 8N1；板子为 v1.0.0 ON 35968/6048，未重烧） |
+| 目的 | 补齐 `MOTOR force` 未在板上跑过的路径：运行中注入、`err=precond`、`err=restore` |
+| 判据（源码） | `pm_f1_tim2_force_fault()`：precond 为 `mode>1` / `s_t2.opened!=0x03` / `pm_timer_claims(TIM2)!=2` / 两条 claim 的 owner/role 不符（返回 -1）；restore 为注入后重申请两条 claim 的 `n_after != n_before`（返回 -2） |
+| 运行中 `force timer` | 前置 `MOTOR fwd 30`（`ccr1=1080`）。回包原文：`MOTOR err=timer`、`MOTOR force mode=cen bits=1 claims=2->2`。注入后立即 `MOTOR stat` 仍 `dir=fwd duty=30% ... ccr1=1080`（PWM 未停在半路）；`MOTOR stop` 后 `ccr1=0`；`MOTOR claims t2=2 o=33/34`；`PWM dbg mapr=0x00000000` → 自洽 |
+| 运行中 `force remap` | 同上；回包原文：`MOTOR err=remap`、`MOTOR force mode=remap bits=2 claims=2->2`。注入后仍 `dir=fwd duty=30%`，`stop` 后归零，claims/mapr 同上 → 自洽 |
+| `err=precond` | **未能构造**。boot 的 `motor_dev_init()` 已把两路开满（`stop` 后 force 仍是 `claims=2->2`）；命令面无 close，`MOTOR conflict` / `MOTOR busy` 之后 `MOTOR claims` 仍 `t2=2 t3=0 t4=1`，无法制造 `opened!=3`、claim 数≠2 或条目不符 |
+| `err=restore` | **未能构造**。注入流程先释放两条 claim，再在单线程内重新申请；表上限 8、板上仅 3 条占用，重申请必然成功，`n_after` 不可能不等于 `n_before`，该分支是防御路径 |
+| 残留检查 | 全部命令结束后 `MOTOR stat dir=stop duty=0`、`MOTOR claims t2=2 o=33/34`、`PWM dbg mapr=0x00000000`；无故障注入位残留 |
+| 日志 | `evidence/v1.0.0-motor-force-branches.log`、`evidence/v1.0.0-motor-force-postinject.log` |
+| 结论 | 运行中注入（timer/remap）已验证且状态自洽；precond/restore 未能构造，登记 `TECH_DEBT.md` D27 |

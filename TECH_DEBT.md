@@ -49,6 +49,7 @@
 | D24 | 诊断命令副作用说明（非检查器命中，非缺陷） | `oled_ch1116_service()`、`oled_ch1116_set_col_offset()`、`OLED col` 处理 | 每次页写只从当前 offset 起写 128 字节，改变 offset 后窗口外的 RAM 列保留旧内容 | **触发条件是主动用 `OLED col n` 切档**；缺省 col=2 时窗口盖满玻璃 RAM2..129，不可能出现；用户已确认不算缺陷 | **已消除（2026-11-20）**：新增 `oled_ch1116_clear_all()`，`OLED col` 切档后先清全 RAM 再重画，竖边不再出现（用户目视确认） |
 | D25 | 检查器版本漂移（工具链，不属代码缺陷） | `tools/CHECKER.lock`、`tools/check_layering.py` | 本仓锁已升到上游 `4da1a77`（checker-version 3.4.0），2026-11-20 同步；此前锁在 `7facd2b`（3.3.1） | 3.3.1→3.4.0 只新增第 28 项 `feature_gate`；本仓 `.arch-roles` 无 `feature` 声明，该项报 0；复跑 `--glue-max-lines 86` 仍 `0 ERROR / 3 WARN`，3 条 WARN 与升级前逐条相同（`pm_port_stm32f1.c:352/362/374`） | **已升级（2026-11-20）**：锁、文件、README 同源；是否继续跟随上游按需再定 |
 | D26 | 验证边界（非检查器命中） | `docs/PROTOCOL.md` §4.1 `HELP` 字节说明；`README.md` 尺寸/`HELP` 行；`evidence/INDEX.md` §146、§147 | OFF 构建 `HELP` 15 行 **654 B**：2026-11-20 23:07 上板实测（`build-doc-align`，COM11 115200 8N1），与构建核算一致 | 登记时无板，仅从 ELF 核算；本次烧 OFF 后实测 654 B 吻合，`DIST err=disabled` 证明确为 OFF 版 | **已结清（2026-11-20 23:07）**：OFF 654 B、ON 660 B 均上板实测，两次烧录均 `Download verified successfully`，证据见 `evidence/INDEX.md` §147 |
+| D27 | 验证边界（非检查器命中） | `motor_dev.c` 的 `reply_force()`；`pm_pwm_tim2_stm32f1.c` 的 `pm_f1_tim2_force_fault()`；`evidence/INDEX.md` §148 | `err=precond`（返回 -1）与 `err=restore`（返回 -2）两条回包路径**仍未在板上触发**；运行中注入 timer/remap 已实测且自洽 | precond 需 `s_t2.opened != 0x03`、TIM2 claim 数≠2 或条目不符，但 boot 已开满两路且命令面无 close；restore 需注入后重申请失败，单线程下释放两条后必然成功 | **开放**：若要覆盖，需另立任务加调试钩子或用调试器改 RAM；本轮按“未能构造”记录，不改源码 |
 
 ### D23 按键轮询被 OLED 整页 I2C 阻塞（2026-11-20 登记，待处理）
 
@@ -117,6 +118,28 @@
 - 证据：`evidence/v1.0.0-off-help-serial.log`、`evidence/v1.0.0-on-help-serial.log`、
   `evidence/INDEX.md` §147。
 - 结论：654 B 与登记值吻合，**结清**；文档中 OFF `HELP` 一律按上板实测表述。
+
+### D27 `MOTOR force` 的 `err=precond` / `err=restore` 未能构造（2026-11-20 登记）
+
+- 条款/归属：验证边界（非检查器命中）。三条未跑过的路径中，运行中注入已实测，这两条仍只在源码里。
+- 位置（按符号）：`reply_force()`（`src/components/motor_dev/motor_dev.c`）；
+  `pm_f1_tim2_force_fault()`（`src/port/stm32f1/pm_pwm_tim2_stm32f1.c`）。
+- 判据：precond 返回 -1 的条件是 `mode > 1`、`s_t2.opened != 0x03`、
+  `pm_timer_claims(TIM2) != 2`、或两条 claim 的 owner/role 与 `owner_of(0/1)` 不符；
+  restore 返回 -2 的条件是注入结束后重申请两条 claim 的 `n_after != n_before`。
+- 板上尝试（2026-11-20 23:47，v1.0.0 ON，COM11）：
+  - `MOTOR stop` 后连续 `MOTOR force timer` / `force remap` 均走成功路径（`claims=2->2`），
+    说明 `s_t2.opened` 与 claim 数在正常命令面不会被打破；
+  - `MOTOR conflict` / `MOTOR busy` 之后 `MOTOR claims` 仍 `t2=2 t3=0 t4=1`，无残留。
+- 为什么构造不出来：
+  - precond：`motor_dev_init()` 在 boot 时已把 TIM2 两路打开，命令面没有 close；
+    claim 表只有 motor 两路与 TIM4 舵机一条，无法制造数量或条目不符。
+  - restore：注入过程先释放两条 claim，随后在同一线程内重申请；表上限 8、
+    板上占用 3，重申请必然成功，`n_after` 恒等于 `n_before`，该分支是防御代码。
+- 若要覆盖：需另立任务加调试钩子（如隐藏参数强制失败）或用调试器改 RAM；
+  本轮按“未能构造”记录，不改源码。
+- 证据：`evidence/INDEX.md` §148；日志 `evidence/v1.0.0-motor-force-branches.log`、
+  `evidence/v1.0.0-motor-force-postinject.log`。
 
 ### 附：边界与撤销条件
 

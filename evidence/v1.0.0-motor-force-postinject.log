@@ -1,0 +1,65 @@
+===== v1.0.0 ON MOTOR force post-inject state 2026-11-20 23:47:22 (COM11 115200 8N1) =====
+-- timer: stat taken right after injection, before stop --
+[+14ms] >>> MOTOR fwd 30
+[+388ms]     MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[+389ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+389ms] >>> MOTOR force timer
+[+650ms]     MOTOR err=timer
+[+651ms]     MOTOR force mode=cen bits=1 claims=2->2
+[+652ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+653ms] >>> MOTOR stat
+[+965ms]     MOTOR stat dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[+966ms]     DIST live cm=67.7 us=3928
+[+968ms] >>> MOTOR claims
+[+1321ms]     MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04
+[+1322ms]     hb
+[+1323ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+1323ms] >>> MOTOR stop
+[+1629ms]     MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+1631ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+1631ms] >>> MOTOR stat
+[+1988ms]     MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+1989ms]     DIST live cm=70.8 us=4107
+-- remap: stat taken right after injection, before stop --
+[+1989ms] >>> MOTOR fwd 30
+[+2344ms]     MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[+2344ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+2346ms] >>> MOTOR force remap
+[+2599ms]     MOTOR err=remap
+[+2600ms]     MOTOR force mode=remap bits=2 claims=2->2
+[+2601ms] >>> MOTOR stat
+[+2910ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+2911ms]     MOTOR stat dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[+2911ms]     DIST live cm=70.8 us=4107
+[+2911ms] >>> MOTOR claims
+[+3267ms]     MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04
+[+3268ms]     hb
+[+3268ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+3269ms] >>> MOTOR stop
+[+3571ms]     MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+3573ms] >>> MOTOR stat
+[+3926ms]     MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+3928ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+3928ms]     DIST live cm=57.1 us=3314
+-- claim-table perturbation attempts (conflict/busy must leave t2=2) --
+[+3930ms] >>> MOTOR conflict
+[+4289ms]     MOTOR conflict t2=conflict t4=ok rel=ok
+[+4289ms]     hb
+[+4290ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+4290ms] >>> MOTOR claims
+[+4654ms]     MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04
+[+4654ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+4655ms] >>> MOTOR busy
+[+5010ms]     MOTOR busy t3=ok rel=ok
+[+5011ms]     DIST live cm=58.4 us=3388
+[+5012ms]     hb
+[+5012ms] >>> MOTOR claims
+[+5370ms]     MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04
+[+5370ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+5371ms] >>> PWM dbg
+[+5721ms]     PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000015 arr=0x0000FFAD ccmr2=0x00000068 ccer=0x00000100 ccr3=0x0000132D cnt0=18380 cnt1=16783 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[+5721ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+5722ms] >>> MOTOR stat
+[+6088ms]     MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+6089ms]     DIST live cm=59.7 us=3464
+[+6089ms]     hb

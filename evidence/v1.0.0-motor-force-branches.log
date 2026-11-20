@@ -1,0 +1,94 @@
+===== v1.0.0 ON MOTOR force branches 2026-11-20 23:46:36 (COM11 115200 8N1) =====
+-- baseline --
+[+14ms] >>> MOTOR stat
+[+427ms]     MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+427ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+427ms] >>> MOTOR claims
+[+846ms]     MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04
+[+847ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+847ms]     DIST live cm=61.1 us=3546
+[+847ms] >>> PWM dbg
+[+1249ms]     PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000015 arr=0x0000FFAD ccmr2=0x00000068 ccer=0x00000100 ccr3=0x0000132D cnt0=46521 cnt1=44859 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[+1250ms]     hb
+[+1251ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+-- run: MOTOR force timer while duty=30% --
+[+1251ms] >>> MOTOR fwd 30
+[+1655ms]     MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[+1656ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+1656ms] >>> MOTOR stat
+[+1966ms]     MOTOR stat dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[+1966ms]     DIST live cm=62.4 us=3622
+[+1968ms] >>> PWM dbg
+[+2276ms]     PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000015 arr=0x0000FFAD ccmr2=0x00000068 ccer=0x00000100 ccr3=0x0000132D cnt0=43548 cnt1=41617 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[+2278ms]     hb
+[+2278ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+2278ms] >>> MOTOR force timer
+[+2541ms]     MOTOR err=timer
+[+2542ms]     MOTOR force mode=cen bits=1 claims=2->2
+[+2543ms] >>> MOTOR stop
+[+2855ms]     MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+2856ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+2856ms]     DIST live cm=63.7 us=3697
+[+2857ms] >>> MOTOR stat
+[+3258ms]     MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+3258ms]     hb
+[+3260ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+3261ms] >>> MOTOR claims
+[+3664ms]     MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04
+[+3665ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+3665ms] >>> PWM dbg
+[+4070ms]     PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000015 arr=0x0000FFAD ccmr2=0x00000068 ccer=0x00000100 ccr3=0x0000132D cnt0=37457 cnt1=35118 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[+4071ms]     DIST live cm=107.8 us=6254
+[+4071ms]     hb
+-- run: MOTOR force remap while duty=30% --
+[+4072ms] >>> MOTOR fwd 30
+[+4475ms]     MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[+4475ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+4476ms] >>> MOTOR stat
+[+4786ms]     MOTOR stat dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[+4787ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+4787ms]     DIST live cm=104.4 us=6054
+[+4788ms] >>> PWM dbg
+[+5094ms]     PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000015 arr=0x0000FFAD ccmr2=0x00000068 ccer=0x00000100 ccr3=0x0000132D cnt0=45893 cnt1=44967 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[+5095ms]     hb
+[+5095ms] >>> MOTOR force remap
+[+5354ms]     MOTOR err=remap
+[+5355ms]     MOTOR force mode=remap bits=2 claims=2->2
+[+5356ms] >>> MOTOR stop
+[+5665ms]     MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+5666ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+5666ms] >>> MOTOR stat
+[+6071ms]     MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+6072ms]     DIST live cm=85.1 us=4934
+[+6072ms]     hb
+[+6072ms] >>> MOTOR claims
+[+6489ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+6490ms]     MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04
+[+6491ms] >>> PWM dbg
+[+6897ms]     PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000015 arr=0x0000FFAD ccmr2=0x00000068 ccer=0x00000100 ccr3=0x0000132D cnt0=17031 cnt1=15559 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[+6897ms]     OLED live ok ms=117 col=2 af=0 berr=0 to=0
+[+6898ms]     DIST live cm=108.7 us=6306
+-- precond attempts after stop (opened/claims unchanged) --
+[+6899ms] >>> MOTOR stop
+[+7209ms]     MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+7210ms]     hb
+[+7211ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+7211ms] >>> MOTOR force timer
+[+7520ms]     MOTOR err=timer
+[+7520ms]     MOTOR force mode=cen bits=1 claims=2->2
+[+7522ms] >>> MOTOR force remap
+[+7834ms]     MOTOR err=remap
+[+7835ms]     MOTOR force mode=remap bits=2 claims=2->2
+[+7836ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+7837ms]     DIST live cm=87.6 us=5081
+[+7837ms] >>> MOTOR claims
+[+8252ms]     MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04
+[+8254ms]     hb
+[+8254ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+8255ms] >>> PWM dbg
+[+8670ms]     PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000015 arr=0x0000FFAD ccmr2=0x00000068 ccer=0x00000100 ccr3=0x0000132D cnt0=3290 cnt1=2516 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[+8671ms]     OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[+8671ms] >>> MOTOR stat
+[+9074ms]     MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[+9075ms]     DIST live cm=71.9 us=4170
+[+9076ms]     hb
