@@ -56,6 +56,7 @@ add_library(pm_core STATIC
     src/common/pm_pwm_math.c
     src/core/pm_pwm.c
     src/core/pm_motor.c
+    src/core/pm_encoder.c
 )
 target_include_directories(pm_core PUBLIC ${PM_ROOT}/include/pm ${PM_ROOT}/include)
 target_compile_options(pm_core PRIVATE

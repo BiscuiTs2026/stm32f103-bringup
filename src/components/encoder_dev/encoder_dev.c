@@ -10,6 +10,15 @@
 static char    s_reply[ENC_REPLY_MAX];
 static uint8_t s_ready;
 
+/* Port-side count snapshot keeps the old dir wording: it is the direction of
+ * the last movement seen, not the direction the shaft has right now. */
+static int32_t s_last_count;
+static int32_t s_last_dir;
+
+#if PM_ENABLE_ENCODER
+static pm_encoder_t s_encoder;
+#endif
+
 static char *put_s(char *p, const char *s)
 {
     while (*s != '\0') {
@@ -55,19 +64,32 @@ static const char *reply_lit(const char *s)
 static const char *reply_stat(void)
 {
 #if PM_ENABLE_ENCODER
-    int32_t  step = pm_encoder_last_step();
-    uint32_t ab   = pm_encoder_ab();
-    char    *p    = put_s(s_reply, "ENC count=");
+    int32_t  count = pm_encoder_count(&s_encoder);
+    int32_t  delta = count - s_last_count;
+    uint8_t  ab    = pm_encoder_last_ab(&s_encoder);
+    bool     down  = false;
+    char    *p;
 
-    p = put_i32(p, pm_encoder_count());
+    if (delta > 0) {
+        s_last_dir = 1;
+    } else if (delta < 0) {
+        s_last_dir = -1;
+    }
+    s_last_count = count;
+
+    (void)pm_encoder_button(&s_encoder, &down);
+
+    p = put_s(s_reply, "ENC count=");
+    p = put_i32(p, count);
     p = put_s(p, " dir=");
-    p = put_s(p, (step > 0) ? "cw" : ((step < 0) ? "ccw" : "idle"));
+    p = put_s(p, (s_last_dir > 0) ? "cw" : ((s_last_dir < 0) ? "ccw" : "idle"));
     p = put_s(p, " a=");
-    p = put_u32(p, ab & 1u);
+    p = put_u32(p, (uint32_t)((ab >> 1) & 1u));
     p = put_s(p, " b=");
-    p = put_u32(p, (ab >> 1) & 1u);
+    p = put_u32(p, (uint32_t)(ab & 1u));
+    /* Old reply printed the raw pin: 1 = released, 0 = pressed. */
     p = put_s(p, " btn=");
-    p = put_u32(p, pm_encoder_button());
+    p = put_u32(p, down ? 0u : 1u);
     p = put_s(p, "\r\n");
     *p = '\0';
     return s_reply;
@@ -109,7 +131,15 @@ static const char *skip_sp(const char *p)
 void encoder_dev_init(void)
 {
 #if PM_ENABLE_ENCODER
-    s_ready = (pm_encoder_init() == 0) ? 1u : 0u;
+    const pm_encoder_cfg_t cfg = {
+        .hw_id      = 0u,
+        .invert     = 0u,
+        .has_button = 1u,
+    };
+
+    s_ready      = (pm_encoder_init(&s_encoder, &cfg) == PM_OK) ? 1u : 0u;
+    s_last_count = 0;
+    s_last_dir   = 0;
 #else
     /* Module not built (decision 0018 §6): no init, no EXTI9_5 ISR. Staying
      * "not ready" reuses the existing ENC err=init reply. */
@@ -136,7 +166,10 @@ const char *encoder_dev_cmd(const char *line)
     }
     if ((ci_eq_n(p, "CLEAR", 5u) != 0) && (p[5] == '\0')) {
 #if PM_ENABLE_ENCODER
-        pm_encoder_reset();
+        (void)pm_encoder_reset(&s_encoder);
+        /* Old pm_encoder_reset kept the last step, so keep the direction and
+         * only rebase the count used for the next delta. */
+        s_last_count = 0;
 #endif
         return reply_lit("ENC clear ok count=0");
     }

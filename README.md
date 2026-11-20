@@ -6,6 +6,7 @@
 `pm_*` 源码是 `BiscuiTs2026/stm32-peripheral-model` 的快照：GPIO/UART 等早期文件对应基线 **`aa342e5`**（v0.1，GPIO + UART）；
 电机链于 2026-11-20 接入模型 **`69a578d`**（v0.7.0）的 `pm_pwm` / `pm_motor` core，逐字并入 6 个文件：
 `include/pm/pm_pwm.h`、`include/pm/pm_pwm_math.h`、`include/pm/pm_motor.h`、`src/core/pm_pwm.c`、`src/core/pm_motor.c`、`src/common/pm_pwm_math.c`（按 git blob 双向核对一致）。
+编码器链同源接入提交 **`69a578d`**（v0.7.0）的 `pm_encoder` core，逐字并入 `include/pm/pm_encoder.h`、`src/core/pm_encoder.c`，并把 `include/pm/pm_err.h`、`src/core/pm_err.c` 同步到同一提交（补 `PM_ERR_DISABLED` / `PM_ERR_NACK` / `PM_ERR_BUS`），共 4 个文件按 git blob 双向核对一致；板端 port 为自有实现（EXTI9_5 优先级仍为 4），组件层改调模型 API，`ENC` 回包文本不变。
 板端原有舵机/蜂鸣器 API 已整体迁到 `include/pm/pm_servo.h`（仅改 include guard 与 `pm_pwm_init`→`pm_servo_init`，函数语义不变）。
 早期 GPIO/UART 复制发生在 `aa342e5` 成型前的工作树中间态——7 个 GPIO/UART 文件与该提交逐字节相同，
 `include/pm/pm_port.h` 少 167 行 SPI 声明；凡涉及 `pm_*` 契约的漂移，**以模型仓为准**，按 `PATCHES.md` 回同步。
@@ -26,8 +27,8 @@
 | 项目 | 状态 | 证据 / 数字 |
 | --- | --- | --- |
 | 交叉编译 | 通过 | `arm-none-eabi-gcc 14.3.1`，`-Wall -Wextra -Wshadow`，项目代码无警告 |
-| 尺寸 | 通过 | Flash **30168 B / 64 KB（46.03%）**，RAM **5376 B / 20 KB（26.25%）**（**接入模型 `pm_pwm` / `pm_motor` core 后的默认配置实测**，`PM_ENABLE_SONAR=OFF`，来源：2026-11-20 `build-motor-integ` 构建输出；较接入前 28644 B / 5296 B 为 **+1524 B / +80 B**；`-DPM_ENABLE_SONAR=ON` 的旧口径 29152 B / 5320 B 本轮未复测） |
-| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（30168 B）、`.hex`、`.map` |
+| 尺寸 | 通过 | Flash **30740 B / 64 KB（46.91%）**，RAM **5408 B / 20 KB（26.41%）**（**接入模型 `pm_pwm` / `pm_motor` / `pm_encoder` core 后的默认配置实测**，`PM_ENABLE_SONAR=OFF`，来源：2026-11-20 `build-enc-integ2` 构建输出；较仅接电机时 30168 B / 5376 B 为 **+572 B / +32 B**；较接入模型前 28644 B / 5296 B 为 **+2096 B / +112 B**；`-DPM_ENABLE_SONAR=ON` 的旧口径本轮未复测） |
+| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（30740 B）、`.hex`、`.map` |
 | 主机单测 | 通过 | 175 项断言，0 失败（MSVC 19.51，C11；来源：`evidence/timebase-hosttest.log`，2026-11-20） |
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
@@ -41,7 +42,7 @@
 | ADC1 | **部分通过** | PA5 电位器静态 2124–2126（30 次极差 2 LSB）；PA4 NTC 升温 raw 2293→1792、降温回升，判定 NTC 在分压低端（§28）。**电位器转动响应未验证：缺十字螺丝刀** |
 | PWM 舵机 / 蜂鸣器 | **部分通过** | PB8 五档脉宽 500/1000/1500/2000/2500 µs 与回包一致；`PWM dbg` 实测 `psc=71`、`fpwm=50.0Hz`、`CCR3` 0/180→500/2500（§32）。**舵机"有动作"已由用户目视确认；角度精度、到位抖动/回弹、带负载表现未验证；蜂鸣器听感未采集**（§30.3） |
 | 循迹 PB14 | **部分通过** | 盖黑物 2 轮：`TRACK raw=1` → `raw=0` → `raw=1`，同状态内无跳变（1.78 s 采样，§31.3）。**只有一路，单路遮挡与全黑不可区分** |
-| 编码器 PA8/PA9 + 按键 PB15 | **部分通过** | `ENC` 双向计数 0→89→−32，cw 为正、ccw 为负，`ENC clear` 正常（§31.3）；2026-11-20 手转复测逆 24→−12、顺 −12→24 精确回零，`btn` 1→0→1 跟随按压约 3.5 s（`evidence/manual-m8-encoder.log`）。**符号与物理转向的对应未目视确认；`dir` 停手后保持最后一次方向、不回落 `idle`** |
+| 编码器 PA8/PA9 + 按键 PB15 | **部分通过** | `ENC` 双向计数 0→89→−32，cw 为正、ccw 为负，`ENC clear` 正常（§31.3）；2026-11-20 手转复测逆 24→−12、顺 −12→24 精确回零，`btn` 1→0→1 跟随按压约 3.5 s（`evidence/manual-m8-encoder.log`）。同日编码器链改走模型 `pm_encoder` core（板端 port 自有实现、EXTI9_5 优先级仍 4，组件改调模型 API，回包文本不变），上电 `ENC` 回包与基线逐字相同（`count=0 dir=idle a=1 b=1 btn=1`，`evidence/manual-m8-encoder-model.log`）；**本轮两次抓包窗口（60 s + 90 s）无人工转轮，改走模型后的动态计数轨迹与 `btn` 跟随未复测，记为未验证**。**符号与物理转向的对应未目视确认；`dir` 停手后保持最后一次方向、不回落 `idle`** |
 | 继电器 PB5 | **部分通过** | `RELAY stat/on/off` 三轮 `pb5=` 读回与请求一致（§34.3、`evidence/relay-20261119-a.log`）。**吸合"咔哒"声、触点通断、高电平=吸合的极性未验证**（§34.4） |
 | 电机 DRV8833（PA0/PA1） | **部分通过** | 2026-11-19：`MOTOR fwd/rev/stop/duty` 的 `ccr1/ccr2` 组合、`duty` 0/100/101 边界与错误分支全部与寄存器读回一致（§35.3、`evidence/motor-20261119-a.log`）；初始化另做 10‰ 时基复核与 TIM2 占用探测，失败回 `err=timer` / `err=remap`。2026-11-20：电机链改走模型 `pm_pwm` / `pm_motor` core（port 新增 TIM2 PWM ops），同一 M4 序列复跑**逐条一致**（`evidence/motor-20261120-a.log`），烧录带回读校验（`evidence/motor-20261120-flash.log`）；舵机链路因头文件迁移复跑五档脉宽与 `PWM dbg`，与既有证据**逐条一致**（`evidence/pwm-20261120-a.log`）。**电机是否真转、`fwd/rev` 对应的轴方向、转速随占空比的变化未验证**（§35.4）；`MOTOR dbg` 与 live 60 s 浸泡本轮未复跑，记为**未验证**、不回填为通过 |
 | SPI | **未验证** | 无实际器件；只有 HAL 源与默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现 |
@@ -90,7 +91,7 @@ cmake -S . -B build-arm -G Ninja `
 cmake --build build-arm
 ```
 
-换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（30168 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（默认 `PM_ENABLE_SONAR=OFF` 时 **30168 B / 5376 B**，来源：2026-11-20 `build-motor-integ`，接入模型 core 后的实测；较接入前 28644 B / 5296 B 为 +1524 B / +80 B。`-DPM_ENABLE_SONAR=ON` 的旧口径 29152 B / 5320 B 本轮未复测）。
+换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（30740 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（默认 `PM_ENABLE_SONAR=OFF` 时 **30740 B / 5408 B**，来源：2026-11-20 `build-enc-integ2`，接入模型 `pm_pwm`/`pm_motor`/`pm_encoder` core 后的实测；较仅接电机时 30168 B / 5376 B 为 +572 B / +32 B，较接入模型前 28644 B / 5296 B 为 +2096 B / +112 B。`-DPM_ENABLE_SONAR=ON` 的旧口径本轮未复测）。
 
 烧录（ST-Link，带校验、烧完复位）：
 
@@ -131,7 +132,7 @@ python tools/check_layering.py . --glue-max-lines 86                 # 扫描
 
 **ERROR 必须为 0（否则 CI 红）；WARN 只打印、不判失败。**
 
-当前 3 条 WARN 是同一种、也是设计使然：`src/port/stm32f1/pm_port_stm32f1.c` 的 UART 中断里调用 `pm_uart_hw_rx_byte` / `pm_uart_hw_tx_complete` / `pm_uart_hw_error`。中断服务留在端口层，只把字节和事件递给 `src/core/pm_uart.c` 的钩子，正落在检查器第 4 项“bsp 调组件 ISR 钩子”的 WARN 分支上；确认仅中断上下文使用即可，既不升级成 ERROR 也不隐藏。
+当前 4 条 WARN 是同一种、也是设计使然：`src/port/stm32f1/pm_port_stm32f1.c` 的 UART 中断里调用 `pm_uart_hw_rx_byte` / `pm_uart_hw_tx_complete` / `pm_uart_hw_error`，以及 `src/port/stm32f1/pm_encoder_stm32f1.c` 的 EXTI9_5 中断里调用 `pm_encoder_hw_edge`。中断服务留在端口层，只把字节/事件/AB 电平递给 `src/core/pm_uart.c`、`src/core/pm_encoder.c` 的钩子，正落在检查器第 4 项“bsp 调组件 ISR 钩子”的 WARN 分支上；确认仅中断上下文使用即可，既不升级成 ERROR 也不隐藏。
 
 扫描耗时（本机 Windows，同一棵树）：检查器 3.0 无 ignore **24.1 s**；3.2.0 无 ignore **22.8 s**；3.2.0 加 `ignore` 后 **0.19 s**。三者 ERROR/WARN 逐条相同。
 
@@ -251,7 +252,7 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 - live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间静态命令（`clear`/`test`/`show`/`frame`）照常接管，3 s 后自动交回；
 - **测距已停用**：TIM2 的 1 µs 自由运行计时与电机 PWM 共用 `PSC/ARR` 无法共存，TIM2 已整颗划给电机；`DIST` 固定回 `DIST err=disabled`，TRIG/ECHO 引脚与 EXTI 逻辑保留，重新启用前必须先确定独立计时源（`docs/TIM2-CONFLICT.md`）；
 - 电机：TIM2 `PSC=0 / ARR=3599` → 20 kHz，只有一路通道出 PWM、另一路恒 0（DRV8833 单向驱动）；`duty 0` 与 `stop` 电气等价（两路 CCR=0、全低滑行），`dir` 字段只是状态记忆；`fwd/rev` 只表示选了哪路通道，**对应轴的哪个方向未验证**；电机未接时只能验证寄存器与回包；
-- 分层检查：本仓用 `tools/check_layering.py`（3.4.0，`tools/CHECKER.lock` 固定 `4da1a77`）扫描，当前 0 ERROR / 3 WARN（2026-11-20，`--glue-max-lines 86`）；从 3.3.1 升到 3.4.0 只新增第 28 项 `feature_gate`（本仓 `.arch-roles` 无 `feature` 声明，该项报 0），其余输出不变，升级细节、复跑结果与"是否继续跟随上游"记在 `TECH_DEBT.md` D25；
+- 分层检查：本仓用 `tools/check_layering.py`（3.4.0，`tools/CHECKER.lock` 固定 `4da1a77`）扫描，当前 0 ERROR / 4 WARN（2026-11-20，`--glue-max-lines 86`；第 4 条为编码器 EXTI 钩子，与 UART 三条同类）；从 3.3.1 升到 3.4.0 只新增第 28 项 `feature_gate`（本仓 `.arch-roles` 无 `feature` 声明时该项报 0），其余输出不变，升级细节、复跑结果与"是否继续跟随上游"记在 `TECH_DEBT.md` D25；
 - 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；
 - 测距停用期间 `DIST` 在启动前就返回 `err=disabled`，不会进入测量。停用前的现象保留在案：自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`，是 HC-SR04 余振，不是故障；输入侧抓包里未发任何 PWM/BUZ 命令也出现过 3.9–45.8 cm 短读数与一次 `err=timeout`（与手/黑物靠近超声视场时间重合，归因未确认，§31.6）；
 - 没有 CMake presets；CI 只有静态分层检查一步（`.github/workflows/layering.yml`）；对象结构体布局不承诺 ABI 稳定。

@@ -16,6 +16,10 @@
 #include "board_f103c8.h"
 #include "pm_pwm_tim2_stm32f1.h"
 
+#if PM_ENABLE_ENCODER
+extern const pm_encoder_ops_t pm_f1_encoder_ops;
+#endif
+
 #include "stm32f1xx_hal.h"
 
 /* ------------------------------------------------------------------ GPIO */
@@ -405,6 +409,11 @@ static const pm_port_t s_port = {
     .pwm            = &pm_f1_tim2_pwm_ops,
     .pwm_ctx        = NULL,
     .pwm_count      = 2u,
+#if PM_ENABLE_ENCODER
+    .encoder        = &pm_f1_encoder_ops,
+    .encoder_ctx    = NULL,
+    .encoder_count  = 1u,
+#endif
 };
 
 const pm_port_t *pm_port_get(void)

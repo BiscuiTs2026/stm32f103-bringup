@@ -1709,3 +1709,34 @@
 | 能证明什么 | 电机命令的全部回包文本、`dir/duty/hz/arr/ccr1/ccr2` 与升级前逐条相同；舵机五档脉宽与 `PWM dbg` 的 PSC/ARR/CCR/频率与既有证据逐条一致；TIM2 寄存器配置与旧实现等价（ARR 3599、20 kHz、CCR=36×pct） |
 | 不能证明什么 | ①舵机**实际角度精度、到位抖动/回弹、带负载表现**仍未验证（沿用 §30.3 的边界），本轮只证明脉宽与回包 ②蜂鸣器听感未采集 ③`MOTOR dbg`（`pm_platform_motor_dbg`）本轮未单独复跑，未纳入对比，记为**未验证**、不回填为通过 ④live 60 s 浸泡本轮未重跑，记为**未验证**，同样不回填为通过 |
 | 遗留 | ①`src/port/stm32f1/pm_motor_stm32f1.c` 已在本轮后续提交中 `git rm` 删除（索引与工作树一并移除），TIM2 寄存器实现由 `src/port/stm32f1/pm_pwm_tim2_stm32f1.c` 承担 ②README 的契约基线与尺寸数字已在本笔（同一提交）同步到本轮口径 ③`TRACK raw` 为环境状态差异，不追、不属本轮改动 |
+
+## 130. 编码器链改走模型 core：编译、烧录、静态回包复核
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 13:2x–13:40 |
+| 触发 | 派发方要求按电机轮同一模板接入编码器：模型侧文件逐字拷入 + blob 双向核对，板端自有 port，组件改调模型 API，回包文本不变；EXTI9_5 优先级必须仍为 4 |
+| 模型来源 | `BiscuiTs2026/stm32-peripheral-model` 提交 `69a578d`（v0.7.0）；`include/pm/pm_encoder.h`、`src/core/pm_encoder.c` 逐字进板端；同提交的 `include/pm/pm_err.h`、`src/core/pm_err.c` 一并同步（补 `PM_ERR_DISABLED=-12` / `PM_ERR_NACK=-13` / `PM_ERR_BUS=-14`，旧 `-1..-11` 不变），4 个文件 `git hash-object` 双向一致；模型仓 `git status` 干净（HEAD `6bed6c2`，较 v0.7.0 仅 README 差异） |
+| 板端改动 | `include/pm/pm_port.h` 只补 ENCODER 段（`pm_encoder_cfg_t` / `pm_encoder_ops_t` / 注册表三字段）；`src/port/stm32f1/pm_encoder_stm32f1.c` 重写为自有 port（PA8/PA9 上拉、EXTI8/9 双边沿、PB15 上拉按键；ISR 只把 A/B 电平交给 `pm_encoder_hw_edge()`；`NVIC_SetPriority(EXTI9_5_IRQn, 4u)` 逐字保留）；`encoder_dev.c` 改调 `pm_encoder_init/count/last_ab/button/reset`，`dir` 由相邻两次查询的计数差保持"最后一次移动方向"（与旧 `last_step` 语义一致），`a/b` 按模型位序（bit1=A、bit0=B）映射，`btn` 仍按旧原始电平输出（1=松开、0=按下）；`CMakeLists.txt` 把 `src/core/pm_encoder.c` 加入 `pm_core` |
+| 编译 | `build-enc-integ2`（独立目录）：**0 error / 0 项目代码警告**，63/63（较电机轮 62/62 多 `pm_encoder.c` 一条编译单元）；链接期仍只有既有 libc_nano `_close/_lseek/_read/_write` 与 RWX LOAD 提示 |
+| 尺寸 | FLASH **30740 B / 64 KB（46.91%）**，RAM **5408 B / 20 KB（26.41%）**；较电机轮板端整机 30168 B / 5376 B 为 **+572 B / +32 B**（口径同为板端整机，非模型仓 demo） |
+| 静态检查 | `python tools/check_layering.py . --glue-max-lines 86` → **0 ERROR / 4 WARN**（预期 3 WARN，实际新增第 4 条：`pm_encoder_stm32f1.c:43` 端口层调用组件 ISR 钩子 `pm_encoder_hw_edge`，与 UART 三条同类；未加豁免、未改检查器）；`--version --lock` = 3.4.0 / `4da1a77`；`src/app/main.c` 未改，86 行闸门通过；日志 `evidence/encoder-model-checker.log` |
+| 烧录 | `STM32_Programmer_CLI -c port=SWD mode=UR -w build-enc-integ2/pm_f103_demo.hex -v -rst` → `Download verified successfully` + `Software reset is performed`，ST-Link SN `37FF71064E5734366E911343`；日志 `evidence/encoder-model-flash.log` |
+| 串口复核 | `evidence/manual-m8-encoder-model.log`：上电 `ENC count=0 dir=idle a=1 b=1 btn=1`，与 §129.1 同项逐字一致；随后两次抓包窗口（60 s + 90 s，每 500 ms 一次 `ENC`）全程 `count=0`，无人工转动/按压 |
+
+### 130.1 与既有 M8 日志逐条对比
+
+| 检查项 | 既有 `manual-m8-encoder.log` | 本轮 `manual-m8-encoder-model.log` | 结论 |
+| --- | --- | --- | --- |
+| 上电回包形状 | `ENC count=0 dir=idle a=1 b=1 btn=1` | 同左 | 字段顺序与取值一致 |
+| 手转逆时针 24→−12 | `count=24 … → count=-12` | 窗口内无转动（`count=0`） | **未复测**，不判通过 |
+| 顺时针 −12→24 回零 | `count=-12 … → count=0` | 同上 | **未复测**，不判通过 |
+| `btn` 跟随 | 1→0→1，按压约 3.5 s | 窗口内无按压（恒 `btn=1`） | **未复测**，不判通过 |
+| 停转后 `dir` | 保持最后一次方向（`cw`/`ccw`），不回落 `idle` | 无转动，恒 `dir=idle` | 语义未变，动态场景**未复测** |
+| `ENC clear` | 回 `ENC clear ok count=0` | 回 `ENC clear ok count=0` | 一致 |
+
+| 项 | 内容 |
+| --- | --- |
+| 能证明什么 | 模型 core 与板端 port 的接口打通；编译、链接、烧录校验通过；`ENC` 静态回包字段与既有日志逐字相同；EXTI9_5 优先级仍为 4（源码逐字保留）；体积口径与电机轮一致 |
+| 不能证明什么 | ①手转计数轨迹（24→−12→24）本轮无人工操作，**未验证** ②`btn` 按压跟随**未验证** ③停转后 `dir` 保持方向的动态表现**未验证** ④模型 core 在真实边沿下的去抖/半步进行为未用示波器或逻辑分析仪取证 |
+| 遗留 | 动态 M8 需人工转轮后补测；检查器 WARN 由 3 变 4，属同一设计类别的真实提示，未加豁免 |

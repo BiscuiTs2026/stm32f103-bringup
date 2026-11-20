@@ -1,0 +1,653 @@
+[       0ms] ===== encoder watch 2026-11-20 13:37:01.425 port=COM11 polls=180 =====
+[     221ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[     622ms] hb
+[     727ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1029ms] >> ENC
+[    1043ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    1232ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1621ms] hb
+[    1720ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1839ms] >> ENC
+[    1855ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    2232ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2349ms] >> ENC
+[    2366ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    2621ms] hb
+[    2722ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2861ms] >> ENC
+[    2871ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    3210ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3377ms] >> ENC
+[    3394ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    3627ms] hb
+[    3715ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3903ms] >> ENC
+[    3930ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    4216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4409ms] >> ENC
+[    4421ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    4630ms] hb
+[    4716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4916ms] >> ENC
+[    4938ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    5216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5421ms] >> ENC
+[    5438ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    5621ms] hb
+[    5721ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5933ms] >> ENC
+[    5955ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    6222ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    6444ms] >> ENC
+[    6467ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    6632ms] hb
+[    6716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    6952ms] >> ENC
+[    6968ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    7217ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    7460ms] >> ENC
+[    7471ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    7633ms] hb
+[    7716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    7967ms] >> ENC
+[    7982ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    8210ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    8470ms] >> ENC
+[    8485ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    8621ms] hb
+[    8721ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    8982ms] >> ENC
+[    9004ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    9215ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    9494ms] >> ENC
+[    9513ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    9621ms] hb
+[    9727ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10004ms] >> ENC
+[   10016ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   10216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10510ms] >> ENC
+[   10533ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   10627ms] hb
+[   10728ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11020ms] >> ENC
+[   11038ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   11216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11527ms] >> ENC
+[   11550ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   11625ms] hb
+[   11716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12032ms] >> ENC
+[   12043ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   12210ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12544ms] >> ENC
+[   12566ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   12617ms] hb
+[   12716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13066ms] >> ENC
+[   13083ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   13222ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13577ms] >> ENC
+[   13588ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   13627ms] hb
+[   13720ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14093ms] >> ENC
+[   14108ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   14209ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14611ms] >> ENC
+[   14625ms] hb
+[   14626ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   14716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15128ms] >> ENC
+[   15144ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   15216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15619ms] hb
+[   15644ms] >> ENC
+[   15677ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   15716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16146ms] >> ENC
+[   16161ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   16207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16610ms] hb
+[   16658ms] >> ENC
+[   16674ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   16726ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17166ms] >> ENC
+[   17188ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   17213ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17622ms] hb
+[   17671ms] >> ENC
+[   17683ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   17716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18177ms] >> ENC
+[   18188ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   18222ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18639ms] hb
+[   18683ms] >> ENC
+[   18710ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   18710ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19184ms] >> ENC
+[   19210ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   19211ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19628ms] hb
+[   19692ms] >> ENC
+[   19725ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19726ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   20206ms] >> ENC
+[   20227ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20234ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   20625ms] hb
+[   20716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20717ms] >> ENC
+[   20727ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   21217ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   21218ms] >> ENC
+[   21239ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   21627ms] hb
+[   21710ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   21728ms] >> ENC
+[   21738ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   22214ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   22230ms] >> ENC
+[   22254ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   22624ms] hb
+[   22708ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   22735ms] >> ENC
+[   22747ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   23227ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   23249ms] >> ENC
+[   23264ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   23629ms] hb
+[   23709ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   23777ms] >> ENC
+[   23794ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   24214ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   24294ms] >> ENC
+[   24309ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   24621ms] hb
+[   24717ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   24800ms] >> ENC
+[   24811ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   25222ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   25316ms] >> ENC
+[   25327ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   25622ms] hb
+[   25727ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   25822ms] >> ENC
+[   25844ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   26211ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   26328ms] >> ENC
+[   26344ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   26622ms] hb
+[   26709ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   26834ms] >> ENC
+[   26850ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   27209ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   27355ms] >> ENC
+[   27371ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   27629ms] hb
+[   27715ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   27860ms] >> ENC
+[   27877ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   28211ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   28377ms] >> ENC
+[   28393ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   28630ms] hb
+[   28727ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   28883ms] >> ENC
+[   28909ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   29222ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   29394ms] >> ENC
+[   29411ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   29628ms] hb
+[   29716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   29900ms] >> ENC
+[   29922ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   30216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   30406ms] >> ENC
+[   30416ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   30627ms] hb
+[   30722ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   30922ms] >> ENC
+[   30938ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   31216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   31426ms] >> ENC
+[   31438ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   31632ms] hb
+[   31710ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   31933ms] >> ENC
+[   31948ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   32226ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   32439ms] >> ENC
+[   32454ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   32628ms] hb
+[   32716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   32944ms] >> ENC
+[   32960ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   33207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   33455ms] >> ENC
+[   33468ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   33628ms] hb
+[   33716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   33961ms] >> ENC
+[   33972ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   34217ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   34472ms] >> ENC
+[   34489ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   34620ms] hb
+[   34717ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   34983ms] >> ENC
+[   34994ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   35216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   35494ms] >> ENC
+[   35517ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   35621ms] hb
+[   35722ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   36016ms] >> ENC
+[   36028ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   36210ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   36528ms] >> ENC
+[   36553ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   36605ms] hb
+[   36716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   37033ms] >> ENC
+[   37051ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   37216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   37555ms] >> ENC
+[   37578ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   37627ms] hb
+[   37710ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   38064ms] >> ENC
+[   38078ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   38216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   38572ms] >> ENC
+[   38595ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   38628ms] hb
+[   38706ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   39078ms] >> ENC
+[   39089ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   39216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   39583ms] >> ENC
+[   39594ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   39632ms] hb
+[   39722ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   40095ms] >> ENC
+[   40111ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   40222ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   40604ms] >> ENC
+[   40620ms] hb
+[   40621ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   40716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   41116ms] >> ENC
+[   41132ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   41227ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   41617ms] hb
+[   41618ms] >> ENC
+[   41644ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   41715ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   42126ms] >> ENC
+[   42151ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   42216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   42630ms] hb
+[   42631ms] >> ENC
+[   42644ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   42719ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   43140ms] >> ENC
+[   43161ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   43209ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   43628ms] hb
+[   43644ms] >> ENC
+[   43660ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   43708ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   44150ms] >> ENC
+[   44167ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   44232ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   44622ms] hb
+[   44655ms] >> ENC
+[   44683ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   44716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   45171ms] >> ENC
+[   45183ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   45221ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   45622ms] hb
+[   45672ms] >> ENC
+[   45688ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   45722ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   46181ms] >> ENC
+[   46197ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   46214ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   46626ms] hb
+[   46688ms] >> ENC
+[   46716ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   46717ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   47192ms] >> ENC
+[   47227ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   47228ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   47624ms] hb
+[   47702ms] >> ENC
+[   47718ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   47719ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   48217ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   48218ms] >> ENC
+[   48233ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   48627ms] hb
+[   48720ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   48721ms] >> ENC
+[   48736ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   49220ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   49235ms] >> ENC
+[   49252ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   49630ms] hb
+[   49707ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   49738ms] >> ENC
+[   49753ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   50206ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   50253ms] >> ENC
+[   50269ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   50626ms] hb
+[   50719ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   50765ms] >> ENC
+[   50781ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   51211ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   51273ms] >> ENC
+[   51288ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   51631ms] hb
+[   51707ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   51784ms] >> ENC
+[   51800ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   52218ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   52295ms] >> ENC
+[   52311ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   52620ms] hb
+[   52713ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   52807ms] >> ENC
+[   52822ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   53207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   53315ms] >> ENC
+[   53331ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   53626ms] hb
+[   53719ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   53828ms] >> ENC
+[   53844ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   54217ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   54342ms] >> ENC
+[   54357ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   54619ms] hb
+[   54713ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   54851ms] >> ENC
+[   54882ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   55210ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   55365ms] >> ENC
+[   55381ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   55626ms] hb
+[   55720ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   55875ms] >> ENC
+[   55890ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   56212ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   56382ms] >> ENC
+[   56398ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   56628ms] hb
+[   56707ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   56894ms] >> ENC
+[   56909ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   57216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   57402ms] >> ENC
+[   57418ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   57618ms] hb
+[   57711ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   57913ms] >> ENC
+[   57944ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   58207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   58424ms] >> ENC
+[   58440ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   58624ms] hb
+[   58718ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   58934ms] >> ENC
+[   58949ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   59212ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   59444ms] >> ENC
+[   59458ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   59629ms] hb
+[   59706ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   59956ms] >> ENC
+[   59972ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   60219ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   60468ms] >> ENC
+[   60484ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   60622ms] hb
+[   60715ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   60976ms] >> ENC
+[   61007ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   61207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   61488ms] >> ENC
+[   61504ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   61612ms] hb
+[   61706ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   62001ms] >> ENC
+[   62016ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   62215ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   62509ms] >> ENC
+[   62525ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   62619ms] hb
+[   62712ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   63023ms] >> ENC
+[   63054ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   63208ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   63532ms] >> ENC
+[   63548ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   63625ms] hb
+[   63718ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   64044ms] >> ENC
+[   64060ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   64213ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   64557ms] >> ENC
+[   64572ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   64618ms] hb
+[   64711ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   65068ms] >> ENC
+[   65083ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   65207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   65582ms] >> ENC
+[   65597ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   65628ms] hb
+[   65720ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   66095ms] >> ENC
+[   66111ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   66219ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   66604ms] >> ENC
+[   66620ms] hb
+[   66622ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   66713ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   67115ms] >> ENC
+[   67131ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   67210ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   67627ms] hb
+[   67628ms] >> ENC
+[   67658ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   67721ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   68137ms] >> ENC
+[   68152ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   68215ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   68617ms] hb
+[   68648ms] >> ENC
+[   68679ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   68711ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   69161ms] >> ENC
+[   69177ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   69207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   69629ms] hb
+[   69675ms] >> ENC
+[   69706ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   69707ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   70185ms] >> ENC
+[   70201ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   70216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   70620ms] hb
+[   70698ms] >> ENC
+[   70715ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   70716ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   71209ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   71210ms] >> ENC
+[   71224ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   71628ms] hb
+[   71705ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   71721ms] >> ENC
+[   71737ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   72205ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   72236ms] >> ENC
+[   72252ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   72609ms] hb
+[   72717ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   72748ms] >> ENC
+[   72764ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   73215ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   73262ms] >> ENC
+[   73277ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   73618ms] hb
+[   73710ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   73773ms] >> ENC
+[   73803ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   74206ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   74284ms] >> ENC
+[   74299ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   74625ms] hb
+[   74718ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   74795ms] >> ENC
+[   74810ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   75216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   75310ms] >> ENC
+[   75325ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   75621ms] hb
+[   75714ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   75837ms] >> ENC
+[   75867ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   76209ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   76348ms] >> ENC
+[   76364ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   76626ms] hb
+[   76719ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   76857ms] >> ENC
+[   76873ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   77211ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   77366ms] >> ENC
+[   77381ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   77630ms] hb
+[   77708ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   77879ms] >> ENC
+[   77894ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   78220ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   78388ms] >> ENC
+[   78405ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   78623ms] hb
+[   78714ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   78899ms] >> ENC
+[   78930ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   79210ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   79412ms] >> ENC
+[   79427ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   79629ms] hb
+[   79707ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   79925ms] >> ENC
+[   79941ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   80205ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   80437ms] >> ENC
+[   80454ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   80626ms] hb
+[   80719ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   80940ms] >> ENC
+[   80957ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   81212ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   81456ms] >> ENC
+[   81473ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   81623ms] hb
+[   81711ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   81963ms] >> ENC
+[   81979ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   82217ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   82484ms] >> ENC
+[   82507ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   82623ms] hb
+[   82712ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   82990ms] >> ENC
+[   83001ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   83206ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   83495ms] >> ENC
+[   83523ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   83624ms] hb
+[   83723ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   84000ms] >> ENC
+[   84017ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   84215ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   84518ms] >> ENC
+[   84533ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   84622ms] hb
+[   84717ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   85033ms] >> ENC
+[   85044ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   85223ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   85555ms] >> ENC
+[   85571ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   85627ms] hb
+[   85707ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   86062ms] >> ENC
+[   86079ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   86206ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   86573ms] >> ENC
+[   86588ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   86625ms] hb
+[   86706ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   87084ms] >> ENC
+[   87101ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   87216ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   87589ms] >> ENC
+[   87612ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   87629ms] hb
+[   87707ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   88095ms] >> ENC
+[   88118ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   88212ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   88601ms] >> ENC
+[   88623ms] hb
+[   88624ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   88711ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   89107ms] >> ENC
+[   89129ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   89207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   89623ms] hb
+[   89624ms] >> ENC
+[   89639ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   89718ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   90129ms] >> ENC
+[   90151ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   90212ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   90633ms] hb
+[   90634ms] >> ENC
+[   90651ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   90712ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   91157ms] >> ENC
+[   91168ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   91212ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   91624ms] hb
+[   91668ms] >> ENC
+[   91690ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   91712ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   92194ms] >> ENC
+[   92206ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   92217ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   92618ms] hb
+[   92712ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   92713ms] >> ENC
+[   92729ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   93207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   93223ms] >> ENC
+[   93240ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   93633ms] hb
+[   93722ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   93735ms] >> ENC clear
+[   93751ms] ENC clear ok count=0
+[   94212ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   94633ms] hb
+[   94649ms] >> ENC
+[   94680ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   94712ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   95207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
