@@ -34,6 +34,7 @@ typedef struct {
 
 static dist_job_t s_dist;
 
+#if PM_ENABLE_SONAR
 /* Last good distance, kept for OLED show. Cleared on a timeout so the screen
  * never claims a stale reading. */
 static uint32_t s_dist_last_cm10;
@@ -55,6 +56,7 @@ static void dist_last_ok(uint32_t cm10)
     *p = '\0';
     pm_cmd_out_last_set(b);
 }
+#endif
 
 void sonar_dev_start(cmd_port_t *c, uint8_t auto_live)
 {
@@ -68,6 +70,7 @@ void sonar_dev_start(cmd_port_t *c, uint8_t auto_live)
         return;
     }
 
+#if PM_ENABLE_SONAR
     if (s_dist.active != 0u) {
         if (auto_live != 0u) {
             return;                        /* live skips this period */
@@ -89,10 +92,12 @@ void sonar_dev_start(cmd_port_t *c, uint8_t auto_live)
     if (auto_live == 0u) {
         oled_ui_now_row();      /* the echo window is ~20 ms, show it */
     }
+#endif /* PM_ENABLE_SONAR */
 }
 
 void sonar_dev_service(uint32_t now)
 {
+#if PM_ENABLE_SONAR
     uint32_t us;
     uint32_t cm10;
     pm_sonar_snapshot_t snap;
@@ -156,6 +161,11 @@ void sonar_dev_service(uint32_t now)
     pm_cmd_out_tx_str(s_dist.c, " us=");
     pm_cmd_out_tx_u32(s_dist.c, us);
     pm_cmd_out_tx_str(s_dist.c, "\r\n");
+#else
+    /* Port not built (PM_ENABLE_SONAR=OFF): s_dist.active is never set, so
+     * there is no job to service. DIST still answers err=disabled above. */
+    (void)now;
+#endif
 }
 
 int sonar_dev_busy(void)

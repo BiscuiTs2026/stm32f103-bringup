@@ -86,6 +86,18 @@ else()
     set(PM_ENCODER_DEFINE PM_ENABLE_ENCODER=0)
 endif()
 
+# Sonar module switch: DIST is disabled (its 1 us time base, TIM2, belongs to
+# the motor PWM), so by default the port source is not compiled at all and
+# EXTI15_10_IRQHandler has no strong definition of ours. sonar_dev keeps the
+# existing "DIST err=disabled" reply; with PM_ENABLE_SONAR=ON the port comes
+# back, but DIST still reports disabled until DIST_TIME_BASE_READY is flipped.
+option(PM_ENABLE_SONAR "Build the HC-SR04 sonar port (PA10 ECHO, EXTI15_10)" OFF)
+if(PM_ENABLE_SONAR)
+    set(PM_SONAR_DEFINE PM_ENABLE_SONAR=1)
+else()
+    set(PM_SONAR_DEFINE PM_ENABLE_SONAR=0)
+endif()
+
 add_library(pm_port_stm32f1 STATIC
     src/port/stm32f1/pm_port_stm32f1.c
     src/port/stm32f1/pm_pwm_stm32f1.c
@@ -95,7 +107,6 @@ add_library(pm_port_stm32f1 STATIC
     src/port/stm32f1/pm_timer_stm32f1.c
     src/port/stm32f1/pm_i2c1_stm32f1.c
     src/port/stm32f1/pm_adc1_stm32f1.c
-    src/port/stm32f1/pm_sonar_stm32f1.c
     src/port/stm32f1/pm_keypad_stm32f1.c
     ${PM_PLATFORM}/board_f103c8.c
     ${PM_PLATFORM}/pm_platform.c
@@ -104,7 +115,12 @@ if(PM_ENABLE_ENCODER)
     target_sources(pm_port_stm32f1 PRIVATE
         src/port/stm32f1/pm_encoder_stm32f1.c)
 endif()
-target_compile_definitions(pm_port_stm32f1 PRIVATE ${PM_ENCODER_DEFINE})
+if(PM_ENABLE_SONAR)
+    target_sources(pm_port_stm32f1 PRIVATE
+        src/port/stm32f1/pm_sonar_stm32f1.c)
+endif()
+target_compile_definitions(pm_port_stm32f1 PRIVATE
+    ${PM_ENCODER_DEFINE} ${PM_SONAR_DEFINE})
 target_include_directories(pm_port_stm32f1
     PUBLIC  ${PM_ROOT}/include/pm ${PM_ROOT}/include
             ${PM_PLATFORM}
@@ -153,7 +169,8 @@ target_include_directories(pm_components
 )
 target_compile_options(pm_components PRIVATE
     ${PM_CPU_FLAGS} ${PM_WARN_FLAGS} ${PM_OPT_FLAGS})
-target_compile_definitions(pm_components PRIVATE ${PM_ENCODER_DEFINE})
+target_compile_definitions(pm_components PRIVATE
+    ${PM_ENCODER_DEFINE} ${PM_SONAR_DEFINE})
 
 add_executable(pm_f103_demo
     src/app/main.c
