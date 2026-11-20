@@ -256,3 +256,7 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 ## 第三方代码
 
 `third_party/` 内为 ARM 的 CMSIS（Apache-2.0）与 ST 的 HAL 驱动子集（BSD-3-Clause），原样分发，版权归各自所有者。本仓库自带链接脚本与启动配置，未复制 ST 的链接脚本模板（其条款禁止再分发）。
+
+## 许可
+
+本仓以 MIT 许可证发布，全文见 [LICENSE](LICENSE)；`third_party/` 内第三方代码仍按其各自许可证分发（见上节）。
