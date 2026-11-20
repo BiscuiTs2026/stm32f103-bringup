@@ -247,11 +247,11 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 
 - `pm_*` 契约只有 GPIO、UART、PWM、输入侧、继电器与电机（`pm_pwm.h`、`pm_track.h`、`pm_encoder.h`、`pm_relay.h`、`pm_motor.h`）；I2C1 轮询主机、HC-SR04 捕获已下沉到 `src/port/stm32f1/pm_i2c1_stm32f1.c` 与 `pm_sonar_stm32f1.c`，OLED 调度在 `src/components/oled_ui/`，`src/app/main.c` 只剩初始化与主循环；
 - SPI 只有 HAL 源和默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现；RTC、Flash 编程、看门狗、DMA 均未实现（ADC1 已在 `src/components/adc_dev/` + `src/port/stm32f1/pm_adc1_stm32f1.c` 上板）；
-- PWM：TIM4 固定 50 Hz 只服务舵机 PB8（`PSC=71` → 1 µs 刻度、`ARR=19999`），蜂鸣器 PB9 由 TIM3 更新中断翻转 GPIO（100–5000 Hz，回包频率是 10 µs 量化后的实际值）；舵机"有动作"已目视确认，但角度精度/到位抖动/回弹与蜂鸣器听感未采集；`PWM sweep` 阻塞约 5.4 s，期间 live 页与 `hb` 暂停、结束后补发；
-- 输入侧：PB14 只有一路数字量，"单路遮挡"与"全黑"同为 `raw=0`，固件不可区分；编码器 x4 计数为 32 位有符号，两个方向符号相反，但符号与物理顺时针/逆时针的对应**未目视确认**；`dir` 只在有效跳变时更新、停手后不归零；PB15 按键已抓到按下与松开（`btn` 1→0→1，约 3.5 s，M8），极性为 `1`=松开、`0`=按下（PB15 上拉输入）；
+- PWM：TIM4 固定 50 Hz 只服务舵机 PB8；时基由模型 `pm_pwm_timing_compute` 选定为 `PSC=21`、`ARR=65453`（刻度 0.3056 µs，周期 20.00017 ms），不是早期手写驱动的 71/19999（决策 0022）；舵机五档脉宽已上板验收（§140），角度精度/到位抖动/回弹仍未采集；蜂鸣器 PB9 由 TIM3 更新中断翻转 GPIO（100–5000 Hz，回包频率是 10 µs 量化后的实际值）；`PWM sweep` 阻塞约 5.7 s，期间 live 页与 `hb` 暂停、结束后补发；
+- 输入侧：PB14 只有一路数字量，"单路遮挡"与"全黑"同为 `raw=0`，固件不可区分；编码器 x4 计数为 32 位有符号，两个方向符号相反，但符号与物理顺时针/逆时针的对应**未目视确认**；`dir` 只在有效跳变时更新、停手后不归零（已定案，决策 0022）；PB15 按键已抓到按下与松开（`btn` 1→0→1，约 3.5 s，M8），极性为 `1`=松开、`0`=按下（PB15 上拉输入）；
 - UART 是逐字节中断，没有 DMA + 空闲中断的接收路径；TX 环 512 B，超长回包靠"边发边等"（`tx_bytes_all`）；
 - live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间静态命令（`clear`/`test`/`show`/`frame`）照常接管，3 s 后自动交回；
-- **测距默认关闭、可编译启用**：默认 `PM_ENABLE_SONAR=OFF`，`DIST` 回 `DIST err=disabled`；`-DPM_ENABLE_SONAR=ON` 时 1 µs 时基换成 `DWT->CYCCNT`（不再占用 TIM2），`EXTI15_10` 优先级 5 低于编码器 `EXTI9_5` 的 4（决策 0020）。ON 构建的绝对距离未与物理尺子对过，且编码器与 sonar 并发时的“不丢计数”未在有人转轮的情况下复测（§133）；
+- **测距默认关闭、可编译启用**：默认 `PM_ENABLE_SONAR=OFF`，`DIST` 回 `DIST err=disabled`；`-DPM_ENABLE_SONAR=ON` 时 1 µs 时基换成 `DWT->CYCCNT`（不再占用 TIM2），`EXTI15_10` 优先级 5 低于编码器 `EXTI9_5` 的 4（决策 0020）。ON 构建的绝对距离**已由用户现场验收（2026-11-20 晚，“没有问题，可通过”）**，但未与物理尺子逐点对照、精度未量化；编码器与 sonar 并发也已由用户口述通过（无记录文件，§142）；
 - 电机：TIM2 `PSC=0 / ARR=3599` → 20 kHz，只有一路通道出 PWM、另一路恒 0（DRV8833 单向驱动）；`duty 0` 与 `stop` 电气等价（两路 CCR=0、全低滑行），`dir` 字段只是状态记忆；`MOTOR brake` 是新增的独立命令（两路 1000‰ → CCR=3600/3600，低边双开），`stop` 仍是滑行、回包不变（M4 基线）；brake 后 `fwd/rev/duty` 会立即退出且不残留 1000‰；**"电机是否真的制动、制动多快"未验证**（需人看转子），`fwd/rev` 对应轴的哪个方向也未验证；电机未接时只能验证寄存器与回包；
 - 分层检查：本仓用 `tools/check_layering.py`（3.4.0，`tools/CHECKER.lock` 固定 `4da1a77`）扫描，当前 0 ERROR / 4 WARN（2026-11-20，`--glue-max-lines 86`；第 4 条为编码器 EXTI 钩子，与 UART 三条同类）；从 3.3.1 升到 3.4.0 只新增第 28 项 `feature_gate`；本仓已在 `.arch-roles` 声明 `feature sonar = off` 并挂 `pm_sonar_init` / `EXTI15_10_IRQn`，该项复跑报 0、无误报（INDEX §131），其余输出不变，升级细节、复跑结果与"是否继续跟随上游"记在 `TECH_DEBT.md` D25；
 - 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；
