@@ -1,0 +1,31 @@
+[       0ms] ===== help brake watch 2026-11-20 14:01:53.454 port=COM11 =====
+[     174ms] hb
+[     255ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[     765ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1175ms] hb
+[    1275ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1754ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2181ms] hb
+[    2268ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2532ms] >> PING
+[    2546ms] PONG
+[    2769ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3047ms] >> HELP
+[    3064ms] HELP HELP=list commands
+[    3064ms] HELP PING=reply PONG
+[    3065ms] HELP STAT=clk/up/tick/keys/uart counters
+[    3080ms] HELP I2C=scan I2C1 bus, list 8-bit addresses
+[    3082ms] HELP AHT=read AHT20, rh and t in 0.1 units
+[    3083ms] HELP AHTS=same but read via repeated START
+[    3083ms] HELP DIST=disabled, TIM2 given to motor
+[    3084ms] HELP ADC=pot PA5 and NTC PA4, raw and mV
+[    3098ms] HELP OLED=on/off/clear/test/show/frame/col/live/dump
+[    3099ms] HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
+[    3099ms] HELP TRACK=raw level of PB14 line sensor
+[    3100ms] HELP ENC=count/clear, dir, a/b, button PB15
+[    3100ms] HELP RELAY=on/off/stat, PB5 relay coil
+[    3114ms] HELP MOTOR=fwd/rev/stop/brake/duty/stat, PA0/PA1 TIM2 PWM
+[    3114ms] HELP KEYS=key press counters, clears them
+[    3163ms] hb
+[    3279ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3775ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0

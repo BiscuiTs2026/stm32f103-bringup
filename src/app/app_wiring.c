@@ -52,7 +52,7 @@ static const pm_cmd_entry_t s_cmds[] = {
     { "TRACK", "TRACK=raw level of PB14 line sensor",             PM_CMD_TRY,    NULL, track_dev_cmd,   NULL, NULL },
     { "ENC",   "ENC=count/clear, dir, a/b, button PB15",          PM_CMD_TRY,    NULL, encoder_dev_cmd, NULL, NULL },
     { "RELAY", "RELAY=on/off/stat, PB5 relay coil",               PM_CMD_TRY,    NULL, relay_dev_cmd,   NULL, NULL },
-    { "MOTOR", "MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM",  PM_CMD_TRY,    NULL, motor_dev_cmd,   NULL, NULL },
+    { "MOTOR", "MOTOR=fwd/rev/stop/brake/duty/stat, PA0/PA1 TIM2 PWM", PM_CMD_TRY, NULL, motor_dev_cmd,   NULL, NULL },
     { "KEYS",  "KEYS=key press counters, clears them",            PM_CMD_EXACT,  run_keys,  NULL, NULL, NULL },
 };
 

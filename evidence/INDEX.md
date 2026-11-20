@@ -1819,7 +1819,7 @@
 | 触发 | 派发方要求 brake 从纸面变成实现；契约三条（brake 期间 `set()` 立即退出且不残留 1000‰、只做快衰减、`MOTOR stop` 是否走 brake 由执行方判断但回包语义不能改） |
 | 现状核查 | 模型 core `src/core/pm_motor.c` **已经有** `motor_brake()` 与 `pm_motor_stop(BRAKE)`：两路写 `PM_PWM_DUTY_MAX=1000`；任何 `set()` 先 `motor_coast()` 把两路写 0 再驱动目标通道，天然满足"立即退出、不残留"。模型仓本轮**未改一行** |
 | 改动 | 只改组件 `src/components/motor_dev/motor_dev.c`：新增 `MOTOR brake` 子命令，调 `pm_motor_stop(PM_MOTOR_STOP_BRAKE)`，回包沿用 `reply_state()` 的 `MOTOR brake ok dir=stop duty=0% hz=.. arr=.. ccr1=.. ccr2=..` |
-| 判断 | **`MOTOR stop` 保持滑行（COAST），不改走 brake**：改成 brake 会让 `MOTOR stop` 的 `ccr1/ccr2` 从 0/0 变成 3600/3600，直接推翻 M4 验收基线。brake 用独立子命令表达；`brake` 不进 `HELP` 的 `MOTOR` 行，保持 `HELP` 638 B 基线 |
+| 判断 | **`MOTOR stop` 保持滑行（COAST），不改走 brake**：改成 brake 会让 `MOTOR stop` 的 `ccr1/ccr2` 从 0/0 变成 3600/3600，直接推翻 M4 验收基线。brake 用独立子命令表达；起初未进 `HELP`（保持 638 B 基线），2026-11-20 复核后已补入，见 §135 |
 | 编译 | `build-relay-track`（默认 OFF）：0 error、0 项目代码警告；FLASH **31316 B / 47.78%**、RAM **5448 B / 26.60%**（较 relay/track 轮 +68 B，语法/字符串开销；日志 `evidence/brake-build.log`） |
 | 静态检查 | `--glue-max-lines 86` → **0 ERROR / 4 WARN**，与 §133 相同（`evidence/brake-checker.log`） |
 | 烧录 | `-w build-relay-track/pm_f103_demo.hex -v -rst` → `Download verified successfully` + `MCU Reset`（`evidence/brake-flash.log`） |
@@ -1835,10 +1835,46 @@
 | `MOTOR brake x` | `MOTOR err=usage` |
 | `MOTOR stop`（基线不变） | `MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0` |
 | `MOTOR duty 50`（stop 后） | `MOTOR err=idle`（与既有语义一致） |
-| `PING` / `HELP` | `PONG`；`HELP` 15 行文本与改动前一致（`DIST` 行仍为默认 OFF 的 disabled 文本） |
+| `PING` / `HELP` | `PONG`；`HELP` 15 行、文本与改动前一致（当时 `brake` 未入 HELP；同日复核后已补入，见 §135） |
 
 | 项 | 内容 |
 | --- | --- |
 | 能证明什么 | `pm_motor_stop(PM_MOTOR_STOP_BRAKE)` 在板端可达；两路 CCR 精确到 `ARR+1=3600`（1000‰，PWM 模式 1 恒高）；随后 `fwd/rev` 立即把两路移出 1000‰ 并只驱动目标通道；`MOTOR stop` 的滑行基线与 `duty` 的 `err=idle` 语义逐字未变 |
 | 不能证明什么 | **"电机是否真的制动、制动多快"未验证**：本轮电机未接/无人观察转子，只到寄存器层；快衰减的电气效果、刹车时间常数、DRV8833 实际低边双开都需人上板看。`brake` 不在 `HELP` 中，发现性靠文档 |
 | 遗留 | 无代码遗留；若后续要把 `MOTOR stop` 改为 brake，必须先改 M4 基线并获得批准 |
+
+## 135. `HELP` 补入 `brake`：15 行 644 B
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 16:0x |
+| 触发 | 终稿复核意见：`MOTOR brake` 不在 `HELP` 里等于不可发现 |
+| 改动 | `src/app/app_wiring.c` 的 `MOTOR` 行改为 `MOTOR=fwd/rev/stop/brake/duty/stat, PA0/PA1 TIM2 PWM`（+6 字符）；其余 14 行未动 |
+| 行数/字节 | 15 行，正文 614 B + 15×CRLF = **644 B**（原 638 B，+6）；逐行累加与源码字符串一致 |
+| 编译 | 0 error、0 项目代码警告；FLASH **31324 B / 47.80%**（较 §134 的 31316 B 为 +8 B，字符串对齐）、RAM **5448 B / 26.60%**（`evidence/help-brake-build.log`） |
+| 烧录 | `-v -rst` → `Download verified successfully` + `MCU Reset`（`evidence/help-brake-flash.log`） |
+| 回包 | `evidence/help-brake-20261120.log`：`PING` → `PONG`；`HELP` 15 行，`MOTOR` 行含 `/brake`，`DIST` 行仍为默认 OFF 的 `disabled` 文本 |
+| 未验证 | 蓝牙侧未重新回归（`HELP` 变长 6 B，仍远小于 USART3 的发送路径容量；上一轮 638 B 后的蓝牙回归结论见 §14.1/README） |
+
+原始回包（逐字）：
+
+```
+>> PING
+PONG
+>> HELP
+HELP HELP=list commands
+HELP PING=reply PONG
+HELP STAT=clk/up/tick/keys/uart counters
+HELP I2C=scan I2C1 bus, list 8-bit addresses
+HELP AHT=read AHT20, rh and t in 0.1 units
+HELP AHTS=same but read via repeated START
+HELP DIST=disabled, TIM2 given to motor
+HELP ADC=pot PA5 and NTC PA4, raw and mV
+HELP OLED=on/off/clear/test/show/frame/col/live/dump
+HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
+HELP TRACK=raw level of PB14 line sensor
+HELP ENC=count/clear, dir, a/b, button PB15
+HELP RELAY=on/off/stat, PB5 relay coil
+HELP MOTOR=fwd/rev/stop/brake/duty/stat, PA0/PA1 TIM2 PWM
+HELP KEYS=key press counters, clears them
+```

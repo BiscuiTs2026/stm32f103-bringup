@@ -109,7 +109,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 15 行 `HELP ...`，共 **638 B**（见下） | — | 否 |
+| `HELP` | 无 | 15 行 `HELP ...`，共 **644 B**（2026-11-20 起；见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -131,7 +131,7 @@ HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
 HELP TRACK=raw level of PB14 line sensor
 HELP ENC=count/clear, dir, a/b, button PB15
 HELP RELAY=on/off/stat, PB5 relay coil
-HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM
+HELP MOTOR=fwd/rev/stop/brake/duty/stat, PA0/PA1 TIM2 PWM
 HELP KEYS=key press counters, clears them
 ```
 
@@ -139,7 +139,8 @@ HELP KEYS=key press counters, clears them
 
 > `PM_ENABLE_SONAR=ON` 的构建把上面 `DIST` 一行换成
 > `HELP DIST=HC-SR04 PA11/PA10, cm/us (DWT base)`，其余 14 行不变；
-> 默认（OFF）仍是 15 行 638 B 基线。
+> 默认（OFF）是 **15 行 644 B**（2026-11-20 起，`MOTOR` 行加入 `/brake`）。
+> ON 构建的总字节数未重新上板实测。
 
 > 实现位置（S10 起）：`HELP`/`PING`/`STAT`/`I2C` 在 `src/components/sys_cmds/`，
 > 命令表与适配器在 `src/app/app_wiring.c`。命令、回包文本与顺序均未变。
@@ -173,8 +174,10 @@ HELP KEYS=key press counters, clears them
   以及回波宽度不在 100..25000 µs 的合理区间。
 - live 模式自动触发的测量回包带 `live` 前缀：`DIST live cm=.. us=..` /
   `DIST live err=timeout`，与手动命令区分。
-- 2026-11-20 的 ON 构建实测：连续 20+ 次 `cm=6.2/7.1 us=358/414`，无 timeout；
-  该读数对应的物理遮挡物未由人现场确认（见 `evidence/INDEX.md` §133）。
+- 2026-11-20 的 ON 构建实测：连续 20+ 次 `cm=6.2/7.1 us=358/414`、无 timeout；
+  **读数待人工确认真实距离**——本轮无人现场放置/确认遮挡物，不能排除模块近场自反射；
+  已排除时基、换算、引脚、触发脉宽四项固件侧原因，排查记录见 `TECH_DEBT.md`
+  “2026-11-20 `DIST` 读数差异复查”。
 - 历史现象仍适用：自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`（HC-SR04 余振）。
 
 ### 4.4 OLED（CH1116，0x7A，128×64，I2C1）
@@ -353,6 +356,10 @@ A/B 相，EXTI8/EXTI9 双边沿 + 软件四倍频（x4）；PB15 是编码器按
 - `TRACK err=init` 只在 `pm_track_init()` 失败时出现；当前实现恒成功，没有现场
   回包证据。
 - 串口只能证明电平与计数；轮子是否打滑、转向是否与计数符号一致，不在串口可证范围内。
+- **2026-11-20 起组件走模型 core**：`TRACK` 调 `pm_track_*`、`ENC` 调 `pm_encoder_*`，
+  板端只保留 port（PB14 / PA8-PA9+EXTI）。`TRACK`/`ENC` 的回包文本与字段形状不变。
+  该轮验收深度只到“编译通过、检查器通过、原有命令行为不变”；**物理行为（遮挡电平、
+  计数方向）未在本轮重新实测**，电平证据仍来自更早的 `PATCHES.md` §31.3。
 
 ### 4.8 继电器（PB5）
 
@@ -371,6 +378,10 @@ MCU 只出电平。**假设高电平吸合**（NPN 低边驱动），复位后 P
   说明写引脚失败或被别处改写。
 - PB5 在 F103C8 上可被部分重映射成 TIM3_CH2，但本工程 `AFIO->MAPR=0`、
   TIM3 只用作蜂鸣器时基不输出通道，且 PB5 配置为普通推挽输出，不冲突。
+- **2026-11-20 起组件走模型 core**：`RELAY` 调 `pm_relay_init/on/off/is_on`，经
+  `pm_gpio` 的逻辑引脚 `BOARD_GPIO_RELAY`（PB5，active high）落地，板端 port 不再
+  自己写 BSRR。回包文本与 `pb5=` 读回语义不变。验收深度只到“编译通过、检查器通过、
+  原有命令行为不变”；**继电器吸合声与触点通断未在本轮重新实测**，仍需人工确认。
 
 ### 4.9 电机（PA0/PA1，DRV8833）
 
@@ -395,11 +406,15 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
 - `duty=100` 时 CCR = 3600 = `ARR+1`，PWM 模式 1 下输出恒有效（满速），不是错误。
 - **`duty 0` 与 `stop` 电气等价**：都是两路 CCR=0、两路全低滑行。区别只在
   `dir` 字段的记忆（`fwd 0` 记住方向，之后 `duty 60` 直接续跑）；驱动板行为相同。
-- **`MOTOR brake` 是独立的刹车命令，`MOTOR stop` 仍是滑行**（保持 M4 基线：
-  `stop` 回 `ccr1=0 ccr2=0` 不变）。brake 期间再发 `fwd/rev/duty`，模型会先把两路
-  写 0 再驱动目标通道，因此会立即退出 brake、寄存器里不会残留 1000‰。
-  只实现快衰减（一路 PWM、另一路低），不提供慢衰减。
-  `brake` 未加入 `HELP` 的 `MOTOR` 行，以保持 `HELP` 638 B 基线不变；这是有意的取舍。
+- **最容易搞错的一条：`stop` 是滑行，`brake` 才是制动。** `MOTOR stop` 两路全低
+  （`ccr1=0 ccr2=0`），电机断电滑行；`MOTOR brake` 两路同高（`ccr1=ccr2=3600`，
+  即 1000‰ = `ARR+1`，PWM 模式 1 恒有效，DRV8833 低边双开），才是刹车。两者都回
+  `dir=stop duty=0%`，只能靠 `ccr1/ccr2` 区分。`stop` 的回包与 M4 基线逐字不变。
+- brake 期间再发 `fwd/rev/duty`，模型会先把两路写 0 再驱动目标通道，因此会立即退出
+  brake、寄存器里不会残留 1000‰。只实现快衰减（一路 PWM、另一路低），不提供慢衰减。
+  寄存器层可证的是两路 CCR 到 3600 与退出后复原；**“电机是否真的制动、制动多快”
+  未验证**，需人上板看转子。
+- `brake` 已列入 `HELP` 的 `MOTOR` 行（2026-11-20）；`HELP` 由 638 B 增至 644 B。
 - 初始化失败按下列顺序判定，回包与判据：
   1. `MOTOR err=timer`，时基复核不通过：`pm_timebase_ok(72 MHz, PSC 0, ARR 3599,
      20 kHz, 10‰)` 判假，说明 PSC/ARR 常量与目标频率对不上；直接拒绝，不写任何
@@ -451,7 +466,7 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **15 行 638 B**（含每条 CRLF）。
+   当前 `HELP` 是 **15 行 644 B**（含每条 CRLF，2026-11-20 实测）。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。
