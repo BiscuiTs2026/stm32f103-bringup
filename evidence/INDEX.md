@@ -1602,3 +1602,21 @@
 | 能证明什么 | `pm_timebase_ok()` 的判据在主机上**真实执行过**并通过，不再只是 `-O2` 常量折叠的观察结果；同时确认本机具备主机单测能力 |
 | 不能证明什么 | 用的是 MSVC 而不是固件所用 arm-none-eabi-gcc；函数是纯整数、无分支依赖，两种编译器语义应一致，但**没有**在 arm 上运行该测试。主机测试不验证 `pm_pwm_init()`/`pm_motor_init()` 的 `return -1` 分支，那条路径仍未被触发 |
 | 对环境限制说法的更正 | 第 122、124 条写的"本机无 x86 编译器"不再成立；正确表述是"本机 `cl.exe` 不在 PATH，需 VS 生成器或 vcvars 环境" |
+
+## 126. 编码器 EXTI 守卫（契约对齐第 5 轮）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 15:25–15:55 |
+| 依据 | 决策 0018 第六条：encoder 的 `EXTI9_5_IRQHandler` 与 `pm_encoder_init()` 放进模块开关；**保留现有优先级 4，不改**。方案第 7.5 节把改动面限定在 `CMakeLists.txt`、`pm_encoder_stm32f1.c`、`encoder_dev.c` |
+| 改动 | ①`CMakeLists.txt` 新增 `option(PM_ENABLE_ENCODER ... ON)` 与 `PM_ENCODER_DEFINE`；`pm_encoder_stm32f1.c` 从 `add_library` 列表移到 `if(PM_ENABLE_ENCODER)` 下的 `target_sources`；该定义同时给 `pm_port_stm32f1` 与 `pm_components` ②`encoder_dev.c` 三处 `pm_encoder_*` 调用加 `#if PM_ENABLE_ENCODER`（`encoder_dev_init` 置 `s_ready=0`、`reply_stat` 退回 `ENC err=init`、`CLEAR` 跳过 reset）③端口文件头补记开关与"优先级 4 为已验证值"。**没有新增回包文本**，关闭态复用既有 `ENC err=init` |
+| 行为等价 | 默认 ON，`pm_encoder_init()` 仍以 0 返回、`s_ready=1`；优先级仍写 4；ISR 内容一字未改 |
+| 编译（ON） | FLASH 29152 B (44.48%) / RAM 5320 B (25.98%)，与第 3/4 轮**完全一致**——开关是编译期条件，默认路径不产生任何运行期成本 |
+| 编译（OFF） | 独立目录 `build-encoder-guard-off`（`-DPM_ENABLE_ENCODER=OFF`）链接通过：FLASH 28544 B / RAM 5304 B（−608 B / −16 B） |
+| 关闭态证明 | `arm-none-eabi-nm` 对比：ON 有 `T EXTI9_5_IRQHandler`、`T pm_encoder_init`、`T pm_encoder_count`；OFF 下 `EXTI9_5_IRQHandler` 只剩启动文件里的 **`W`（weak 默认处理器）**，`pm_encoder_init`/`pm_encoder_count` 不存在，`encoder_dev_init` 仍在（桩） |
+| 静态检查 | `python tools/check_layering.py . --glue-max-lines 87` → `0 ERROR / 3 WARN`，与基线逐条一致；胶水层 86 行未变（`main.c` 本轮未改） |
+| 烧录 | `Download verified successfully`，`evidence/encoder-guard-flash.log` |
+| 板端-寄存器 | hotplug 读 32 B：`0xE000E414 = 0x40000000` → `IP[23]=0x40`，即 EXTI9_5 优先级仍为 **4**；`EXTI IMR/RTSR/FTSR = 0x00000300`（仅 8/9 线，bit10 仍为 0）。`evidence/encoder-guard-regs.log` |
+| 板端-串口 | `evidence/encoder-guard-serial.log`：`ENC`/`ENC STAT` → `ENC count=0 dir=idle a=1 b=1 btn=1`；`ENC CLEAR` → `ENC clear ok count=0`；`MOTOR stat` → `hz=20000 arr=3599 ccr1=0 ccr2=0`（无回归） |
+| 能证明什么 | 默认路径行为不变（回包文本、优先级、EXTI 布防均与改前一致）；开关确实能在链接层消除 ISR 与 init，而不是只关业务 |
+| 不能证明什么 | ①OFF 固件**没有烧录上板**，"没有 ISR" 只有 `nm` 静态证据 ②本轮**没有转动编码器**，`count` 增量与 `dir=cw/ccw` 未复核，沿用 `PATCHES` §31.3 的旧证据 ③`-r32` 的长度参数是**字节**不是字（`4` 只出一个字），首次 4 字节读曾回 0，改用 32 字节读三次一致后才采信 |

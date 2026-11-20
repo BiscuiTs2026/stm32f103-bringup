@@ -1,0 +1,61 @@
+﻿# 2026-11-20 encoder EXTI guard, build-split-s10 (PM_ENABLE_ENCODER=ON)
+# hotplug keeps the core running; mode=UR/normal resets it and reads zeros.
+# NOTE: with -r32 the length argument is bytes, not words (6 -> 8 bytes shown).
+
+== NVIC IPR[0..31] @ 0xE000E400, 32 bytes ==
+== expect word 0xE000E414 = 0x40000000: EXTI9_5_IRQn = 23, top byte = 0x40 = priority 4 ==
+      -------------------------------------------------------------------
+                       STM32CubeProgrammer v2.23.0                  
+      -------------------------------------------------------------------
+
+ST-LINK SN  : 37FF71064E5734366E911343
+ST-LINK FW  : V2J48S7
+Board       : --
+Voltage     : 3.28V
+SWD freq    : 4000 KHz
+Connect mode: Hot Plug
+Reset mode  : Software reset
+Device ID   : 0x410
+Revision ID : Rev X
+Device name : STM32F101/F102/F103 Medium-density
+NVM size    : 64 KBytes
+Device type : MCU
+Device CPU  : Cortex-M3
+BL Version  : --
+
+
+Reading 32-bit memory content
+  Size          : 32 Bytes
+  Address:      : 0xE000E400
+0xE000E400 : 00000000 00000000 00000000 00000000
+0xE000E410 : 00000000 40000000 00000000 00003000
+
+== EXTI IMR/EMR/RTSR/FTSR/SWI/PR @ 0x40010400, 24 bytes ==
+== expect IMR=0x00000300: lines 8 and 9 (PA8/PA9) armed, line 10 still off ==
+      -------------------------------------------------------------------
+                       STM32CubeProgrammer v2.23.0                  
+      -------------------------------------------------------------------
+
+ST-LINK SN  : 37FF71064E5734366E911343
+ST-LINK FW  : V2J48S7
+Board       : --
+Voltage     : 3.28V
+SWD freq    : 4000 KHz
+Connect mode: Hot Plug
+Reset mode  : Software reset
+Device ID   : 0x410
+Revision ID : Rev X
+Device name : STM32F101/F102/F103 Medium-density
+NVM size    : 64 KBytes
+Device type : MCU
+Device CPU  : Cortex-M3
+BL Version  : --
+
+
+Reading 32-bit memory content
+  Size          : 24 Bytes
+  Address:      : 0x40010400
+0x40010400 : 00000300 00000000 00000300 00000300
+0x40010410 : 00000000 00000000
+
+

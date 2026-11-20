@@ -54,6 +54,7 @@ static const char *reply_lit(const char *s)
 
 static const char *reply_stat(void)
 {
+#if PM_ENABLE_ENCODER
     int32_t  step = pm_encoder_last_step();
     uint32_t ab   = pm_encoder_ab();
     char    *p    = put_s(s_reply, "ENC count=");
@@ -70,6 +71,10 @@ static const char *reply_stat(void)
     p = put_s(p, "\r\n");
     *p = '\0';
     return s_reply;
+#else
+    /* Unreachable while s_ready is 0, but the port symbols do not exist. */
+    return reply_lit("ENC err=init");
+#endif
 }
 
 static int ci_eq_n(const char *a, const char *b, unsigned n)
@@ -103,7 +108,13 @@ static const char *skip_sp(const char *p)
 
 void encoder_dev_init(void)
 {
+#if PM_ENABLE_ENCODER
     s_ready = (pm_encoder_init() == 0) ? 1u : 0u;
+#else
+    /* Module not built (decision 0018 §6): no init, no EXTI9_5 ISR. Staying
+     * "not ready" reuses the existing ENC err=init reply. */
+    s_ready = 0u;
+#endif
 }
 
 const char *encoder_dev_cmd(const char *line)
@@ -124,7 +135,9 @@ const char *encoder_dev_cmd(const char *line)
         return reply_stat();
     }
     if ((ci_eq_n(p, "CLEAR", 5u) != 0) && (p[5] == '\0')) {
+#if PM_ENABLE_ENCODER
         pm_encoder_reset();
+#endif
         return reply_lit("ENC clear ok count=0");
     }
     return reply_lit("ENC err=usage");

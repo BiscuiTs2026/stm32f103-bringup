@@ -74,11 +74,22 @@ target_compile_options(pm_osal PRIVATE
     ${PM_CPU_FLAGS} ${PM_WARN_FLAGS} ${PM_OPT_FLAGS})
 
 # -------------------------------------------------------- STM32F1 port + board
+# Encoder module switch (decision 0018 §6): with the module off the port source
+# is not compiled at all, so neither pm_encoder_init() nor EXTI9_5_IRQHandler
+# exists and nothing arms EXTI8/9 or the NVIC line. encoder_dev turns into a
+# stub that stays "not ready", which keeps the ENC reply on the existing
+# err=init wording instead of growing a second disabled state.
+option(PM_ENABLE_ENCODER "Build the quadrature encoder (PA8/PA9, EXTI9_5)" ON)
+if(PM_ENABLE_ENCODER)
+    set(PM_ENCODER_DEFINE PM_ENABLE_ENCODER=1)
+else()
+    set(PM_ENCODER_DEFINE PM_ENABLE_ENCODER=0)
+endif()
+
 add_library(pm_port_stm32f1 STATIC
     src/port/stm32f1/pm_port_stm32f1.c
     src/port/stm32f1/pm_pwm_stm32f1.c
     src/port/stm32f1/pm_track_stm32f1.c
-    src/port/stm32f1/pm_encoder_stm32f1.c
     src/port/stm32f1/pm_relay_stm32f1.c
     src/port/stm32f1/pm_motor_stm32f1.c
     src/port/stm32f1/pm_timer_stm32f1.c
@@ -89,6 +100,11 @@ add_library(pm_port_stm32f1 STATIC
     ${PM_PLATFORM}/board_f103c8.c
     ${PM_PLATFORM}/pm_platform.c
 )
+if(PM_ENABLE_ENCODER)
+    target_sources(pm_port_stm32f1 PRIVATE
+        src/port/stm32f1/pm_encoder_stm32f1.c)
+endif()
+target_compile_definitions(pm_port_stm32f1 PRIVATE ${PM_ENCODER_DEFINE})
 target_include_directories(pm_port_stm32f1
     PUBLIC  ${PM_ROOT}/include/pm ${PM_ROOT}/include
             ${PM_PLATFORM}
@@ -137,6 +153,7 @@ target_include_directories(pm_components
 )
 target_compile_options(pm_components PRIVATE
     ${PM_CPU_FLAGS} ${PM_WARN_FLAGS} ${PM_OPT_FLAGS})
+target_compile_definitions(pm_components PRIVATE ${PM_ENCODER_DEFINE})
 
 add_executable(pm_f103_demo
     src/app/main.c

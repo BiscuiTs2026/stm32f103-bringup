@@ -3,6 +3,13 @@
  *
  * Both edges of both channels are counted (x4). The transition table rejects
  * bounce and half steps instead of counting them. No timer is allocated.
+ *
+ * 2026-11-20 (decision 0018 §6): this file is only in the build when
+ * CMake option PM_ENABLE_ENCODER is ON, which is the default. Turning it off
+ * removes the file, so pm_encoder_init() and EXTI9_5_IRQHandler are not
+ * defined and nothing arms EXTI8/9 or the NVIC line; the startup file's weak
+ * default takes the vector instead. Priority 4 below is the verified value and
+ * is deliberately not changed.
  */
 #include "pm_encoder.h"
 

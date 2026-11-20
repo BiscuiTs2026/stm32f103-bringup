@@ -1,0 +1,28 @@
+﻿[    82ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[   505ms] hb\r\n
+[   576ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1084ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1213ms] <<< PING >>>
+[  1221ms] PONG\r\n
+[  1493ms] hb\r\n
+[  1580ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1916ms] <<< ENC >>>
+[  1927ms] ENC count=0 dir=idle a=1 b=1 btn=1\r\n
+[  2083ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  2493ms] hb\r\n
+[  2579ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  2620ms] <<< ENC STAT >>>
+[  2627ms] ENC count=0 dir=idle a=1 b=1 btn=1\r\n
+[  3089ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  3342ms] <<< ENC CLEAR >>>
+[  3354ms] ENC clear ok count=0\r\n
+[  3490ms] hb\r\n
+[  3588ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  4048ms] <<< ENC STAT >>>
+[  4066ms] ENC count=0 dir=idle a=1 b=1 btn=1\r\n
+[  4085ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  4505ms] hb\r\n
+[  4583ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  4759ms] <<< MOTOR stat >>>
+[  4772ms] MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0\r\n
+[  5082ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
