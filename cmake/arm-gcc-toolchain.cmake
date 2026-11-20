@@ -1,12 +1,28 @@
 # CMake toolchain file for arm-none-eabi-gcc (STM32F1).
-# Override the toolchain root with -DTOOLCHAIN_ROOT=<dir>/bin if needed.
+# The directory containing arm-none-eabi-gcc must be provided in one of two ways:
+#   1) -DTOOLCHAIN_ROOT=<dir>/bin on the cmake command line
+#   2) environment variable ARM_GCC_ROOT=<dir>/bin
+# There is no hard-coded default; if neither is set, configure fails with a hint.
 
 set(CMAKE_SYSTEM_NAME      Generic)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
 if(NOT DEFINED TOOLCHAIN_ROOT)
-  set(TOOLCHAIN_ROOT "C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin")
+  if(NOT "$ENV{ARM_GCC_ROOT}" STREQUAL "")
+    set(TOOLCHAIN_ROOT "$ENV{ARM_GCC_ROOT}")
+  else()
+    message(FATAL_ERROR
+      "TOOLCHAIN_ROOT is not set.\n"
+      "Pass -DTOOLCHAIN_ROOT=<dir>/bin (the directory containing arm-none-eabi-gcc.exe), "
+      "or set the ARM_GCC_ROOT environment variable to that directory.")
+  endif()
 endif()
+
+# Accept Windows-style backslash paths from -D or the environment.
+file(TO_CMAKE_PATH "${TOOLCHAIN_ROOT}" TOOLCHAIN_ROOT)
+set(TOOLCHAIN_ROOT "${TOOLCHAIN_ROOT}" CACHE PATH "Directory containing arm-none-eabi-gcc" FORCE)
+# Forward the value into try_compile sub-projects (compiler ABI detection).
+list(APPEND CMAKE_TRY_COMPILE_PLATFORM_VARIABLES TOOLCHAIN_ROOT)
 
 set(CMAKE_C_COMPILER   "${TOOLCHAIN_ROOT}/arm-none-eabi-gcc.exe")
 set(CMAKE_ASM_COMPILER "${TOOLCHAIN_ROOT}/arm-none-eabi-gcc.exe")

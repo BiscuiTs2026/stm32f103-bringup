@@ -88,12 +88,24 @@ third_party/            CMSIS 与 ST HAL 子集（BSD-3-Clause，原样分发）
 ```
 
 ```powershell
+# 二选一：设环境变量，或配置时传 -DTOOLCHAIN_ROOT
+$env:ARM_GCC_ROOT = "$env:LOCALAPPDATA\stm32cube\bundles\gnu-tools-for-stm32\14.3.1+st.2\bin"
+
 cmake -S . -B build-arm -G Ninja `
       -DCMAKE_TOOLCHAIN_FILE=cmake/arm-gcc-toolchain.cmake
 cmake --build build-arm
 ```
 
-换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用。**HEAD 两版实测**：最终固件 `-DPM_ENABLE_SONAR=ON` 为 **35968 B / 6048 B（54.88% / 29.53%）**（`build-v080-force-diag`，`evidence/v080-force-diag-build.log`、INDEX §145）；默认 `PM_ENABLE_SONAR=OFF` 为 **35132 B / 6024 B（53.61% / 29.41%）**（本任务新建 `build-doc-align`，`evidence/v080-off-doc-align-build.log`，2026-11-20；同日烧录验证后恢复 ON，见 INDEX §147）。两版都含 v0.8.0 claim 表与故障诊断；ON 比 OFF 多 836 B / 24 B。旧 31324 / 5448 与 32084 / 5472 是接入 claim 表之前的数字，不再代表 HEAD。
+等价写法（不设环境变量，直接传参）：
+
+```powershell
+cmake -S . -B build-arm -G Ninja `
+      -DCMAKE_TOOLCHAIN_FILE=cmake/arm-gcc-toolchain.cmake `
+      -DTOOLCHAIN_ROOT="$env:LOCALAPPDATA\stm32cube\bundles\gnu-tools-for-stm32\14.3.1+st.2\bin"
+cmake --build build-arm
+```
+
+工具链根目录没有写死默认值：设 `ARM_GCC_ROOT`，或配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`；两者都没有时 configure 直接报错并提示这两种写法。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用。**HEAD 两版实测**：最终固件 `-DPM_ENABLE_SONAR=ON` 为 **35968 B / 6048 B（54.88% / 29.53%）**（`build-v080-force-diag`，`evidence/v080-force-diag-build.log`、INDEX §145）；默认 `PM_ENABLE_SONAR=OFF` 为 **35132 B / 6024 B（53.61% / 29.41%）**（本任务新建 `build-doc-align`，`evidence/v080-off-doc-align-build.log`，2026-11-20；同日烧录验证后恢复 ON，见 INDEX §147）。两版都含 v0.8.0 claim 表与故障诊断；ON 比 OFF 多 836 B / 24 B。旧 31324 / 5448 与 32084 / 5472 是接入 claim 表之前的数字，不再代表 HEAD。
 
 烧录（ST-Link，带校验、烧完复位）：
 
