@@ -57,6 +57,8 @@ add_library(pm_core STATIC
     src/core/pm_pwm.c
     src/core/pm_motor.c
     src/core/pm_encoder.c
+    src/core/pm_relay.c
+    src/core/pm_track.c
 )
 target_include_directories(pm_core PUBLIC ${PM_ROOT}/include/pm ${PM_ROOT}/include)
 target_compile_options(pm_core PRIVATE
@@ -107,7 +109,6 @@ add_library(pm_port_stm32f1 STATIC
     src/port/stm32f1/pm_pwm_stm32f1.c
     src/port/stm32f1/pm_pwm_tim2_stm32f1.c
     src/port/stm32f1/pm_track_stm32f1.c
-    src/port/stm32f1/pm_relay_stm32f1.c
     src/port/stm32f1/pm_timer_stm32f1.c
     src/port/stm32f1/pm_i2c1_stm32f1.c
     src/port/stm32f1/pm_adc1_stm32f1.c

@@ -1753,3 +1753,30 @@
 | 能证明什么 | 第 28 项在真实工程上可用：显式声明停用并挂入口符号/中断号后不误报；当前 sonar 确实没有处于无条件编译路径的入口调用或中断使能 |
 | 不能证明什么 | 本轮没有构造"声明停用但仍无条件调用"的反例，因此只证明不误报，**未**在本仓证明其正向检出能力（该规则自身的正向用例不在本仓） |
 | 遗留 | 无。`TECH_DEBT.md` D25 里"无 feature 声明"是升级当刻的记录，保留不改 |
+
+## 132. relay / track 接入模型 core：编译、检查器、原有命令回包对比
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 13:4x–13:5x |
+| 触发 | 派发方要求按电机/编码器同一模板接入；先核实模型仓有无对应 core 与契约 |
+| 模型来源 | `69a578d`（v0.7.0）**已有** `pm_relay` / `pm_track` core 与契约，无需造契约；逐字并入 `include/pm/pm_relay.h`、`src/core/pm_relay.c`、`include/pm/pm_track.h`、`src/core/pm_track.c`，4 个文件 `git hash-object` 双向一致 |
+| 板端改动 | `include/pm/pm_port.h` 补 TRACK 段与注册表三字段；`src/port/stm32f1/pm_track_stm32f1.c` 重写为 ops（PB14 上拉输入、返回原始电平、close 释放上拉）；`platform/stm32f103/board_f103c8.h/.c` 新增 `BOARD_GPIO_RELAY`（PB5）；`relay_dev.c` 改调 `pm_relay_init/on/off/is_on`（active high），`track_dev.c` 改调 `pm_track_init/read_raw`（active low 反算 `raw=`）；`CMakeLists.txt` 把 `pm_relay.c`、`pm_track.c` 加入 `pm_core`，并把旧的 `pm_relay_stm32f1.c` 移出构建 |
+| 编译 | `build-relay-track`：**0 error / 0 项目代码警告**，64/64；FLASH **31248 B / 64 KB（47.68%）**，RAM **5448 B / 20 KB（26.60%）**；较编码器轮 30740 B / 5408 B 为 **+508 B / +40 B** |
+| 静态检查 | `python tools/check_layering.py . --glue-max-lines 86` → **0 ERROR / 4 WARN**，与 §131 完全相同，无任何 relay/track 相关条目；日志 `evidence/relay-track-checker.log` |
+| 烧录 | `STM32_Programmer_CLI -c port=SWD mode=UR -w build-relay-track/pm_f103_demo.hex -v -rst` → `Download verified successfully` + `Software reset is performed`；日志 `evidence/relay-track-flash.log` |
+| 回包对比 | `evidence/relay-track-20261120.log` 与既有日志：`RELAY stat pb5=0`（`split-s2-before.log`）、`RELAY on ok pb5=1` / `RELAY off ok pb5=0`（`relay-20261119-a.log`）、`TRACK raw=1`（`split-s3-before.log`）、`TRACK err=usage`（`input-20261119-a.log`）**逐字一致** |
+
+| 命令 | 既有回包 | 本轮回包 |
+| --- | --- | --- |
+| `RELAY stat`（上电） | `RELAY stat pb5=0` | `RELAY stat pb5=0` |
+| `RELAY on` | `RELAY on ok pb5=1` | `RELAY on ok pb5=1` |
+| `RELAY off` | `RELAY off ok pb5=0` | `RELAY off ok pb5=0` |
+| `TRACK` | `TRACK raw=1` | `TRACK raw=1` |
+| `TRACK raw?` | `TRACK err=usage` | `TRACK err=usage` |
+
+| 项 | 内容 |
+| --- | --- |
+| 能证明什么 | 模型 core 与板端 port 打通；编译、链接、烧录校验通过；检查器无新增；`RELAY` / `TRACK` 的命令文本与历史日志逐字一致 |
+| 不能证明什么 | relay 的物理吸合声、触点通断与极性**未验证**；track 的遮挡动态**本轮未复测**。relay/track 本轮没有独立实测，验收只到"编译通过、检查器通过、原有命令行为不变" |
+| 遗留 | `src/port/stm32f1/pm_relay_stm32f1.c` 已移出构建但**未删除**（无本轮删除授权，文件内仍是旧 `pm_relay_init(void)` API）；待批准后清理 |

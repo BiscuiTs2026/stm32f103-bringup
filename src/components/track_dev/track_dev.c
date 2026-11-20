@@ -9,6 +9,7 @@
 
 static char    s_reply[TRACK_REPLY_MAX];
 static uint8_t s_ready;
+static pm_track_t s_track;
 
 static char *put_s(char *p, const char *s)
 {
@@ -45,10 +46,15 @@ static const char *reply_lit(const char *s)
 
 static const char *reply_raw(void)
 {
-    char *p = put_s(s_reply, "TRACK raw=");
+    bool  on_line = false;
+    char *p;
 
-    p  = put_u32(p, pm_track_raw());
-    p  = put_s(p, "\r\n");
+    (void)pm_track_read_raw(&s_track, &on_line);
+
+    /* PB14 module is active low: on_line true means the raw level is 0. */
+    p = put_s(s_reply, "TRACK raw=");
+    p = put_u32(p, on_line ? 0u : 1u);
+    p = put_s(p, "\r\n");
     *p = '\0';
     return s_reply;
 }
@@ -84,7 +90,12 @@ static const char *skip_sp(const char *p)
 
 void track_dev_init(void)
 {
-    s_ready = (pm_track_init() == 0) ? 1u : 0u;
+    const pm_track_cfg_t cfg = {
+        .hw_id        = 0u,
+        .active_level = (uint8_t)PM_GPIO_LEVEL_LOW,
+    };
+
+    s_ready = (pm_track_init(&s_track, &cfg) == PM_OK) ? 1u : 0u;
 }
 
 const char *track_dev_cmd(const char *line)

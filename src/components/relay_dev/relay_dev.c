@@ -4,12 +4,14 @@
  */
 #include "relay_dev.h"
 
+#include "board_f103c8.h"
 #include "pm_relay.h"
 
 #define RELAY_REPLY_MAX 48u
 
 static char    s_reply[RELAY_REPLY_MAX];
 static uint8_t s_ready;
+static pm_relay_t s_relay;
 
 static char *put_s(char *p, const char *s)
 {
@@ -44,13 +46,14 @@ static const char *reply_lit(const char *s)
     return s_reply;
 }
 
-/* pb5= is the level read back from the output register, not the request. */
+/* pb5= is the model state, which with active-high wiring is the output level
+ * the old reply read back from the register. */
 static const char *reply_level(const char *head)
 {
     char *p = put_s(s_reply, head);
 
     p  = put_s(p, " pb5=");
-    p  = put_u32(p, pm_relay_get());
+    p  = put_u32(p, pm_relay_is_on(&s_relay) ? 1u : 0u);
     p  = put_s(p, "\r\n");
     *p = '\0';
     return s_reply;
@@ -96,7 +99,12 @@ static int is_word(const char *p, const char *w, unsigned n)
 
 void relay_dev_init(void)
 {
-    s_ready = (pm_relay_init() == 0) ? 1u : 0u;
+    const pm_relay_cfg_t cfg = {
+        .pin          = { .id = (uint16_t)BOARD_GPIO_RELAY },
+        .active_level = PM_RELAY_ACTIVE_HIGH,
+    };
+
+    s_ready = (pm_relay_init(&s_relay, &cfg) == PM_OK) ? 1u : 0u;
 }
 
 const char *relay_dev_cmd(const char *line)
@@ -114,11 +122,11 @@ const char *relay_dev_cmd(const char *line)
     }
     p = skip_sp(p + 5);
     if (is_word(p, "ON", 2u) != 0) {
-        pm_relay_set(1);
+        (void)pm_relay_on(&s_relay);
         return reply_level("RELAY on ok");
     }
     if (is_word(p, "OFF", 3u) != 0) {
-        pm_relay_set(0);
+        (void)pm_relay_off(&s_relay);
         return reply_level("RELAY off ok");
     }
     if (is_word(p, "STAT", 4u) != 0) {

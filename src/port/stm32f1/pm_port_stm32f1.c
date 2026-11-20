@@ -16,6 +16,8 @@
 #include "board_f103c8.h"
 #include "pm_pwm_tim2_stm32f1.h"
 
+extern const pm_track_ops_t pm_f1_track_ops;
+
 #if PM_ENABLE_ENCODER
 extern const pm_encoder_ops_t pm_f1_encoder_ops;
 #endif
@@ -409,6 +411,9 @@ static const pm_port_t s_port = {
     .pwm            = &pm_f1_tim2_pwm_ops,
     .pwm_ctx        = NULL,
     .pwm_count      = 2u,
+    .track          = &pm_f1_track_ops,
+    .track_ctx      = NULL,
+    .track_count    = 1u,
 #if PM_ENABLE_ENCODER
     .encoder        = &pm_f1_encoder_ops,
     .encoder_ctx    = NULL,

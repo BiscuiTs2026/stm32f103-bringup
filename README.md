@@ -7,6 +7,7 @@
 电机链于 2026-11-20 接入模型 **`69a578d`**（v0.7.0）的 `pm_pwm` / `pm_motor` core，逐字并入 6 个文件：
 `include/pm/pm_pwm.h`、`include/pm/pm_pwm_math.h`、`include/pm/pm_motor.h`、`src/core/pm_pwm.c`、`src/core/pm_motor.c`、`src/common/pm_pwm_math.c`（按 git blob 双向核对一致）。
 编码器链同源接入提交 **`69a578d`**（v0.7.0）的 `pm_encoder` core，逐字并入 `include/pm/pm_encoder.h`、`src/core/pm_encoder.c`，并把 `include/pm/pm_err.h`、`src/core/pm_err.c` 同步到同一提交（补 `PM_ERR_DISABLED` / `PM_ERR_NACK` / `PM_ERR_BUS`），共 4 个文件按 git blob 双向核对一致；板端 port 为自有实现（EXTI9_5 优先级仍为 4），组件层改调模型 API，`ENC` 回包文本不变。
+继电器与循迹同样接入 `69a578d` 的 `pm_relay` / `pm_track` core，逐字并入 `include/pm/pm_relay.h`、`src/core/pm_relay.c`、`include/pm/pm_track.h`、`src/core/pm_track.c`（4 个文件 blob 双向一致）；继电器走 `pm_gpio`，PB5 作为 `BOARD_GPIO_RELAY` 加入板级逻辑引脚表，循迹 port 改为读 PB14 原始电平，组件回包文本不变。
 板端原有舵机/蜂鸣器 API 已整体迁到 `include/pm/pm_servo.h`（仅改 include guard 与 `pm_pwm_init`→`pm_servo_init`，函数语义不变）。
 早期 GPIO/UART 复制发生在 `aa342e5` 成型前的工作树中间态——7 个 GPIO/UART 文件与该提交逐字节相同，
 `include/pm/pm_port.h` 少 167 行 SPI 声明；凡涉及 `pm_*` 契约的漂移，**以模型仓为准**，按 `PATCHES.md` 回同步。
@@ -27,8 +28,8 @@
 | 项目 | 状态 | 证据 / 数字 |
 | --- | --- | --- |
 | 交叉编译 | 通过 | `arm-none-eabi-gcc 14.3.1`，`-Wall -Wextra -Wshadow`，项目代码无警告 |
-| 尺寸 | 通过 | Flash **30740 B / 64 KB（46.91%）**，RAM **5408 B / 20 KB（26.41%）**（**接入模型 `pm_pwm` / `pm_motor` / `pm_encoder` core 后的默认配置实测**，`PM_ENABLE_SONAR=OFF`，来源：2026-11-20 `build-enc-integ2` 构建输出；较仅接电机时 30168 B / 5376 B 为 **+572 B / +32 B**；较接入模型前 28644 B / 5296 B 为 **+2096 B / +112 B**；`-DPM_ENABLE_SONAR=ON` 的旧口径本轮未复测） |
-| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（30740 B）、`.hex`、`.map` |
+| 尺寸 | 通过 | Flash **31248 B / 64 KB（47.68%）**，RAM **5448 B / 20 KB（26.60%）**（**接入模型 `pm_pwm` / `pm_motor` / `pm_encoder` / `pm_relay` / `pm_track` core 后的默认配置实测**，`PM_ENABLE_SONAR=OFF`，来源：2026-11-20 `build-relay-track` 构建输出；较仅接电机时 30168 B / 5376 B 为 **+1080 B / +72 B**；较接入模型前 28644 B / 5296 B 为 **+2604 B / +152 B**；`-DPM_ENABLE_SONAR=ON` 的旧口径本轮未复测） |
+| 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（31248 B）、`.hex`、`.map` |
 | 主机单测 | 通过 | 175 项断言，0 失败（MSVC 19.51，C11；来源：`evidence/timebase-hosttest.log`，2026-11-20） |
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
@@ -41,9 +42,9 @@
 | 按键 | 通过（带限制） | 20 ms 消抖，6 组 pressed/released 无重复无漏（§7）。**限制：主循环每 500 ms 约 98 ms 被 OLED 整页 I2C 占住，短于约 100 ms 的点按可能整段丢失**（M1-e、`evidence/MANUAL-CHECKS.md`、`TECH_DEBT.md` D23） |
 | ADC1 | **部分通过** | PA5 电位器静态 2124–2126（30 次极差 2 LSB）；PA4 NTC 升温 raw 2293→1792、降温回升，判定 NTC 在分压低端（§28）。**电位器转动响应未验证：缺十字螺丝刀** |
 | PWM 舵机 / 蜂鸣器 | **部分通过** | PB8 五档脉宽 500/1000/1500/2000/2500 µs 与回包一致；`PWM dbg` 实测 `psc=71`、`fpwm=50.0Hz`、`CCR3` 0/180→500/2500（§32）。**舵机"有动作"已由用户目视确认；角度精度、到位抖动/回弹、带负载表现未验证；蜂鸣器听感未采集**（§30.3） |
-| 循迹 PB14 | **部分通过** | 盖黑物 2 轮：`TRACK raw=1` → `raw=0` → `raw=1`，同状态内无跳变（1.78 s 采样，§31.3）。**只有一路，单路遮挡与全黑不可区分** |
+| 循迹 PB14 | **部分通过** | 盖黑物 2 轮：`TRACK raw=1` → `raw=0` → `raw=1`，同状态内无跳变（1.78 s 采样，§31.3）。**只有一路，单路遮挡与全黑不可区分**。2026-11-20 改走模型 `pm_track` core（port 自有实现读 PB14 原始电平，组件保持 `raw=` 语义）后，`TRACK raw=1` 与 `TRACK err=usage` 与基线逐字一致（`evidence/relay-track-20261120.log`）；本项只证明命令行为不变，遮挡动态**本轮未复测** |
 | 编码器 PA8/PA9 + 按键 PB15 | **部分通过** | `ENC` 双向计数 0→89→−32，cw 为正、ccw 为负，`ENC clear` 正常（§31.3）；2026-11-20 手转复测逆 24→−12、顺 −12→24 精确回零，`btn` 1→0→1 跟随按压约 3.5 s（`evidence/manual-m8-encoder.log`）。同日编码器链改走模型 `pm_encoder` core（板端 port 自有实现、EXTI9_5 优先级仍 4，组件改调模型 API，回包文本不变），上电 `ENC` 回包与基线逐字相同（`count=0 dir=idle a=1 b=1 btn=1`，`evidence/manual-m8-encoder-model.log`）；**本轮两次抓包窗口（60 s + 90 s）无人工转轮，改走模型后的动态计数轨迹与 `btn` 跟随未复测，记为未验证**。**符号与物理转向的对应未目视确认；`dir` 停手后保持最后一次方向、不回落 `idle`** |
-| 继电器 PB5 | **部分通过** | `RELAY stat/on/off` 三轮 `pb5=` 读回与请求一致（§34.3、`evidence/relay-20261119-a.log`）。**吸合"咔哒"声、触点通断、高电平=吸合的极性未验证**（§34.4） |
+| 继电器 PB5 | **部分通过** | `RELAY stat/on/off` 三轮 `pb5=` 读回与请求一致（§34.3、`evidence/relay-20261119-a.log`）。**吸合"咔哒"声、触点通断、高电平=吸合的极性未验证**（§34.4）。2026-11-20 改走模型 `pm_relay` core（PB5 加入板级逻辑引脚表，组件调模型 API）后，`RELAY stat=0`、`on=1`、`off=0` 与基线逐字一致（`evidence/relay-track-20261120.log`）；本项只证明命令行为不变，物理通断**仍未验证** |
 | 电机 DRV8833（PA0/PA1） | **部分通过** | 2026-11-19：`MOTOR fwd/rev/stop/duty` 的 `ccr1/ccr2` 组合、`duty` 0/100/101 边界与错误分支全部与寄存器读回一致（§35.3、`evidence/motor-20261119-a.log`）；初始化另做 10‰ 时基复核与 TIM2 占用探测，失败回 `err=timer` / `err=remap`。2026-11-20：电机链改走模型 `pm_pwm` / `pm_motor` core（port 新增 TIM2 PWM ops），同一 M4 序列复跑**逐条一致**（`evidence/motor-20261120-a.log`），烧录带回读校验（`evidence/motor-20261120-flash.log`）；舵机链路因头文件迁移复跑五档脉宽与 `PWM dbg`，与既有证据**逐条一致**（`evidence/pwm-20261120-a.log`）。**电机是否真转、`fwd/rev` 对应的轴方向、转速随占空比的变化未验证**（§35.4）；`MOTOR dbg` 与 live 60 s 浸泡本轮未复跑，记为**未验证**、不回填为通过 |
 | SPI | **未验证** | 无实际器件；只有 HAL 源与默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现 |
 
@@ -91,7 +92,7 @@ cmake -S . -B build-arm -G Ninja `
 cmake --build build-arm
 ```
 
-换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（30740 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（默认 `PM_ENABLE_SONAR=OFF` 时 **30740 B / 5408 B**，来源：2026-11-20 `build-enc-integ2`，接入模型 `pm_pwm`/`pm_motor`/`pm_encoder` core 后的实测；较仅接电机时 30168 B / 5376 B 为 +572 B / +32 B，较接入模型前 28644 B / 5296 B 为 +2096 B / +112 B。`-DPM_ENABLE_SONAR=ON` 的旧口径本轮未复测）。
+换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（31248 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（默认 `PM_ENABLE_SONAR=OFF` 时 **31248 B / 5448 B**，来源：2026-11-20 `build-relay-track`，接入模型 `pm_pwm`/`pm_motor`/`pm_encoder`/`pm_relay`/`pm_track` core 后的实测；较仅接电机时 30168 B / 5376 B 为 +1080 B / +72 B，较接入模型前 28644 B / 5296 B 为 +2604 B / +152 B。`-DPM_ENABLE_SONAR=ON` 的旧口径本轮未复测）。
 
 烧录（ST-Link，带校验、烧完复位）：
 

@@ -1,0 +1,38 @@
+[       0ms] ===== relay/track replay 2026-11-20 13:45:16.092 port=COM11 =====
+[     110ms] hb
+[     189ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[     695ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1105ms] hb
+[    1183ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1242ms] >> RELAY stat
+[    1256ms] RELAY stat pb5=0
+[    1694ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1955ms] >> RELAY on
+[    1972ms] RELAY on ok pb5=1
+[    2106ms] hb
+[    2195ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2656ms] >> RELAY stat
+[    2671ms] RELAY stat pb5=1
+[    2689ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3106ms] hb
+[    3194ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3361ms] >> RELAY off
+[    3384ms] RELAY off ok pb5=0
+[    3694ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4067ms] >> RELAY stat
+[    4082ms] RELAY stat pb5=0
+[    4083ms] hb
+[    4183ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4696ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4772ms] >> TRACK
+[    4783ms] TRACK raw=1
+[    5094ms] hb
+[    5197ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5484ms] >> TRACK raw?
+[    5500ms] TRACK err=usage
+[    5683ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    6100ms] hb
+[    6183ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    6184ms] >> RELAY bad
+[    6206ms] RELAY err=usage
+[    6687ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0

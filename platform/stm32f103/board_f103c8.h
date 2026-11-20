@@ -14,6 +14,7 @@ typedef enum {
     BOARD_GPIO_LED_RED,        /* PB0 */
     BOARD_GPIO_KEY1,           /* PB12, external 10k pull-up */
     BOARD_GPIO_KEY2,           /* PB13, no external pull-up */
+    BOARD_GPIO_RELAY,          /* PB5, relay driver, active high */
     BOARD_GPIO_COUNT
 } board_gpio_id_t;
 

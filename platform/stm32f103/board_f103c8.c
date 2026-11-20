@@ -12,6 +12,7 @@ static const pm_f1_gpio_map_t s_gpio_map[BOARD_GPIO_COUNT] = {
     [BOARD_GPIO_LED_RED]   = { GPIOB, GPIO_PIN_0 },
     [BOARD_GPIO_KEY1]      = { GPIOB, GPIO_PIN_12 },
     [BOARD_GPIO_KEY2]      = { GPIOB, GPIO_PIN_13 },
+    [BOARD_GPIO_RELAY]     = { GPIOB, GPIO_PIN_5 },
 };
 
 const pm_f1_gpio_ctx_t pm_f1_gpio_ctx = {

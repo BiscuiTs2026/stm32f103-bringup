@@ -127,6 +127,23 @@ typedef struct {
     pm_err_t (*enable)(void *ctx, pm_pwm_t *p, bool on);
 } pm_pwm_ops_t;
 
+/* ----------------------------------------------------------------- TRACK */
+
+typedef struct {
+    uint8_t hw_id;
+    uint8_t active_level;   /* pm_gpio_level_t value */
+} pm_track_cfg_t;
+
+typedef struct pm_track pm_track_t;
+
+typedef struct {
+    /* read() returns the raw electrical level (true = high). The polarity
+     * decision belongs to the core. */
+    pm_err_t (*open)(void *ctx, pm_track_t *t, const pm_track_cfg_t *cfg);
+    void     (*close)(void *ctx, pm_track_t *t);
+    pm_err_t (*read)(void *ctx, pm_track_t *t, bool *high);
+} pm_track_ops_t;
+
 /* --------------------------------------------------------------- ENCODER */
 
 typedef struct {
@@ -168,6 +185,10 @@ typedef struct {
     const pm_pwm_ops_t  *pwm;
     void                *pwm_ctx;
     uint8_t              pwm_count;        /* valid hw_id are [0, count) */
+
+    const pm_track_ops_t *track;
+    void                 *track_ctx;
+    uint8_t               track_count;     /* valid hw_id are [0, count) */
 
     const pm_encoder_ops_t *encoder;
     void                   *encoder_ctx;
