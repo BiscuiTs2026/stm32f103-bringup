@@ -56,7 +56,8 @@ TIM2 只有一套 `PSC/ARR/CNT`，两个用途必须共用同一时基，而两�
 - **TIM2 整颗让给电机 PWM**：不再有任何代码写 `TIM2->PSC/ARR/CNT`。
 - 相关代码：`src/port/stm32f1/pm_sonar_stm32f1.c`（`pm_sonar_init`/`pm_sonar_pulse`，S6 已从
   `main.c` 迁出）、`src/components/sonar_dev/sonar_dev.c`（`sonar_dev_start`）、
-  `src/port/stm32f1/pm_motor_stm32f1.c`。
+  `src/port/stm32f1/pm_pwm_tim2_stm32f1.c`（TIM2 CH1/CH2 PWM ops；2026-11-20 改走模型 core 后，
+  原 `pm_motor_stm32f1.c` 已删除）。
 
 ## 6. 建议检查器规则
 

@@ -1656,7 +1656,7 @@
 | 时间 | 2026-11-20 13:0x–13:19 |
 | 触发 | 派发方裁决"按 A 执行、只改名不改语义"：舵机/蜂鸣器 API 整体迁到 `pm_servo.h`；`pm_pwm.h` 让给模型通道对象契约；`pm_port.h` 只补 PWM 段；板端新增 TIM2 PWM ops，电机改走模型 `pm_pwm.c` / `pm_motor.c` |
 | 模型来源 | `BiscuiTs2026/stm32-peripheral-model` 提交 `69a578d`（v0.7.0）；`include/pm/pm_pwm.h`、`pm_pwm_math.h`、`pm_motor.h`、`src/core/pm_pwm.c`、`src/core/pm_motor.c`、`src/common/pm_pwm_math.c` 逐字进板端，blob 双向核对（`git hash-object --no-filters`）；模型仓 `git status` 干净 |
-| 板端新增/改动 | `include/pm/pm_servo.h`（原舵机/蜂鸣器 API，guard 改 `PM_SERVO_H`，`pm_pwm_init`→`pm_servo_init`，其余零语义改动）；`include/pm/pm_motor_dbg.h` + `pm_motor_hw_snapshot()`（只读 TIM2 快照供 `MOTOR stat`）；`src/port/stm32f1/pm_pwm_tim2_stm32f1.c/.h`（TIM2 CH1/CH2 ops，PSC0/ARR3599/CCMR1 0x6868/CC1E|CC2E/ARPE|CEN 与旧寄存器逻辑逐项一致）；`pm_port.h` 补 PWM 段与三字段；`pm_err.h` 补 `PM_ERR_CONFLICT=-11`（-1..-10 与模型逐行一致）；`motor_dev.c` 改调模型 API（pct×10→permille，回包文本不变）；`CMakeLists.txt` 接入三份模型源文件、`pm_motor_stm32f1.c` 移出构建（文件未删） |
+| 板端新增/改动 | `include/pm/pm_servo.h`（原舵机/蜂鸣器 API，guard 改 `PM_SERVO_H`，`pm_pwm_init`→`pm_servo_init`，其余零语义改动）；`include/pm/pm_motor_dbg.h` + `pm_motor_hw_snapshot()`（只读 TIM2 快照供 `MOTOR stat`）；`src/port/stm32f1/pm_pwm_tim2_stm32f1.c/.h`（TIM2 CH1/CH2 ops，PSC0/ARR3599/CCMR1 0x6868/CC1E|CC2E/ARPE|CEN 与旧寄存器逻辑逐项一致）；`pm_port.h` 补 PWM 段与三字段；`pm_err.h` 补 `PM_ERR_CONFLICT=-11`（-1..-10 与模型逐行一致）；`motor_dev.c` 改调模型 API（pct×10→permille，回包文本不变）；`CMakeLists.txt` 接入三份模型源文件、`pm_motor_stm32f1.c` 移出构建（同日后续提交已 `git rm` 删除） |
 | 分层归属 | `pm_pwm_math.c` 放 `src/common/`（模型原布局）。放 `src/core/` 会被检查器判"common 声明/调用上层函数"共 4 ERROR，因为 `.arch-roles` 把 `src/core/*` 定为 components；目录名 `common` 自动定角色，**未改 `.arch-roles`** |
 | 编译 | `build-motor-integ`（独立目录）：**0 error / 0 项目代码警告**，62/62；链接期只有既有 libc_nano `_close/_lseek/_read/_write` 与 RWX LOAD 段提示 |
 | 尺寸 | FLASH **30168 B / 64 KB（46.03%）**，RAM **5376 B / 20 KB（26.25%）**；对比上一基线 28644 B / 5296 B 为 **+1524 B / +80 B** |
@@ -1708,4 +1708,4 @@
 | --- | --- |
 | 能证明什么 | 电机命令的全部回包文本、`dir/duty/hz/arr/ccr1/ccr2` 与升级前逐条相同；舵机五档脉宽与 `PWM dbg` 的 PSC/ARR/CCR/频率与既有证据逐条一致；TIM2 寄存器配置与旧实现等价（ARR 3599、20 kHz、CCR=36×pct） |
 | 不能证明什么 | ①舵机**实际角度精度、到位抖动/回弹、带负载表现**仍未验证（沿用 §30.3 的边界），本轮只证明脉宽与回包 ②蜂鸣器听感未采集 ③`MOTOR dbg`（`pm_platform_motor_dbg`）本轮未单独复跑，未纳入对比，记为**未验证**、不回填为通过 ④live 60 s 浸泡本轮未重跑，记为**未验证**，同样不回填为通过 |
-| 遗留 | ①`src/port/stm32f1/pm_motor_stm32f1.c` 只移出构建、文件仍在盘上，删除需单独批准 ②README 的契约基线与尺寸数字已在本笔（同一提交）同步到本轮口径 ③`TRACK raw` 为环境状态差异，不追、不属本轮改动 |
+| 遗留 | ①`src/port/stm32f1/pm_motor_stm32f1.c` 已在本轮后续提交中 `git rm` 删除（索引与工作树一并移除），TIM2 寄存器实现由 `src/port/stm32f1/pm_pwm_tim2_stm32f1.c` 承担 ②README 的契约基线与尺寸数字已在本笔（同一提交）同步到本轮口径 ③`TRACK raw` 为环境状态差异，不追、不属本轮改动 |

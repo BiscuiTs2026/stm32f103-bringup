@@ -1824,6 +1824,11 @@ PA0/PA1 → 驱动板 PWM1/PWM2（排针脚 4 / 脚 3），PCB 丝印 **A0/A1**�
 | `CMakeLists.txt` | 新增端口与组件源文件、include 目录 |
 | `src/app/main.c` | 只加 4 处登记（include、HELP、分发链、init） |
 
+> 2026-11-20 补记：电机链改走模型 `pm_pwm` / `pm_motor` core 后，上表
+> `src/port/stm32f1/pm_motor_stm32f1.c` 已删除（`git rm`）。TIM2 寄存器实现改由
+> `src/port/stm32f1/pm_pwm_tim2_stm32f1.c` 承担，上层逻辑在 `src/core/pm_motor.c`、
+> `src/core/pm_pwm.c`；`include/pm/pm_motor.h` 已换成模型契约。
+
 关键取舍：
 
 - **占用判据只看寄存器**：`pm_motor_init()` 在写任何配置前检查
