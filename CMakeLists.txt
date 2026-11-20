@@ -54,6 +54,7 @@ add_library(pm_core STATIC
     src/core/pm_cmd.c
     src/core/pm_cmd_table.c
     src/common/pm_pwm_math.c
+    src/common/pm_timer.c
     src/core/pm_pwm.c
     src/core/pm_motor.c
     src/core/pm_encoder.c

@@ -270,7 +270,8 @@ ADC1，单次软件触发，ADCCLK = PCLK2/6 = 12 MHz，采样时间 55.5 周期
 
 ### 4.6 PWM（PB8 舵机 / PB9 无源蜂鸣器）
 
-PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是定时器通道，
+PB8 = TIM4_CH3，固定 **50 Hz** 帧；时基由 `pm_pwm_timing_compute(72 MHz, 50 Hz)`
+决定，当前为 `psc=21 / arr=65453`（约 0.306 µs 刻度，见决策 0022）；PB9 不是定时器通道，
 由 TIM3 更新中断翻转 GPIO 生成，10 µs 相位分辨率。两者同属 TIM4 的引脚冲突
 已按"TIM4 只给舵机、蜂鸣器走 TIM3 中断"解决，见 `PATCHES.md` §30.1。
 
@@ -317,11 +318,13 @@ PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是
   阻塞 10 s。该命令已编译进固件，但**没有上板运行过**（`PATCHES.md` §32.4）。
 - 慢扫期间主循环停摆约 5.4 s：OLED 刷新、`DIST live`、`hb` 都暂停，结束后 `hb`
   会补发几条（同一秒内到达），这是预期现象，不是卡死。
-- `PWM err=init` 只在 `pm_pwm_init()` 返回非 0 时出现。当前有两个失败入口：
-  ①时基复核 `pm_timebase_ok(72 MHz, PSC 71, ARR 19999, 50 Hz, 10‰)` 不通过——
-  预分频/ARR 常量与 50 Hz 对不上时拒绝初始化，不写任何寄存器；②GPIO/寄存器
-  初始化失败（现有实现没有这种返回路径）。当前常量下复核恒通过，因此该分支
-  **没有现场回包证据**（`PATCHES.md` §30.3）。
+- `PWM err=init` 只在舵机 `pm_pwm_init()` 返回非 0 时出现。当前失败入口：
+  ①`pm_pwm_timing_compute` 给不出可用时基，或 `pm_pwm_timing_matches` 在 10‰ 容差内
+  不通过——预分频/ARR 与 50 Hz 对不上时拒绝初始化，不写任何寄存器；②TIM4 申请失败：
+  端口以 `hw_id=4、owner=0x24、role=PWM、channels=0x04` 调 `pm_timer_claim()`，
+  模型回 `PM_ERR_BUSY`（TIM4 被模型外部启动）或 `PM_ERR_CONFLICT`（时基/角色不兼容）
+  即拒绝，同样不写寄存器；③GPIO/寄存器初始化失败（现有实现没有这种返回路径）。
+  当前配置下①②恒通过，因此该分支**没有现场回包证据**（`PATCHES.md` §30.3）。
 - 舵机"有动作"已由用户目视确认（`PATCHES.md` §32.4），但角度精度、到位抖动/回弹、
   带负载表现与蜂鸣器听感**不在串口可证范围内**，回包只说明配置值与脉宽。
 
@@ -419,16 +422,24 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
   寄存器层可证的是两路 CCR 到 3600 与退出后复原；**“电机是否真的制动、制动多快”
   未验证**，需人上板看转子。
 - `brake` 已列入 `HELP` 的 `MOTOR` 行（2026-11-20）；`HELP` 由 638 B 增至 644 B。
-- 初始化失败按下列顺序判定，回包与判据：
+- 初始化失败按下列顺序判定，回包与判据（2026-11-20 起由模型 `pm_timer` claim 表驱动，
+  回包文本与优先级不变）：
   1. `MOTOR err=timer`，时基复核不通过：`pm_timebase_ok(72 MHz, PSC 0, ARR 3599,
      20 kHz, 10‰)` 判假，说明 PSC/ARR 常量与目标频率对不上；直接拒绝，不写任何
      寄存器。
-  2. `MOTOR err=timer`，TIM2 已在计数：占用探测 `pm_timer_probe(PM_TIMER_T2)`
-     读到 `TIM2->CR1.CEN` 已置位（别人已占用）。与第 3 条同时成立时按本条优先。
-  3. `MOTOR err=remap`，通道重映射字段非 0：`AFIO->MAPR` 的 `TIM2_REMAP` **2 位字段**
-     （掩码 `0x300`）非 0 即判占用。其中 `01`/`11` 把 CH1/CH2 移出 PA0/PA1；`10`
-     （partial remap 2）保留 CH1/CH2，但字段非 0 说明 AFIO 已被配置，按保守策略同样拒绝。
-  判据只读寄存器，不看任何软件占用标记，因此不会因状态变量失步而误报。
+  2. `MOTOR err=timer`，TIM2 已被外部占用：端口向模型申请
+     `pm_timer_claim(hw_id=2, owner=0x21/0x22, role=PWM, psc/arr, ch)`，
+     模型返回 `PM_ERR_BUSY` 后，端口再用板端探测位细分——`TIM2->CR1.CEN` 已置位
+     即归 `err=timer`（外部占用）。与第 3 条同时成立时按本条优先。
+  3. `MOTOR err=remap`，通道重映射字段非 0：同一 `PM_ERR_BUSY` 细分路径里，
+     `AFIO->MAPR` 的 `TIM2_REMAP` **2 位字段**（掩码 `0x300`）非 0 时端口改报
+     `PM_ERR_STATE`，组件映射为 `err=remap`。`01`/`11` 把 CH1/CH2 移出 PA0/PA1；
+     `10`（partial remap 2）保留 CH1/CH2，但字段非 0 说明 AFIO 已被配置，
+     按保守策略同样拒绝。
+  4. 模型内部冲突（`PM_ERR_CONFLICT`，如同一 `hw_id` 已被另一角色或时基不兼容的
+     占用者持有）原样上抛，按 `err=timer` 一路返回；它不归 Remap 分支。
+  细分判据只读寄存器，不看任何软件占用标记；是否存在占用由模型 claim 表裁决，
+  端口只负责把 `PM_ERR_BUSY` 还原成 `timer`/`remap` 两个既有文案。
 - TIM2 仍只服务电机；HC-SR04 的可选构建已改用 `DWT->CYCCNT` 时基，不再申请 TIM2
   （决策 0020、`docs/TIM2-CONFLICT.md`）。
 

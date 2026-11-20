@@ -1975,6 +1975,45 @@ source-commit: 7facd2b0039acd407d91c96ee043ef95dfc4b446
   as well"，与 RM0008 的 10 档（CH1/CH2 仍在 PA0/PA1）不符；判据本身按非 0 处理不受影响，
   注释留待下次触碰该文件时更正。
 
+## 37. 2026-11-20 模型 v0.8.0 `pm_timer` claim 表整层移植
+
+- 背景：0018 §5 定的是“只探测、先不建表”，前提是模型侧没有 claim 表。模型
+  **v0.8.0（`0e56b1c`）** 已提供 `pm_timer_claim/release/retime/check`、
+  owner 查询 `pm_timer_claims/claim_at`，并把外部占用改为 `PM_ERR_BUSY`。
+  本轮按用户裁决 A 整层接入，见 `coordination/decisions/0023-timer-claim-table-established.md`。
+- 逐字引入：`include/pm/pm_timer.h`（blob `53c9403…`）、`src/common/pm_timer.c`
+  （blob `43b4043…`）与模型提交一致，无本地改写；`CMakeLists.txt` 加入 `src/common/pm_timer.c`。
+- 端口改造：
+  - 新建 `src/port/stm32f1/pm_timer_stm32f1.h`：板端 `hw_id`（TIM2=2、TIM3=3、TIM4=4）、
+    owner（0x21/0x22/0x24）、探测位；`.c` 只读 `CR1.CEN`/`AFIO->MAPR`，
+    `pm_f1_timer_probe_install()` 在 `pm_pwm_board_init()` 第一行安装探针。
+  - `pm_pwm_tim2_stm32f1.c`：`tim2_open` 先算时基再 `pm_timer_claim`（PWM、单个通道位），
+    只有 `PM_OK` 才写寄存器；`tim2_close` 调 `pm_timer_release`；`tim2_set_freq`
+    在单通道改频前 `pm_timer_retime`，兄弟通道时基不同则回 `PM_ERR_CONFLICT`。
+  - `pm_pwm_tim4_stm32f1.c`：舵机 `tim4_open` 以 `hw_id=4、owner=0x24、channels=0x04`
+    `pm_timer_claim`，`close` 释放，`set_freq` 改时基前 `retime`。
+  - `err=timer`/`err=remap` 的区分保留：模型回 `PM_ERR_BUSY` 后，端口读探测位细分——
+    `CEN` 置位 → `PM_ERR_BUSY`（`err=timer`，优先），否则 remap 非 0 → `PM_ERR_STATE`
+    （`err=remap`）；`PM_ERR_CONFLICT` 原样上抛，归 `err=timer`。
+- 诊断入口（隐藏，不改进 `HELP`）：`MOTOR claims`（遍历 TIM2..TIM4 打 owner/role/psc/arr/ch）、
+  `MOTOR conflict`（对电机持有的 TIM2 以 TONE/0x7E 二次申请；对 TIM4 同 PSC/ARR 的 CH4
+  申请后释放）、`MOTOR busy`（蜂鸣器运行时申请 TIM3）。既有命令文本一个字节未改。
+- 编译：`-DPM_ENABLE_SONAR=ON`，FLASH **35032 B / 53.45%**、RAM **6040 B / 29.49%**
+  （33136 → 35032，+1896；5504 → 6040，+536）。检查器 3.4.0 锁一致，0 ERROR / 4 WARN。
+- 烧录：`-v -rst` 回读校验通过（`evidence/v080-timer-claim-flash.log`）。
+- 回包自证（`evidence/v080-timer-claim-serial.log`）：
+  - 既有命令逐字一致：`PWM stat` / `PWM servo 90` / `PWM dbg`（`psc=0x15 arr=0xFFAD ccr3=0x132D`）、
+    `MOTOR fwd 30/stat/stop`（`ccr1=1080 ccr2=0` 等）、`ENC`、`DIST`、`HELP` 15 行 660 B。
+  - `MOTOR claims t2=2 o=33 ch=0x01 o=34 ch=0x02 t3=0 t4=1 o=36 psc=21 arr=65453 ch=0x04`：
+    TIM2 与 TIM4 同时可查。
+  - `MOTOR conflict t2=conflict t4=ok rel=ok`：同 `hw_id` 二次申请得到模型
+    `PM_ERR_CONFLICT`，兼容的第四通道可共存并释放。
+  - `MOTOR busy t3=busy rel=state`：蜂鸣器占用时外部探测 → `PM_ERR_BUSY`。
+- 未验：`MOTOR err=timer` / `err=remap` 两条失败文案未现场触发（需 init 前外部占用 TIM2
+  或预置 AFIO remap）；`PWM err=init` 的 claim 失败分支未触发；声音与机械动作不在本轮范围。
+- 代价：`MOTOR claims` 的 owner 以十进制打印（33/34/36 即 0x21/0x22/0x24），
+  与源码宏同源；TIM3 不进表，只作外部占用被探测。
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，

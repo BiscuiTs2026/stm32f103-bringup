@@ -18,7 +18,7 @@
 #include "pm_motor_dbg.h"
 #include "pm_pwm.h"
 #include "pm_pwm_math.h"
-#include "pm_timer.h"
+#include "pm_timer_stm32f1.h"
 
 #define TIM2_CLK_HZ     72000000u
 #define TIM2_CH_COUNT   2u
@@ -39,6 +39,12 @@ static uint8_t ch_of(const pm_pwm_t *p)
     return p->hw_id;
 }
 
+static uint8_t owner_of(uint8_t ch)
+{
+    return (ch == 0u) ? PM_F1_TIMER_OWNER_TIM2_CH1
+                      : PM_F1_TIMER_OWNER_TIM2_CH2;
+}
+
 static void set_ccr(uint8_t ch, uint16_t value)
 {
     if (ch == 0u) {
@@ -57,6 +63,7 @@ static pm_err_t tim2_open(void *ctx, pm_pwm_t *p, const pm_pwm_cfg_t *cfg,
                           uint32_t *actual_hz)
 {
     pm_pwm_timing_t t;
+    pm_timer_claim_t claim;
     pm_err_t rc;
     uint8_t ch;
 
@@ -74,23 +81,41 @@ static pm_err_t tim2_open(void *ctx, pm_pwm_t *p, const pm_pwm_cfg_t *cfg,
     }
 
     ch = ch_of(p);
-    if (s_t2.opened != 0u) {
-        /* One timer, one period: a sibling with another PSC/ARR is exactly
-         * the conflict the model refuses to hide. */
-        if ((t.psc != s_t2.psc) || (t.arr != s_t2.arr)) {
+    if ((s_t2.opened & (uint8_t)(1u << ch)) != 0u) {
+        return PM_ERR_BUSY;
+    }
+
+    /* Arbitration is the model's job (pm_timer.c v0.8.0): a sibling with a
+     * different PSC/ARR and a timer started outside the model are both refused
+     * before any register write. Only the error refinement stays local, so the
+     * two visible motor errors keep their old split. */
+    claim.hw_id    = PM_F1_TIMER_TIM2;
+    claim.owner_id = owner_of(ch);
+    claim.role     = PM_TIMER_ROLE_PWM;
+    claim.psc      = t.psc;
+    claim.arr      = t.arr;
+    claim.channels = (uint8_t)(1u << ch);
+
+    rc = pm_timer_claim(&claim);
+    if (rc == PM_ERR_BUSY) {
+        /* CEN set  -> someone else is counting          -> err=timer
+         * remap set-> pins are not where the caller says -> err=remap
+         * PM_ERR_STATE is the component-side carrier for the remap case. */
+        uint32_t busy = pm_f1_timer_busy_bits(PM_F1_TIMER_TIM2);
+
+        if ((busy & PM_F1_TIMER_BUSY_CEN) != 0u) {
             return PM_ERR_BUSY;
         }
-        if ((s_t2.opened & (uint8_t)(1u << ch)) != 0u) {
-            return PM_ERR_BUSY;
+        if ((busy & PM_F1_TIMER_BUSY_REMAP) != 0u) {
+            return PM_ERR_STATE;
         }
-    } else {
-        uint32_t busy = pm_timer_probe(PM_TIMER_T2);
+        return PM_ERR_BUSY;
+    }
+    if (rc != PM_OK) {
+        return rc;              /* PM_ERR_CONFLICT: sibling config differs */
+    }
 
-        if (busy != PM_TIMER_FREE) {
-            return ((busy & PM_TIMER_BUSY_CEN) != 0u) ? PM_ERR_BUSY
-                                                      : PM_ERR_STATE;
-        }
-
+    if (s_t2.opened == 0u) {
         RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_AFIOEN;
         RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 
@@ -145,6 +170,7 @@ static void tim2_close(void *ctx, pm_pwm_t *p)
     s_t2.permille[ch] = 0u;
     set_ccr(ch, 0u);
     TIM2->CCER &= ~ccer_bit(ch);
+    (void)pm_timer_release(PM_F1_TIMER_TIM2, owner_of(ch));
 
     if (s_t2.opened == 0u) {
         TIM2->CR1 &= ~TIM_CR1_CEN;
@@ -178,9 +204,10 @@ static pm_err_t tim2_set_freq(void *ctx, pm_pwm_t *p, uint32_t freq_hz,
 
     ch = ch_of(p);
     if ((s_t2.opened & (uint8_t)~(uint8_t)(1u << ch)) != 0u) {
-        /* A sibling is open: the period is shared, so only a no-op is safe. */
+        /* A sibling is open: the model allows sharing only at the same
+         * PSC/ARR, so a different period is an internal conflict. */
         if ((t.psc != s_t2.psc) || (t.arr != s_t2.arr)) {
-            return PM_ERR_BUSY;
+            return PM_ERR_CONFLICT;
         }
         if (actual_hz != NULL) {
             *actual_hz = s_t2.freq_hz;
@@ -193,6 +220,11 @@ static pm_err_t tim2_set_freq(void *ctx, pm_pwm_t *p, uint32_t freq_hz,
             *actual_hz = s_t2.freq_hz;
         }
         return PM_OK;
+    }
+
+    rc = pm_timer_retime(PM_F1_TIMER_TIM2, owner_of(ch), t.psc, t.arr);
+    if (rc != PM_OK) {
+        return rc;
     }
 
     TIM2->CR1 &= ~TIM_CR1_CEN;

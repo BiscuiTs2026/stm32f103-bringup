@@ -16,6 +16,7 @@
 
 #include "pm_pwm.h"
 #include "pm_pwm_math.h"
+#include "pm_timer_stm32f1.h"
 
 #define TIM4_CLK_HZ        72000000u  /* APB1 36 MHz x2 for timers */
 #define TIM4_TOL_PERMILLE  10u        /* decision 0018: 10 permille */
@@ -34,6 +35,7 @@ static pm_err_t tim4_open(void *ctx, pm_pwm_t *p, const pm_pwm_cfg_t *cfg,
                           uint32_t *actual_hz)
 {
     pm_pwm_timing_t t;
+    pm_timer_claim_t claim;
     pm_err_t rc;
 
     (void)ctx;
@@ -56,6 +58,21 @@ static pm_err_t tim4_open(void *ctx, pm_pwm_t *p, const pm_pwm_cfg_t *cfg,
     if (!pm_pwm_timing_matches(TIM4_CLK_HZ, t.psc, t.arr, cfg->freq_hz,
                                TIM4_TOL_PERMILLE)) {
         return PM_ERR_PARAM;
+    }
+
+    /* TIM4 is in the claim table too: a second user of the same timer gets
+     * PM_ERR_CONFLICT (different PSC/ARR or role) or PM_ERR_BUSY (started
+     * outside the model) instead of silently overwriting this time base. */
+    claim.hw_id    = PM_F1_TIMER_TIM4;
+    claim.owner_id = PM_F1_TIMER_OWNER_TIM4;
+    claim.role     = PM_TIMER_ROLE_PWM;
+    claim.psc      = t.psc;
+    claim.arr      = t.arr;
+    claim.channels = 0x04u;     /* CH3 */
+
+    rc = pm_timer_claim(&claim);
+    if (rc != PM_OK) {
+        return rc;
     }
 
     RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
@@ -98,6 +115,7 @@ static void tim4_close(void *ctx, pm_pwm_t *p)
     TIM4->CCR3 = 0u;
     TIM4->CCER &= ~TIM_CCER_CC3E;
     TIM4->CR1  &= ~TIM_CR1_CEN;
+    (void)pm_timer_release(PM_F1_TIMER_TIM4, PM_F1_TIMER_OWNER_TIM4);
     s_t4.opened   = 0u;
     s_t4.permille = 0u;
     s_t4.freq_hz  = 0u;
@@ -130,6 +148,11 @@ static pm_err_t tim4_set_freq(void *ctx, pm_pwm_t *p, uint32_t freq_hz,
     }
 
     if ((t.psc != s_t4.psc) || (t.arr != s_t4.arr)) {
+        rc = pm_timer_retime(PM_F1_TIMER_TIM4, PM_F1_TIMER_OWNER_TIM4,
+                             t.psc, t.arr);
+        if (rc != PM_OK) {
+            return rc;
+        }
         TIM4->CR1 &= ~TIM_CR1_CEN;
         TIM4->PSC  = t.psc;
         TIM4->ARR  = t.arr;

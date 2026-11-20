@@ -1986,3 +1986,24 @@ HELP KEYS=key press counters, clears them
 | 影响 | `PWM dbg` 的 `psc/arr` 与早期证据不再逐字相同，比对必须换算（旧 71/19999 ↔ 新 21/65453，周期同为 20 ms） |
 
 
+
+## 144. 模型 v0.8.0 `pm_timer` claim 表整层移植（回包自证）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 20:37–20:38（COM11） |
+| 目的 | 板端从“只读探测”改为真正使用模型 claim/release/retime；TIM2 与 TIM4 同时纳入 |
+| 模型来源 | `BiscuiTs2026/stm32-peripheral-model` 提交 `0e56b1c`（tag `v0.8.0`），`pm_timer.h/.c` 逐字引入，blob 双向一致 |
+| 固件 | `build-v080-timer-claim/pm_f103_demo.hex`，`-DPM_ENABLE_SONAR=ON`，FLASH **35032 B（53.45%）** / RAM **6040 B（29.49%）** |
+| 体积变化 | 较上一版 33136 / 5504 B：FLASH **+1896 B**，RAM **+536 B** |
+| 烧录 | `STM32_Programmer_CLI -c port=SWD mode=UR -w … -v -rst`，`Download verified successfully`，`evidence/v080-timer-claim-flash.log` |
+| 检查器 | 3.4.0 锁一致；扫描 0 ERROR / 4 WARN（既有 ISR 钩子），`evidence/v080-timer-claim-checker.log` |
+| 既有命令复跑 | `PWM stat servo=90.0c pulse=1500us buz=off`；`PWM servo ok deg=90.0 pulse=1500us`；`PWM dbg … psc=0x00000015 arr=0x0000FFAD … ccr3=0x0000132D … fpwm=50.0Hz`；`MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0`；`MOTOR stat` 同上；`MOTOR stop ok … ccr1=0 ccr2=0`；`ENC count=0 dir=idle a=1 b=1 btn=1`；`DIST cm=101.3 us=5874`（格式同上一版，数值随遮挡距离变化） |
+| HELP | 15 行 / **660 B**，与上一版逐字一致；隐藏诊断 `MOTOR claims/conflict/busy` 未进入 HELP |
+| claim 表自证 | `MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04`（owner 33/34/36 = 0x21/0x22/0x24） |
+| 冲突自证 | 电机仍持 TIM2 时，以 owner 0x7E / TONE 二次申请同一 `hw_id=2` → `MOTOR conflict t2=conflict t4=ok rel=ok`；同 PSC/ARR 的 TIM4 CH4 申请成功并释放 |
+| 外部占用自证 | `PWM buz 4000` 后对 TIM3 申请 → `MOTOR busy t3=busy rel=state`；`PWM buz off` 后再查表不变 |
+| 回包自证项 | claim 表内容、同 hw_id 冲突、兼容共存、外部 CEN 占用、既有命令逐字一致、HELP 长度 |
+| 未验项 | `MOTOR err=timer` / `err=remap` 两条失败文案**未现场触发**（需 init 前外部占用 TIM2 或预置 AFIO remap）；`PWM err=init` 的 claim 失败分支未触发；蜂鸣器听感、电机/舵机机械动作不在本轮范围 |
+| 日志 | `evidence/v080-timer-claim-build.log`、`evidence/v080-timer-claim-serial.log`、`evidence/v080-timer-claim-heap.log`、`evidence/v080-timer-claim-flash.log`、`evidence/v080-timer-claim-checker.log` |
+| 决策记录 | `coordination/decisions/0023-timer-claim-table-established.md`（0018 §5 由“先不建表”改为“已建立”） |

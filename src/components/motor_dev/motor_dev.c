@@ -9,11 +9,22 @@
 #include "pm_motor.h"
 #include "pm_motor_dbg.h"
 #include "pm_pwm.h"
+#include "pm_timer.h"
 
 #define MOTOR_REPLY_MAX 96u
 #define MOTOR_FREQ_HZ   20000u
 
+/* Board-defined timer ids and a diagnostic owner that is never used by the
+ * firmware itself. Must match src/port/stm32f1/pm_timer_stm32f1.h. */
+#define MOTOR_TIM2_ID    2u
+#define MOTOR_TIM3_ID    3u
+#define MOTOR_TIM4_ID    4u
+#define MOTOR_DIAG_OWNER 0x7Eu
+
+#define MOTOR_DIAG_MAX  448u
+
 static char    s_reply[MOTOR_REPLY_MAX];
+static char    s_diag[MOTOR_DIAG_MAX];
 static uint8_t s_ready;
 static const char *s_init_err;
 static motor_dev_dbg_fn s_dbg;
@@ -99,6 +110,173 @@ static const char *reply_range(uint32_t v)
     p  = put_s(p, "\r\n");
     *p = '\0';
     return s_reply;
+}
+
+/* ---- claim-table diagnostics (hidden: not listed in HELP) -----------------
+ * These subcommands exist to prove, from replies alone, that arbitration is
+ * done by the model's table rather than by the old CEN shortcut:
+ *   MOTOR claims   dump pm_timer_claim_at() for TIM2/TIM3/TIM4
+ *   MOTOR conflict second claim on TIM2 (motor holds it) and a compatible
+ *                  fourth channel on TIM4
+ *   MOTOR busy     claim TIM3 while the buzzer has the counter running
+ * None of them changes the text of an existing command. */
+
+static const char *err_name(pm_err_t e)
+{
+    switch (e) {
+    case PM_OK:           return "ok";
+    case PM_ERR_BUSY:     return "busy";
+    case PM_ERR_CONFLICT: return "conflict";
+    case PM_ERR_STATE:    return "state";
+    case PM_ERR_PARAM:    return "param";
+    case PM_ERR_NOMEM:    return "nomem";
+    case PM_ERR_RANGE:    return "range";
+    case PM_ERR_NULL:     return "null";
+    default:              return "other";
+    }
+}
+
+static const char *role_name(pm_timer_role_t r)
+{
+    switch (r) {
+    case PM_TIMER_ROLE_PWM:     return "pwm";
+    case PM_TIMER_ROLE_TONE:    return "tone";
+    case PM_TIMER_ROLE_COUNTER: return "counter";
+    default:                    return "?";
+    }
+}
+
+static char *put_hex8(char *p, uint8_t v)
+{
+    static const char hex[] = "0123456789ABCDEF";
+
+    *p++ = hex[(v >> 4) & 0xFu];
+    *p++ = hex[v & 0xFu];
+    return p;
+}
+
+static const char *reply_claims(void)
+{
+    char    *p = s_diag;
+    uint8_t  hw;
+
+    p = put_s(p, "MOTOR claims");
+    for (hw = MOTOR_TIM2_ID; hw <= MOTOR_TIM4_ID; hw++) {
+        uint8_t n = pm_timer_claims(hw);
+        uint8_t i;
+
+        p = put_s(p, " t");
+        p = put_u32(p, hw);
+        p = put_s(p, "=");
+        p = put_u32(p, n);
+        for (i = 0u; i < n; i++) {
+            pm_timer_claim_t c;
+
+            if (pm_timer_claim_at(hw, i, &c) != PM_OK) {
+                p = put_s(p, " ?");
+                break;
+            }
+            p = put_s(p, " o=");
+            p = put_u32(p, c.owner_id);
+            p = put_s(p, " r=");
+            p = put_s(p, role_name(c.role));
+            p = put_s(p, " psc=");
+            p = put_u32(p, c.psc);
+            p = put_s(p, " arr=");
+            p = put_u32(p, c.arr);
+            p = put_s(p, " ch=0x");
+            p = put_hex8(p, c.channels);
+        }
+    }
+    p  = put_s(p, "\r\n");
+    *p = '\0';
+    return s_diag;
+}
+
+static const char *reply_conflict(void)
+{
+    char            *p = s_diag;
+    pm_timer_claim_t c;
+    pm_err_t         rc2;
+    pm_err_t         rc4 = PM_ERR_STATE;
+    pm_err_t         rel = PM_ERR_STATE;
+    uint8_t          n4;
+    uint16_t         psc4 = 0u;
+    uint16_t         arr4 = 0u;
+
+    n4 = pm_timer_claims(MOTOR_TIM4_ID);
+    if ((n4 > 0u) && (pm_timer_claim_at(MOTOR_TIM4_ID, 0u, &c) == PM_OK)) {
+        psc4 = c.psc;
+        arr4 = c.arr;
+    } else {
+        n4 = 0u;
+    }
+
+    /* Same hw_id as the motor, different owner and role: the model must say
+     * CONFLICT, not overwrite the motor's time base. */
+    c.hw_id    = MOTOR_TIM2_ID;
+    c.owner_id = MOTOR_DIAG_OWNER;
+    c.role     = PM_TIMER_ROLE_TONE;
+    c.psc      = 0u;
+    c.arr      = PM_TIMER_ARR_FULL;
+    c.channels = 0u;
+    rc2 = pm_timer_claim(&c);
+    if (rc2 == PM_OK) {
+        (void)pm_timer_release(MOTOR_TIM2_ID, MOTOR_DIAG_OWNER);
+    }
+
+    /* Positive case: same PSC/ARR as the servo claim, disjoint channel. */
+    if (n4 > 0u) {
+        c.hw_id    = MOTOR_TIM4_ID;
+        c.owner_id = MOTOR_DIAG_OWNER;
+        c.role     = PM_TIMER_ROLE_PWM;
+        c.psc      = psc4;
+        c.arr      = arr4;
+        c.channels = 0x08u;     /* CH4, servo uses CH3 */
+        rc4 = pm_timer_claim(&c);
+        if (rc4 == PM_OK) {
+            rel = pm_timer_release(MOTOR_TIM4_ID, MOTOR_DIAG_OWNER);
+        }
+    }
+
+    p = put_s(p, "MOTOR conflict t2=");
+    p = put_s(p, err_name(rc2));
+    p = put_s(p, " t4=");
+    p = put_s(p, err_name(rc4));
+    p = put_s(p, " rel=");
+    p = put_s(p, err_name(rel));
+    p  = put_s(p, "\r\n");
+    *p = '\0';
+    return s_diag;
+}
+
+static const char *reply_busy(void)
+{
+    char            *p = s_diag;
+    pm_timer_claim_t c;
+    pm_err_t         rc;
+    pm_err_t         rel = PM_ERR_STATE;
+
+    /* TIM3 is deliberately outside the table; with the buzzer running the
+     * probe sees CEN and the model must refuse with BUSY. */
+    c.hw_id    = MOTOR_TIM3_ID;
+    c.owner_id = MOTOR_DIAG_OWNER;
+    c.role     = PM_TIMER_ROLE_TONE;
+    c.psc      = 71u;
+    c.arr      = 999u;
+    c.channels = 0u;
+    rc = pm_timer_claim(&c);
+    if (rc == PM_OK) {
+        rel = pm_timer_release(MOTOR_TIM3_ID, MOTOR_DIAG_OWNER);
+    }
+
+    p = put_s(p, "MOTOR busy t3=");
+    p = put_s(p, err_name(rc));
+    p = put_s(p, " rel=");
+    p = put_s(p, err_name(rel));
+    p  = put_s(p, "\r\n");
+    *p = '\0';
+    return s_diag;
 }
 
 static int ci_eq_n(const char *a, const char *b, unsigned n)
@@ -277,6 +455,24 @@ const char *motor_dev_cmd(const char *line)
             return reply_lit("MOTOR err=usage");
         }
         return reply_state("MOTOR stat");
+    }
+    if (is_word(p, "CLAIMS", 6u) != 0) {
+        if (p[6] != '\0') {
+            return reply_lit("MOTOR err=usage");
+        }
+        return reply_claims();
+    }
+    if (is_word(p, "CONFLICT", 8u) != 0) {
+        if (p[8] != '\0') {
+            return reply_lit("MOTOR err=usage");
+        }
+        return reply_conflict();
+    }
+    if (is_word(p, "BUSY", 4u) != 0) {
+        if (p[4] != '\0') {
+            return reply_lit("MOTOR err=usage");
+        }
+        return reply_busy();
     }
     if (is_word(p, "DBG", 3u) != 0) {
         if (p[3] != '\0') {

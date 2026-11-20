@@ -1,0 +1,72 @@
+﻿===== v0.8.0 timer claim capture 2026-11-20 20:37:58 COM11 115200 =====
+>> PWM stat
+PWM stat servo=90.0c pulse=1500us buz=off
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+DIST live cm=101.3 us=5873
+>> PWM servo 90
+PWM servo ok deg=90.0 pulse=1500us
+hb
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> PWM dbg
+PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000015 arr=0x0000FFAD ccmr2=0x00000068 ccer=0x00000100 ccr3=0x0000132D cnt0=19753 cnt1=16582 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+OLED live ok ms=117 col=2 af=0 berr=0 to=0
+DIST live cm=62.4 us=3621
+hb
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> MOTOR fwd 30
+MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+DIST live cm=100.8 us=5847
+>> MOTOR stat
+hb
+MOTOR stat dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> MOTOR stop
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+DIST live cm=100.8 us=5847
+hb
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> ENC
+ENC count=0 dir=idle a=1 b=1 btn=1
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+DIST live cm=101.3 us=5874
+>> DIST
+DIST cm=101.3 us=5874
+hb
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> MOTOR claims
+MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+DIST live cm=101.3 us=5873
+hb
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> MOTOR conflict
+MOTOR conflict t2=conflict t4=ok rel=ok
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+DIST live cm=101.3 us=5873
+hb
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> PWM buz 4000
+PWM buz ok freq=4000Hz duty=20%
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+DIST live cm=100.9 us=5852
+>> MOTOR busy
+MOTOR busy t3=busy rel=state
+hb
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> PWM buz off
+PWM buz off ok
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+DIST live cm=102.2 us=5926
+hb
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+>> MOTOR claims
+MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+DIST live cm=101.3 us=5873
+>> PWM stat
+PWM stat servo=90.0c pulse=1500us buz=off
+hb
+OLED live ok ms=98 col=2 af=0 berr=0 to=0
+===== capture end =====
