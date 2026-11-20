@@ -38,7 +38,7 @@ work/
 │   ├── stm32f103c8.ld            自行编写的链接脚本（64K/20K）
 │   └── startup_stm32f103xb.s     启动文件（来自 CMSIS 设备包）
 ├── tests/host/                   主机测试
-│   ├── test_main.c               96 项断言
+│   ├── test_main.c               175 项断言
 │   ├── pm_port_mock.c            内存后端
 │   ├── pm_osal_host.c            可控时间
 │   └── CMakeLists.txt            独立构建（MSVC/GCC 均可）
@@ -49,6 +49,8 @@ work/
 ├── CMakeLists.txt                ARM 固件构建
 └── README.md
 ```
+
+> `test_main.c` 的断言数 **175** 取自本仓实测 `evidence/timebase-hosttest.log`（2026-11-20，`175 checks, 0 failure(s)`）；新增测试时同步更新此处。
 
 ## 2. 每个目录的职责边界
 

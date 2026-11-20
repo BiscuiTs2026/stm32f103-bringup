@@ -203,7 +203,7 @@ static uint8_t   s_tx[512];       /* 2 的幂，>=64 */
 - 主机侧提供两样东西即可跑测试：
   - `tests/host/pm_port_mock.c`：实现 `pm_port_get()` 的内存版；
   - `tests/host/pm_osal_host.c`：时间由测试推进的 OSAL。
-- 当前覆盖：环形缓冲（含回绕、丢弃、consume）、事件队列（去重、溢出）、GPIO 参数校验、UART 生命周期、TX 流控、RX 投递、超时路径。共 96 项断言，全部通过。
+- 当前覆盖：环形缓冲（含回绕、丢弃、consume）、事件队列（去重、溢出）、GPIO 参数校验、UART 生命周期、TX 流控、RX 投递、超时路径。共 **175** 项断言，全部通过（取值来源：`evidence/timebase-hosttest.log`，2026-11-20，`175 checks, 0 failure(s)`；新增测试时同步更新此处）。
 - 新增外设时，**先写 core 逻辑和 mock 测试，再接真实后端**。做不到就说明该逻辑还不该进 core。
 
 ---
