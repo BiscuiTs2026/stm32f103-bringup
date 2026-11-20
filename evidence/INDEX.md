@@ -1484,3 +1484,18 @@
 | 不能证明什么 | 像素是否干净串口判不了——由用户按复现序列 `OLED col 2 → OLED frame → OLED col 3 → OLED col 4 → OLED show` 目视确认：**最左侧贯 8 行的竖边已消失**，M9 据此按 PASS 收项 |
 | 局限 | 清屏为阻塞操作，`OLED col` 响应从约 15 ms 增至约 205 ms（已在 PROTOCOL 记明）；目视结论无照片 |
 | PATCHES 引用 | 未引用 |
+
+## 118. 推送直连两连败转 MCP 兜底（decision 0010 实例）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 11:12–11:20 |
+| 背景 | 提交 `7583e47`（D24 口径更正，三份文档）需推送；`git push origin main` 连续两次失败 |
+| 失败原文 | 第 1 次：`fatal: unable to access 'https://github.com/BiscuiTs2026/stm32f103-bringup.git/': Recv failure: Connection was reset`；第 2 次：`Failed to connect to github.com:443 after 21073 ms`；随后 `git ls-remote origin refs/heads/main` 同样 `Recv failure: Connection was reset`（exit 128） |
+| 决策依据 | AGENTS 第 6 节 + `coordination/decisions/0010`：直连连续两次失败才允许启用 MCP 兜底，且以远端文件内容一致验收，不看提交哈希 |
+| 通道与做法 | GitHub MCP `push_files`（`BiscuiTs2026/stm32f103-bringup`，`branch=main`）：先 `get_file_contents` 取远端当前 blob 作基底，按与本地相同的替换生成新内容，一笔提交写入三份文件，提交信息同 `7583e47` |
+| 验收方式 | 写前核对远端旧 blob = `6ff62ce` 的 blob（`dddb5c1c` / `91347e53` / `f0e57fab`）；写后用 `git hash-object` 的本地 blob 逐项比对远端新 blob：`2fe44b96` / `6d3c2db2` / `8cd0941e`，三项全一致 |
+| 副产物 | 远端新增提交 `46aef2d`，与本地 `7583e47` 从 `6ff62ce` 分叉（内容相同、哈希不同） |
+| 分叉消除 | 网络恢复后 `git fetch origin` + `git reset --mixed origin/main`：三份文档 blob 相同故无差异，`MOTOR dbg` 未提交修改不受影响；不得直推 `7583e47` |
+| 能证明什么 | MCP 写入内容与本地逐字节一致；分叉只源于提交哈希不同，不源于内容差异 |
+| 局限 | MCP 每次写文件会各自产生提交，无法复用本地哈希，故必须用 blob 验收而非提交号 |
