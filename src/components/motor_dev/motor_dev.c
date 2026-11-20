@@ -28,6 +28,7 @@ static char    s_diag[MOTOR_DIAG_MAX];
 static uint8_t s_ready;
 static const char *s_init_err;
 static motor_dev_dbg_fn s_dbg;
+static motor_dev_force_fn s_force;
 
 /* Two PWM channels on one timer plus the DRV8833 state machine. */
 static pm_pwm_t   s_in1;
@@ -279,6 +280,54 @@ static const char *reply_busy(void)
     return s_diag;
 }
 
+/* Debug-only fault injection: the first line is the exact text the boot path
+ * prints for the same classification, the second line proves the registers and
+ * the claim table were restored. The injector itself lives in the port. */
+static const char *reply_force(uint8_t mode)
+{
+    int      rrc = 0;
+    uint32_t bits = 0u;
+    uint8_t  before = 0u;
+    uint8_t  after = 0u;
+    int      ret;
+    char    *p;
+
+    if (s_force == NULL) {
+        return reply_lit("MOTOR err=unsupported");
+    }
+    ret = s_force(mode, &rrc, &bits, &before, &after);
+    if (ret != 0) {
+        p = put_s(s_diag, (ret == -2) ? "MOTOR force err=restore claims="
+                                      : "MOTOR force err=precond claims=");
+        p = put_u32(p, after);
+        p  = put_s(p, "\r\n");
+        *p = '\0';
+        return s_diag;
+    }
+
+    if ((rrc != (int)PM_ERR_BUSY) && (rrc != (int)PM_ERR_STATE)) {
+        p = put_s(s_diag, "MOTOR force err=");
+        p = put_s(p, err_name((pm_err_t)rrc));
+        p  = put_s(p, "\r\n");
+        *p = '\0';
+        return s_diag;
+    }
+
+    p = put_s(s_diag, (rrc == (int)PM_ERR_STATE) ? "MOTOR err=remap"
+                                                 : "MOTOR err=timer");
+    p = put_s(p, "\r\n");
+    p = put_s(p, (mode == 0u) ? "MOTOR force mode=cen bits="
+                              : "MOTOR force mode=remap bits=");
+    p = put_u32(p, bits);
+    p = put_s(p, " claims=");
+    p = put_u32(p, before);
+    p = put_s(p, "->");
+    p = put_u32(p, after);
+    p  = put_s(p, "\r\n");
+    *p = '\0';
+    return s_diag;
+}
+
 static int ci_eq_n(const char *a, const char *b, unsigned n)
 {
     unsigned i;
@@ -394,6 +443,11 @@ void motor_dev_set_dbg(motor_dev_dbg_fn fn)
     s_dbg = fn;
 }
 
+void motor_dev_set_force(motor_dev_force_fn fn)
+{
+    s_force = fn;
+}
+
 const char *motor_dev_cmd(const char *line)
 {
     const char *p = skip_sp(line);
@@ -473,6 +527,17 @@ const char *motor_dev_cmd(const char *line)
             return reply_lit("MOTOR err=usage");
         }
         return reply_busy();
+    }
+    if (is_word(p, "FORCE", 5u) != 0) {
+        const char *q = skip_sp(p + 5);
+
+        if ((is_word(q, "TIMER", 5u) != 0) && (q[5] == '\0')) {
+            return reply_force(0u);
+        }
+        if ((is_word(q, "REMAP", 5u) != 0) && (q[5] == '\0')) {
+            return reply_force(1u);
+        }
+        return reply_lit("MOTOR err=usage");
     }
     if (is_word(p, "DBG", 3u) != 0) {
         if (p[3] != '\0') {

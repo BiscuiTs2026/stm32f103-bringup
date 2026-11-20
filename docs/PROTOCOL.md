@@ -476,6 +476,29 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
 - `MOTOR err=unsupported` 只在入口层没有绑定钩子时出现（组件被别处复用、或板级实现
   被裁掉）；正常固件里不会看到。
 
+#### 隐藏诊断命令（仅调试用，不进 HELP）
+
+以下子命令**只用于上板取证**，不属于对外接口，**不得在生产固件里依赖**。它们都不在
+`HELP` 列表里，也都不改变任何既有命令的回包文本；只有显式输入时才执行，正常启动与
+`MOTOR fwd/stat/stop` 等路径不会调用它们。
+
+| 命令 | 作用 | 回包要点 |
+| --- | --- | --- |
+| `MOTOR claims` | 遍历 TIM2/TIM3/TIM4，打印 claim 表的 owner/role/psc/arr/channels | `MOTOR claims t2=… t3=… t4=…`（owner 为十进制，33/34/36 = 0x21/0x22/0x24） |
+| `MOTOR conflict` | 对电机已持有的 TIM2 以 TONE/0x7E 二次申请；再申请 TIM4 同 PSC/ARR 的空闲通道并释放 | `MOTOR conflict t2=conflict t4=ok rel=ok` |
+| `MOTOR busy` | 蜂鸣器运行时对 TIM3 申请 | `MOTOR busy t3=busy rel=state`（外部 CEN → `PM_ERR_BUSY`） |
+| `MOTOR force timer` | 临时释放电机两路 claim，直接置 `TIM2->CR1.CEN` 从外部启动，走与初始化相同的 claim/判据，再恢复寄存器与 claim 表 | 第一行是启动路径的原文 `MOTOR err=timer`；第二行 `MOTOR force mode=cen bits=1 claims=2->2` 证明现场已还原 |
+| `MOTOR force remap` | 同上，但改为预置 `AFIO->MAPR` 的 TIM2 remap 字段（0x100） | 第一行 `MOTOR err=remap`；第二行 `MOTOR force mode=remap bits=2 claims=2->2` |
+
+- 两条 `force` 命令的前置条件是电机两路都处于打开状态且 claim 表里正好是
+  0x21/0x22 两条 PWM 记录；不满足时回 `MOTOR force err=precond claims=<n>`，不做
+  任何寄存器写入。恢复后 claim 数不一致则回 `err=restore`，属于缺陷，应上报。
+- 注入期间会先把 `CCER` 清零、`CEN` 停掉，避免故障注入影响 DRV8833 输入；恢复顺序是
+  `CNT→CCER→CR1`，`AFIO->MAPR` 整字还原。第二行的 `claims=2->2` 与随后 `MOTOR claims`
+  的逐字一致，是“没有副作用”的回包证据；`PWM dbg` 里 `mapr=0x00000000` 可再次核对。
+- 2026-11-20 实测：两条文案分别抓到（见 `evidence/v080-force-diag-serial.log`、
+  INDEX §145），故障后 `MOTOR fwd 30` / `stat` / `stop` 与故障前逐字一致。
+
 ---
 
 ## 5. 判读陷阱（实测教训）

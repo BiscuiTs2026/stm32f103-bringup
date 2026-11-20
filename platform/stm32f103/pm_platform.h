@@ -21,4 +21,12 @@ uint32_t pm_platform_core_clock(void);
  * Bound into the motor component by the entry layer (main.c). */
 const char *pm_platform_motor_dbg(void);
 
+/* Debug-only fault injector behind "MOTOR force timer|remap" (2026-11-20).
+ * mode 0 starts TIM2 outside the model, mode 1 sets the AFIO TIM2 remap field;
+ * both run the motor channel's claim/classification path and then restore the
+ * registers and the claim table. Returns 0 restored, -1 precondition,
+ * -2 restore failed. Do not rely on this in production firmware. */
+int pm_platform_motor_force(uint8_t mode, int *rc, uint32_t *bits,
+                            uint8_t *before, uint8_t *after);
+
 #endif /* PM_PLATFORM_H */

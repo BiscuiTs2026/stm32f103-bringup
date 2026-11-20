@@ -59,11 +59,47 @@ static uint32_t ccer_bit(uint8_t ch)
     return (ch == 0u) ? TIM_CCER_CC1E : TIM_CCER_CC2E;
 }
 
+static pm_err_t tim2_claim_channel(uint8_t ch, uint16_t psc, uint16_t arr,
+                                   uint8_t owner, uint32_t *busy_bits)
+{
+    pm_timer_claim_t claim;
+    pm_err_t rc;
+
+    claim.hw_id    = PM_F1_TIMER_TIM2;
+    claim.owner_id = owner;
+    claim.role     = PM_TIMER_ROLE_PWM;
+    claim.psc      = psc;
+    claim.arr      = arr;
+    claim.channels = (uint8_t)(1u << ch);
+
+    rc = pm_timer_claim(&claim);
+    if (rc != PM_ERR_BUSY) {
+        return rc;
+    }
+
+    /* CEN set  -> someone else is counting          -> err=timer
+     * remap set-> pins are not where the caller says -> err=remap
+     * PM_ERR_STATE is the component-side carrier for the remap case. */
+    {
+        uint32_t busy = pm_f1_timer_busy_bits(PM_F1_TIMER_TIM2);
+
+        if (busy_bits != NULL) {
+            *busy_bits = busy;
+        }
+        if ((busy & PM_F1_TIMER_BUSY_CEN) != 0u) {
+            return PM_ERR_BUSY;
+        }
+        if ((busy & PM_F1_TIMER_BUSY_REMAP) != 0u) {
+            return PM_ERR_STATE;
+        }
+        return PM_ERR_BUSY;
+    }
+}
+
 static pm_err_t tim2_open(void *ctx, pm_pwm_t *p, const pm_pwm_cfg_t *cfg,
                           uint32_t *actual_hz)
 {
     pm_pwm_timing_t t;
-    pm_timer_claim_t claim;
     pm_err_t rc;
     uint8_t ch;
 
@@ -89,28 +125,7 @@ static pm_err_t tim2_open(void *ctx, pm_pwm_t *p, const pm_pwm_cfg_t *cfg,
      * different PSC/ARR and a timer started outside the model are both refused
      * before any register write. Only the error refinement stays local, so the
      * two visible motor errors keep their old split. */
-    claim.hw_id    = PM_F1_TIMER_TIM2;
-    claim.owner_id = owner_of(ch);
-    claim.role     = PM_TIMER_ROLE_PWM;
-    claim.psc      = t.psc;
-    claim.arr      = t.arr;
-    claim.channels = (uint8_t)(1u << ch);
-
-    rc = pm_timer_claim(&claim);
-    if (rc == PM_ERR_BUSY) {
-        /* CEN set  -> someone else is counting          -> err=timer
-         * remap set-> pins are not where the caller says -> err=remap
-         * PM_ERR_STATE is the component-side carrier for the remap case. */
-        uint32_t busy = pm_f1_timer_busy_bits(PM_F1_TIMER_TIM2);
-
-        if ((busy & PM_F1_TIMER_BUSY_CEN) != 0u) {
-            return PM_ERR_BUSY;
-        }
-        if ((busy & PM_F1_TIMER_BUSY_REMAP) != 0u) {
-            return PM_ERR_STATE;
-        }
-        return PM_ERR_BUSY;
-    }
+    rc = tim2_claim_channel(ch, t.psc, t.arr, owner_of(ch), NULL);
     if (rc != PM_OK) {
         return rc;              /* PM_ERR_CONFLICT: sibling config differs */
     }
@@ -296,6 +311,97 @@ static pm_err_t tim2_enable(void *ctx, pm_pwm_t *p, bool on)
         TIM2->CCER &= ~ccer_bit(ch);
     }
     return PM_OK;
+}
+
+/* Debug-only seam for "MOTOR force timer|remap" (2026-11-20). It withholds
+ * the motor's two claims for the duration of one probe, injects the requested
+ * fault exactly the way an outside owner would, runs the same
+ * tim2_claim_channel() call tim2_open() uses, then puts the registers and the
+ * two claims back. mode 0: set CR1.CEN; mode 1: set the AFIO TIM2_REMAP field.
+ * Returns 0 when the claim table is back to what it was, -1 precondition,
+ * -2 restore failed. *rc receives the pm_err_t tim2_open() would have returned. */
+#define TIM2_REMAP_MASK 0x300u
+
+int pm_f1_tim2_force_fault(uint8_t mode, int *rc, uint32_t *bits,
+                           uint8_t *before, uint8_t *after)
+{
+    uint32_t cr1;
+    uint32_t ccer;
+    uint32_t cnt;
+    uint32_t mapr;
+    uint32_t seen = 0u;
+    uint8_t  n_before;
+    uint8_t  n_after;
+    uint8_t  i;
+    pm_err_t result;
+
+    if ((mode > 1u) || (s_t2.opened != 0x03u)) {
+        return -1;
+    }
+    n_before = pm_timer_claims(PM_F1_TIMER_TIM2);
+    if (n_before != 2u) {
+        return -1;
+    }
+    for (i = 0u; i < 2u; i++) {
+        pm_timer_claim_t c;
+
+        if ((pm_timer_claim_at(PM_F1_TIMER_TIM2, i, &c) != PM_OK) ||
+            (c.owner_id != owner_of(i)) || (c.role != PM_TIMER_ROLE_PWM)) {
+            return -1;
+        }
+    }
+
+    cr1  = TIM2->CR1;
+    ccer = TIM2->CCER;
+    cnt  = TIM2->CNT;
+    mapr = AFIO->MAPR;
+
+    /* Outputs off and counter stopped: the injected fault must not reach the
+     * DRV8833 inputs or shift the PWM phase. */
+    TIM2->CCER = 0u;
+    TIM2->CR1  = cr1 & ~TIM_CR1_CEN;
+    TIM2->CNT  = 0u;
+
+    (void)pm_timer_release(PM_F1_TIMER_TIM2, owner_of(0u));
+    (void)pm_timer_release(PM_F1_TIMER_TIM2, owner_of(1u));
+
+    if (mode == 0u) {
+        TIM2->CR1 = (cr1 & ~TIM_CR1_CEN) | TIM_CR1_CEN;      /* external start */
+    } else {
+        AFIO->MAPR = (mapr & ~TIM2_REMAP_MASK) | (0x1u << 8);
+    }
+
+    result = tim2_claim_channel(0u, s_t2.psc, s_t2.arr,
+                                PM_F1_TIMER_OWNER_DIAG, &seen);
+
+    /* Undo the fault first, then re-claim while the probe still reads clear. */
+    TIM2->CR1  = cr1 & ~TIM_CR1_CEN;
+    TIM2->CNT  = 0u;
+    AFIO->MAPR = mapr;
+    for (i = 0u; i < 2u; i++) {
+        if ((s_t2.opened & (uint8_t)(1u << i)) != 0u) {
+            (void)tim2_claim_channel(i, s_t2.psc, s_t2.arr, owner_of(i), NULL);
+        }
+    }
+    n_after = pm_timer_claims(PM_F1_TIMER_TIM2);
+
+    TIM2->CNT  = cnt;
+    TIM2->CCER = ccer;
+    TIM2->CR1  = cr1;
+
+    if (rc != NULL) {
+        *rc = (int)result;
+    }
+    if (bits != NULL) {
+        *bits = seen;
+    }
+    if (before != NULL) {
+        *before = n_before;
+    }
+    if (after != NULL) {
+        *after = n_after;
+    }
+    return (n_after == n_before) ? 0 : -2;
 }
 
 const pm_pwm_ops_t pm_f1_tim2_pwm_ops = {

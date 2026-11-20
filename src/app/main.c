@@ -124,7 +124,9 @@ int main(void)
 #if PM_ENABLE_SONAR
     pm_sonar_init();
 #endif
-    track_dev_init(); encoder_dev_init(); relay_dev_init(); motor_dev_init(); motor_dev_set_dbg(pm_platform_motor_dbg);
+    /* The second hook is debug-only (MOTOR force timer|remap); kept on this
+     * line because the glue file is at its code-line cap. */
+    track_dev_init(); encoder_dev_init(); relay_dev_init(); motor_dev_init(); motor_dev_set_dbg(pm_platform_motor_dbg); motor_dev_set_force(pm_platform_motor_force);
 
     next_led_ms = next_hb_ms = pm_osal_now_ms();
 

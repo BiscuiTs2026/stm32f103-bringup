@@ -1975,7 +1975,7 @@ source-commit: 7facd2b0039acd407d91c96ee043ef95dfc4b446
   as well"，与 RM0008 的 10 档（CH1/CH2 仍在 PA0/PA1）不符；判据本身按非 0 处理不受影响，
   注释留待下次触碰该文件时更正。
 
-## 37. 2026-11-20 模型 v0.8.0 `pm_timer` claim 表整层移植
+## 39. 2026-11-20 模型 v0.8.0 `pm_timer` claim 表整层移植
 
 - 背景：0018 §5 定的是“只探测、先不建表”，前提是模型侧没有 claim 表。模型
   **v0.8.0（`0e56b1c`）** 已提供 `pm_timer_claim/release/retime/check`、
@@ -2013,6 +2013,38 @@ source-commit: 7facd2b0039acd407d91c96ee043ef95dfc4b446
   或预置 AFIO remap）；`PWM err=init` 的 claim 失败分支未触发；声音与机械动作不在本轮范围。
 - 代价：`MOTOR claims` 的 owner 以十进制打印（33/34/36 即 0x21/0x22/0x24），
   与源码宏同源；TIM3 不进表，只作外部占用被探测。
+
+## 40. 2026-11-20 `err=timer` / `err=remap` 失败分支现场触发
+
+- 背景：§39 移植后两条失败文案只剩代码路径，没有现场回包证据。本轮按用户授权加
+  两条**仅调试用**诊断，把两条分支真造出来。
+- 实现：
+  - `pm_pwm_tim2_stm32f1.c` 把 open 的 claim + `PM_ERR_BUSY` 细分抽成
+    `tim2_claim_channel()`，`tim2_open` 与诊断共用同一函数，生产路径行为不变。
+  - 新增 `pm_f1_tim2_force_fault(mode, …)`：先确认两路都已打开且 claim 表正好是
+    0x21/0x22，随后 `CCER=0`、停 `CEN`，释放两条 claim；mode 0 置 `CR1.CEN`，
+    mode 1 置 `AFIO->MAPR` 的 TIM2 remap 字段；调用同一 claim 函数得到
+    `PM_ERR_BUSY`（CEN）或 `PM_ERR_STATE`（remap）；再整字还原 `MAPR`、按
+    `CNT→CCER→CR1` 恢复寄存器并重放两条 claim。恢复后 claim 数不符返回 -2。
+  - 组件 `motor_dev` 增加 `motor_dev_set_force()` 钩子与隐藏分支
+    `MOTOR force timer|remap`；板级经 `pm_platform_motor_force()` 转发到端口；
+    入口胶水 `main.c` 在原 `motor_dev_set_dbg(...)` 同一行绑定，胶水行数仍 86。
+  - 前置条件不满足回 `MOTOR force err=precond claims=<n>`；恢复失败回
+    `err=restore`；诊断钩子未绑定回 `MOTOR err=unsupported`。
+- 编译：FLASH **35968 B / 54.88%**、RAM **6048 B / 29.53%**（35032 → 35968，
+  +936；6040 → 6048，+8）。检查器 0 ERROR / 4 WARN。
+- 烧录：`-v -rst` 校验通过（`evidence/v080-force-diag-flash.log`）。
+- 回包（`evidence/v080-force-diag-serial.log`）：
+  - `MOTOR force timer` → `MOTOR err=timer` + `MOTOR force mode=cen bits=1 claims=2->2`
+  - `MOTOR force remap` → `MOTOR err=remap` + `MOTOR force mode=remap bits=2 claims=2->2`
+  - 两次前后 `MOTOR claims` 逐字一致；随后 `PWM dbg` 的 `mapr=0x00000000` 复核；
+    故障后 `MOTOR fwd 30` / `stat` / `stop` 与故障前逐字一致。
+  - `PWM stat` / `PWM servo 90` / `PWM dbg`（psc=0x15、arr=0xFFAD、ccr3=0x132D）
+    未受影响；`HELP` 仍 15 行 660 B。
+- 未验 / 范围外：`MOTOR force` 在电机运行中调用、`err=precond` 分支未现场触发；
+  声音与机械动作不在本轮范围。
+- 注意：这两条命令仅为调试取证保留，**生产固件不应依赖**；正常启动与
+  `MOTOR fwd/stat/stop` 不经过它们。
 
 ## 已知遗留
 

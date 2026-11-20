@@ -1,5 +1,6 @@
 #include "pm_platform.h"
 #include "pm_osal.h"
+#include "pm_pwm_tim2_stm32f1.h"
 #include "stm32f1xx_hal.h"
 
 /* Clock tree: HSE 8 MHz -> PLL x9 -> SYSCLK 72 MHz,
@@ -130,6 +131,14 @@ const char *pm_platform_motor_dbg(void)
     p = dbg_s(p, "\r\n");
     *p = '\0';
     return s_dbg;
+}
+
+/* Thin board seam for the debug-only fault injector; the register work lives
+ * in src/port/stm32f1/pm_pwm_tim2_stm32f1.c next to the production open path. */
+int pm_platform_motor_force(uint8_t mode, int *rc, uint32_t *bits,
+                            uint8_t *before, uint8_t *after)
+{
+    return pm_f1_tim2_force_fault(mode, rc, bits, before, after);
 }
 
 /* One ISR feeds both time bases. HAL uses its own tick for HAL_Delay and

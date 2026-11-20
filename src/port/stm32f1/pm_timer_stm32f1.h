@@ -23,6 +23,8 @@
 #define PM_F1_TIMER_OWNER_TIM2_CH1  0x21u
 #define PM_F1_TIMER_OWNER_TIM2_CH2  0x22u
 #define PM_F1_TIMER_OWNER_TIM4      0x24u
+/* Never used by the firmware; only "MOTOR force timer|remap" borrows it. */
+#define PM_F1_TIMER_OWNER_DIAG      0x7Eu
 
 /* Probe result bits, same meaning as the pre-claim probe (decision 0018):
  * CEN already set = someone started the counter; a non-zero AFIO remap field

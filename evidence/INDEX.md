@@ -2007,3 +2007,25 @@ HELP KEYS=key press counters, clears them
 | 未验项 | `MOTOR err=timer` / `err=remap` 两条失败文案**未现场触发**（需 init 前外部占用 TIM2 或预置 AFIO remap）；`PWM err=init` 的 claim 失败分支未触发；蜂鸣器听感、电机/舵机机械动作不在本轮范围 |
 | 日志 | `evidence/v080-timer-claim-build.log`、`evidence/v080-timer-claim-serial.log`、`evidence/v080-timer-claim-heap.log`、`evidence/v080-timer-claim-flash.log`、`evidence/v080-timer-claim-checker.log` |
 | 决策记录 | `coordination/decisions/0023-timer-claim-table-established.md`（0018 §5 由“先不建表”改为“已建立”） |
+
+## 145. `MOTOR force timer|remap`：两条初始化失败分支现场触发（回包自证）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 20:51（COM11） |
+| 目的 | 把 `MOTOR err=timer` 与 `MOTOR err=remap` 两条失败文案真造出来，并验证诊断后现场恢复干净 |
+| 固件 | `build-v080-force-diag/pm_f103_demo.hex`，`-DPM_ENABLE_SONAR=ON`，FLASH **35968 B（54.88%）** / RAM **6048 B（29.53%）** |
+| 体积变化 | 较上一版 35032 / 6040 B：FLASH **+936 B**，RAM **+8 B** |
+| 烧录 | `-v -rst`，`Download verified successfully`、`MCU Reset`，`evidence/v080-force-diag-flash.log` |
+| 检查器 | 3.4.0 锁一致，0 ERROR / 4 WARN；`main.c` 仍 86 行（诊断钩子绑定与原 `set_dbg` 同行，未抬闸门），`evidence/v080-force-diag-checker.log` |
+| 故障前基线 | `MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0`；`MOTOR fwd ok … ccr1=1080 ccr2=0`；`MOTOR stop ok … ccr1=0 ccr2=0` |
+| `MOTOR force timer` | `MOTOR err=timer` + `MOTOR force mode=cen bits=1 claims=2->2`（bits=1 即 `CR1.CEN`；2->2 表示 claim 表已还原） |
+| `MOTOR force remap` | `MOTOR err=remap` + `MOTOR force mode=remap bits=2 claims=2->2`（bits=2 即 AFIO TIM2 remap 非 0） |
+| 现场恢复 | 两次 force 前后 `MOTOR claims` 逐字一致（t2=2 o=33/34，psc=0 arr=3599，ch=0x01/0x02；t4=1）；随后 `PWM dbg` 的 `mapr=0x00000000` 复核 remap 已清除 |
+| 故障后复跑 | `MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0`；`MOTOR stat` 同；`MOTOR stop ok … ccr1=0 ccr2=0`，与故障前逐字一致 |
+| 舵机未受影响 | `PWM stat servo=90.0c pulse=1500us buz=off`；`PWM servo ok deg=90.0 pulse=1500us`；`PWM dbg … psc=0x00000015 arr=0x0000FFAD … ccr3=0x0000132D … fpwm=50.0Hz` |
+| HELP | 15 行 / 660 B，与上一版逐字一致；force 子命令未进入 HELP |
+| 回包自证项 | 两条失败文案分别触发、探测位分别为 CEN/REMAP、claim 数 2->2、mapr 回到 0、故障前后 MOTOR 与舵机命令逐字一致 |
+| 未验 / 范围外 | 声音、机械动作不在本轮范围，未作判断；`MOTOR err=unsupported`/`err=precond` 分支未现场触发 |
+| 日志 | `evidence/v080-force-diag-build.log`、`evidence/v080-force-diag-serial.log`、`evidence/v080-force-diag-help.log`、`evidence/v080-force-diag-flash.log`、`evidence/v080-force-diag-checker.log` |
+| 说明 | `MOTOR force timer|remap` 是**仅调试用**入口，生产固件不应依赖；正常启动与 `MOTOR fwd/stat/stop` 不经过它 |
