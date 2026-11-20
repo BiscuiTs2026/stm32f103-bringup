@@ -21,9 +21,14 @@
 #define DIST_TIMEOUT_MS  60u
 #define DIST_MIN_US      100u      /* < 2 cm: noise */
 #define DIST_MAX_US      25000u    /* > 4.3 m: the module tops out at 4 m */
-/* 0 = DIST disabled: its 1 us time base (TIM2) was reassigned to the motor
- * PWM. Set back to 1 only after a different time source is chosen. */
+/* 2026-11-20: with the sonar built, the 1 us time base is the DWT cycle
+ * counter (decision 0020), so DIST is live. With PM_ENABLE_SONAR=OFF the port
+ * is absent and DIST keeps answering err=disabled. */
+#if PM_ENABLE_SONAR
+#define DIST_TIME_BASE_READY 1
+#else
 #define DIST_TIME_BASE_READY 0
+#endif
 
 typedef struct {
     cmd_port_t       *c;
@@ -60,9 +65,9 @@ static void dist_last_ok(uint32_t cm10)
 
 void sonar_dev_start(cmd_port_t *c, uint8_t auto_live)
 {
-    /* DIST is disabled: TIM2, the 1 us timestamp source, now belongs to the
-     * motor PWM. Manual DIST explains the reason; live mode skips silently so
-     * the screen is not flooded once per second. */
+    /* DIST is disabled only when the sonar port is not built. Manual DIST
+     * explains the reason; live mode skips silently so the screen is not
+     * flooded once per second. */
     if (DIST_TIME_BASE_READY == 0) {
         if (auto_live == 0u) {
             pm_cmd_out_tx_str(c, "DIST err=disabled\r\n");

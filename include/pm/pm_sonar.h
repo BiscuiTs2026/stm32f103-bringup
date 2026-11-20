@@ -12,7 +12,8 @@
 #include <stdint.h>
 
 /* Written by the EXTI10 handler, read by the measurement state machine.
- * Times are TIM2 counter values at 1 MHz, already truncated to 16 bits. */
+ * Times are microseconds from DWT->CYCCNT (72 MHz), already truncated to
+ * 16 bits: one echo is < 25 ms, so the 65.5 ms truncation window is safe. */
 typedef struct {
     uint16_t          rise_us;
     uint16_t          width_us;
@@ -20,12 +21,18 @@ typedef struct {
     volatile uint8_t  done;
 } pm_sonar_snapshot_t;
 
-/* GPIOA/AFIO/EXTI/NVIC setup. Does not configure TIM2: the counter belongs
- * to the motor PWM (see main.c, DIST_TIME_BASE_READY). */
+/* GPIOA/AFIO/EXTI/NVIC setup plus the DWT cycle counter used as the 1 us
+ * time base. Does not configure TIM2: the counter belongs to the motor PWM
+ * (docs/TIM2-CONFLICT.md).
+ *
+ * Interrupt priority: EXTI15_10 is set to 5, numerically lower priority than
+ * the encoder's EXTI9_5 at 4 (ARM: larger number = lower priority). A
+ * quadrature edge can therefore preempt the echo handler; decision 0020
+ * fixes both values. */
 void pm_sonar_init(void);
 
-/* One 10 us TRIG pulse, timed by TIM2 so it does not depend on loop speed.
- * Only valid while a 1 MHz time base runs on TIM2. */
+/* One 10 us TRIG pulse, timed by DWT->CYCCNT so it does not depend on loop
+ * speed. Requires pm_sonar_init() to have enabled the cycle counter. */
 void pm_sonar_pulse(void);
 
 /* Clears the pending EXTI10 flag and the edge snapshot. */

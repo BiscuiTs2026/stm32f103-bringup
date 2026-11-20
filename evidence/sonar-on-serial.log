@@ -1,0 +1,179 @@
+[       0ms] ===== sonar-on watch 2026-11-20 13:50:03.774 port=COM11 =====
+[      51ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[     170ms] DIST live cm=6.2 us=358
+[     436ms] hb
+[     526ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1030ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1181ms] DIST live cm=6.2 us=358
+[    1431ms] hb
+[    1530ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2030ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2170ms] DIST live cm=6.2 us=358
+[    2436ms] hb
+[    2520ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+# --- three spaced DIST readings ---
+[    2538ms] >> DIST
+[    2557ms] DIST cm=6.2 us=358
+[    3026ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3170ms] DIST live cm=7.1 us=413
+[    3430ms] hb
+[    3520ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4021ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4047ms] >> DIST
+[    4075ms] DIST cm=7.1 us=414
+[    4181ms] DIST live cm=7.1 us=413
+[    4436ms] hb
+[    4526ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5025ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5171ms] DIST live cm=7.1 us=413
+[    5432ms] hb
+[    5526ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5564ms] >> DIST
+[    5586ms] DIST cm=7.1 us=414
+[    6020ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    6181ms] DIST live cm=7.1 us=414
+[    6438ms] hb
+[    6525ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    7031ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+# --- DIST every 500ms with ENC polled between ---
+[    7078ms] >> DIST
+[    7101ms] DIST cm=6.2 us=358
+[    7179ms] DIST live cm=6.2 us=358
+[    7342ms] >> ENC
+[    7364ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    7453ms] hb
+[    7531ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    7598ms] >> DIST
+[    7620ms] DIST cm=7.1 us=413
+[    7849ms] >> ENC
+[    7865ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    8019ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    8126ms] >> DIST
+[    8142ms] DIST cm=6.2 us=358
+[    8174ms] DIST live cm=6.2 us=358
+[    8387ms] >> ENC
+[    8412ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    8437ms] hb
+[    8525ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    8664ms] >> DIST
+[    8687ms] DIST cm=7.1 us=414
+[    8937ms] >> ENC
+[    8964ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    9026ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    9170ms] DIST live cm=6.2 us=358
+[    9192ms] >> DIST
+[    9214ms] DIST cm=6.2 us=358
+[    9431ms] hb
+[    9446ms] >> ENC
+[    9465ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    9520ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    9709ms] >> DIST
+[    9725ms] DIST cm=6.2 us=358
+[    9981ms] >> ENC
+[    9992ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   10020ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10178ms] DIST live cm=6.2 us=358
+[   10242ms] >> DIST
+[   10259ms] DIST cm=6.2 us=358
+[   10428ms] hb
+[   10504ms] >> ENC
+[   10520ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10520ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   10759ms] >> DIST
+[   10775ms] DIST cm=6.2 us=358
+[   11015ms] >> ENC
+[   11026ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11026ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   11186ms] DIST live cm=6.2 us=358
+[   11276ms] >> DIST
+[   11302ms] DIST cm=6.2 us=358
+[   11437ms] hb
+[   11526ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11542ms] >> ENC
+[   11553ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   11803ms] >> DIST
+[   11832ms] DIST cm=7.1 us=414
+[   12026ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12059ms] >> ENC
+[   12069ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   12176ms] DIST live cm=6.2 us=358
+[   12320ms] >> DIST
+[   12337ms] DIST cm=6.2 us=358
+[   12437ms] hb
+[   12526ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12598ms] >> ENC
+[   12614ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   12865ms] >> DIST
+[   12891ms] DIST cm=6.2 us=359
+[   13021ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13131ms] >> ENC
+[   13144ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   13186ms] DIST live cm=6.2 us=358
+[   13393ms] >> DIST
+[   13410ms] DIST cm=6.2 us=358
+[   13431ms] hb
+[   13523ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   13658ms] >> ENC
+[   13675ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   13918ms] >> DIST
+[   13942ms] DIST cm=6.2 us=358
+[   14025ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14177ms] DIST live cm=6.2 us=359
+[   14177ms] >> ENC
+[   14193ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   14431ms] hb
+[   14432ms] >> DIST
+[   14468ms] DIST cm=6.2 us=358
+[   14530ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   14687ms] >> ENC
+[   14703ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   14948ms] >> DIST
+[   14970ms] DIST cm=6.2 us=358
+[   15025ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15170ms] DIST live cm=6.2 us=358
+[   15214ms] >> ENC
+[   15231ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   15435ms] hb
+[   15467ms] >> DIST
+[   15498ms] DIST cm=6.2 us=359
+[   15526ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   15736ms] >> ENC
+[   15751ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   15999ms] >> DIST
+[   16031ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16032ms] DIST cm=6.2 us=358
+[   16187ms] DIST live cm=6.2 us=359
+[   16253ms] >> ENC
+[   16269ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   16436ms] hb
+[   16506ms] >> DIST
+[   16521ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   16536ms] DIST cm=6.2 us=358
+[   16777ms] >> ENC
+[   16802ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   17025ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17036ms] >> DIST
+[   17058ms] DIST cm=6.2 us=358
+[   17169ms] DIST live cm=6.2 us=358
+[   17292ms] >> ENC
+[   17303ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   17437ms] hb
+[   17526ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   17559ms] >> ENC clear
+[   17574ms] ENC clear ok count=0
+[   18020ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18170ms] DIST live cm=7.1 us=414
+[   18270ms] >> ENC
+[   18292ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[   18429ms] hb
+[   18522ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   18981ms] >> STAT
+[   19003ms] STAT clk=72000000 up=51673 tick=1 key1=0 key2=0 uart_rx=260 uart_tx=7415
+[   19020ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19170ms] DIST live cm=7.1 us=414
+[   19434ms] hb
+[   19520ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   19693ms] >> MOTOR stat
+[   19715ms] MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[   20031ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   20170ms] DIST live cm=7.1 us=413

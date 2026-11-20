@@ -1,0 +1,69 @@
+[       0ms] ===== sonar-on HELP/DIST 2026-11-20 13:55:40.609 port=COM11 =====
+[     181ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[     332ms] DIST live cm=5.9 us=340
+[     593ms] hb
+[     693ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1181ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1332ms] DIST live cm=5.9 us=340
+[    1599ms] hb
+[    1679ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2182ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2337ms] DIST live cm=5.9 us=340
+[    2541ms] >> HELP
+[    2555ms] HELP HELP=list commands
+[    2556ms] HELP PING=reply PONG
+[    2557ms] HELP STAT=clk/up/tick/keys/uart counters
+[    2581ms] HELP I2C=scan I2C1 bus, list 8-bit addresses
+[    2583ms] HELP AHT=read AHT20, rh and t in 0.1 units
+[    2584ms] HELP AHTS=same but read via repeated START
+[    2584ms] HELP DIST=HC-SR04 PA11/PA10, cm/us (DWT base)
+[    2584ms] HELP ADC=pot PA5 and NTC PA4, raw and mV
+[    2585ms] HELP OLED=on/off/clear/test/show/frame/col/live/dump
+[    2599ms] HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
+[    2599ms] HELP TRACK=raw level of PB14 line sensor
+[    2600ms] HELP ENC=count/clear, dir, a/b, button PB15
+[    2600ms] HELP RELAY=on/off/stat, PB5 relay coil
+[    2615ms] HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM
+[    2616ms] HELP KEYS=key press counters, clears them
+[    2616ms] hb
+[    2704ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3207ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3343ms] DIST live cm=5.9 us=340
+[    3447ms] >> DIST
+[    3465ms] DIST cm=5.9 us=340
+[    3577ms] hb
+[    3710ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4210ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4343ms] DIST live cm=5.9 us=340
+[    4588ms] hb
+[    4649ms] >> DIST
+[    4676ms] DIST cm=5.9 us=340
+[    4693ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5195ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5332ms] DIST live cm=5.9 us=340
+[    5583ms] hb
+[    5710ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5860ms] >> DIST
+[    5889ms] DIST cm=5.9 us=340
+[    6210ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    6343ms] DIST live cm=5.8 us=339
+[    6593ms] hb
+[    6699ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    7071ms] >> ENC
+[    7083ms] ENC count=0 dir=idle a=1 b=1 btn=1
+[    7198ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    7332ms] DIST live cm=5.9 us=340
+[    7581ms] hb
+[    7677ms] >> TRACK
+[    7704ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    7705ms] TRACK raw=1
+[    8215ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    8287ms] >> RELAY stat
+[    8305ms] RELAY stat pb5=0
+[    8332ms] DIST live cm=5.9 us=340
+[    8577ms] hb
+[    8699ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    8893ms] >> MOTOR stat
+[    8904ms] MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[    9193ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    9355ms] DIST live cm=5.9 us=340

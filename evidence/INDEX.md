@@ -1780,3 +1780,33 @@
 | 能证明什么 | 模型 core 与板端 port 打通；编译、链接、烧录校验通过；检查器无新增；`RELAY` / `TRACK` 的命令文本与历史日志逐字一致 |
 | 不能证明什么 | relay 的物理吸合声、触点通断与极性**未验证**；track 的遮挡动态**本轮未复测**。relay/track 本轮没有独立实测，验收只到"编译通过、检查器通过、原有命令行为不变" |
 | 遗留 | `src/port/stm32f1/pm_relay_stm32f1.c` 已移出构建但**未删除**（无本轮删除授权，文件内仍是旧 `pm_relay_init(void)` API）；待批准后清理 |
+## 133. sonar 真正上板（PM_ENABLE_SONAR=ON）：DWT 时基、优先级 5、DIST/ENC 并发
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 15:0x–15:3x |
+| 触发 | 派发方要求把唯一从未编过/上过板的组合编出来、烧上去、跑 DIST；编码器优先级 4 不动，sonar 取更低优先级 |
+| 时基 | `pm_sonar_stm32f1.c` 改用 `DWT->CYCCNT`：`DEMCR.TRCENA` → `DWT.CYCCNT` → `CTRL.CYCCNTENA`，`s_cycles_per_us = SystemCoreClock/1000000`；ISR 记录 rise/width 的 `uint16` 截断对 < 65.5 ms 的宽度无损 |
+| 优先级 | `EXTI15_10` = **5**；编码器 `EXTI9_5` 仍为 **4**（`NVIC_SetPriority(EXTI9_5_IRQn, 4u)` 逐字未动）。ARM 语义下 5 低于 4，编码器可抢占回声中断；理由与不可行方案见决策 0020 |
+| 其它改动 | `sonar_dev.c` 的 `DIST_TIME_BASE_READY` 改为跟 `PM_ENABLE_SONAR` 联动；`main.c` 增加 `#include "pm_sonar.h"` 与 `#if PM_ENABLE_SONAR pm_sonar_init();`；`app_wiring.c` 的 `HELP DIST` 行按开关切换（OFF 仍为原文 638 B 基线）；`CMakeLists.txt` 给 `pm_f103_demo` 加 `PM_SONAR_DEFINE` |
+| 时基核验 | SWD 两次读 `0xE0001004`：`0x02939713`（43,164,435）与 `0x2AD810BE`（719,847,614），差 **676,683,179**；按 72 MHz 折算 9.4 s，与 10 s 睡眠 + 连接停顿吻合，确认 `CYCCNT` 确为 72 MHz（不是 4.5 MHz 之类别名时钟） |
+| 编译 | `build-sonar-on`（`-DPM_ENABLE_SONAR=ON`）：65 条编译单元，0 error、0 项目代码警告；**FLASH 32084 B / 64 KB（48.96%）、RAM 5472 B / 20 KB（26.72%）**；默认 OFF 同源构建 31248 B / 5448 B，增 **+836 B / +24 B**（日志 `evidence/sonar-on-build.log`、`evidence/sonar-off-rebuild.log`） |
+| 烧录 | `STM32_Programmer_CLI -c port=SWD mode=UR -w build-sonar-on/pm_f103_demo.hex -v -rst` → `Download verified successfully` + `Software reset is performed`（`evidence/sonar-on-flash.log`） |
+| 静态检查 | `--glue-max-lines 86` → **0 ERROR / 4 WARN**，与 §132 相同；`.arch-roles` 仍声明 `feature sonar = off`（默认构建确实 OFF），`pm_sonar_init()` 在 `#if PM_ENABLE_SONAR` 内，第 28 项不报（`evidence/sonar-on-checker.log`） |
+| DIST 三次 | `DIST cm=6.2 us=358`、`DIST cm=7.1 us=414`、`DIST cm=7.1 us=414`（间隔 1.5 s，`evidence/sonar-on-serial.log`）；换 HELP 文本的同一固件复测三次 `DIST cm=5.9 us=340` ×3（`evidence/sonar-on-help.log`）。全部在 100..25000 µs 有效区间内，无 timeout |
+| DIST 连续 | 与 `ENC` 交替 20 轮（约 10 s）：每一次 DIST 都是 `cm=6.2/7.1`，每一次 ENC 都是 `count=0 dir=idle a=1 b=1 btn=1`；live 自动测距每 ~1 s 一次同样稳定（`DIST live cm=5.9/5.8`） |
+| ENC 并发 | sonar 运行期间 `count` 始终 0、`dir=idle`、A/B 恒 1/1，无假跳变；`ENC clear` 后仍 `count=0 dir=idle` |
+
+| 原始回包（节选） | 内容 |
+| --- | --- |
+| `DIST` #1 | `DIST cm=6.2 us=358` |
+| `DIST` #2 | `DIST cm=7.1 us=414` |
+| `DIST` #3 | `DIST cm=7.1 us=414` |
+| `HELP`（ON 构建） | `HELP DIST=HC-SR04 PA11/PA10, cm/us (DWT base)` |
+| `ENC`（并发中，20 次之一） | `ENC count=0 dir=idle a=1 b=1 btn=1` |
+
+| 项 | 内容 |
+| --- | --- |
+| 能证明什么 | `PM_ENABLE_SONAR=ON` 能编、能烧、能校验；DWT 时基在板端确为 72 MHz；EXTI15_10 能进中断并产出稳定宽度；sonar 运行时编码器无假计数；`HELP`/`DIST` 回包形状符合契约；两构建体积差已按板端整机口径记录 |
+| 不能证明什么 | 读数对应的物理遮挡物未由人现场确认（6 cm 属近场，不能排除模块自反射；11-19 的 TIM2 版本同一位置曾读到 ~99 cm，环境是否变化未知）。**编码器与 sonar 并发时的"不丢计数"未验证**：本轮无人转轮，只能证明无假触发。"电机是否真的制动"与本条无关，见下一任务 |
+| 遗留 | 读数绝对值未与米尺对过；`build-sonar-on/` 为一次性构建目录，按规则不在工程树内长期保留（待批准后清理） |

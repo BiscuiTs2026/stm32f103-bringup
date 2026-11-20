@@ -19,6 +19,7 @@
 #include "pm_cmd_out.h"
 #include "pm_cmd_console.h"
 #include "sonar_dev.h"
+#include "pm_sonar.h"
 #include "adc_dev.h"
 #include "pm_platform.h"
 #include "board_f103c8.h"
@@ -63,14 +64,12 @@ static void error_loop(void)
 
 /* ---------------------------------------------- HC-SR04 distance, PA11/PA10
  * The job (DIST command, reply formatting, last-good value) lives in
- * src/components/sonar_dev; the pins, the EXTI10 handler and the TIM2 time
- * stamp live in src/port/stm32f1/pm_sonar_stm32f1.c. This layer only wires
- * them to the command table and the main loop.
+ * src/components/sonar_dev; the pins, the EXTI10 handler and the DWT 1 us
+ * time stamp live in src/port/stm32f1/pm_sonar_stm32f1.c. This layer only
+ * wires them to the command table and the main loop.
  *
- * pm_sonar_init() is deliberately NOT called: DIST is disabled (its 1 us time
- * base, TIM2, belongs to the motor PWM), so arming EXTI10 would only add an
- * interrupt nobody consumes. See the header comment of the port file before
- * calling it again. */
+ * pm_sonar_init() runs only when PM_ENABLE_SONAR is ON; with the default OFF
+ * the port is not built and DIST keeps answering err=disabled. */
 
 /* The screen component reaches the measurement job through two hooks; both
  * are thin adapters over sonar_dev. */
@@ -122,10 +121,12 @@ int main(void)
     oled_ui_boot(&s_oled_hooks, s_console.debug_port);
     aht20_init(&s_aht_hooks);
     pwm_dev_init();
+#if PM_ENABLE_SONAR
+    pm_sonar_init();
+#endif
     track_dev_init(); encoder_dev_init(); relay_dev_init(); motor_dev_init(); motor_dev_set_dbg(pm_platform_motor_dbg);
 
-    next_led_ms = pm_osal_now_ms();
-    next_hb_ms  = next_led_ms;
+    next_led_ms = next_hb_ms = pm_osal_now_ms();
 
     for (;;) {
         uint32_t now = pm_osal_now_ms();

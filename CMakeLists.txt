@@ -192,6 +192,7 @@ target_compile_options(pm_f103_demo PRIVATE
 target_compile_definitions(pm_f103_demo PRIVATE
     USE_HAL_DRIVER
     STM32F103xB
+    ${PM_ENCODER_DEFINE} ${PM_SONAR_DEFINE}
 )
 
 # SPI demo is compile-time optional: the board pins it would use (PB13/PB14/

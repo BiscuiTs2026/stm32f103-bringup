@@ -91,7 +91,7 @@ OLED ready (128x64, 6x8 font)
   | `AHT err=busy` | AHT20 自己没测完（状态字节 bit7=1），已重试 3 次 | 上电初期、总线异常 |
   | `DIST err=busy` | 上一次手动测距还在进行 | 60 ms 内重复发 `DIST` |
   | `DIST err=busy live` | live 模式自动测距正在进行 | live 开启时手动 `DIST` 撞上 |
-  | `DIST err=disabled` | 测距已停用，没有 µs 计时源 | 每次都回（TIM2 已划给电机 PWM） |
+  | `DIST err=disabled` | 本次构建没有编译 sonar 端口（`PM_ENABLE_SONAR=OFF`，默认） | 每次都回；`PM_ENABLE_SONAR=ON` 时不出现 |
   | `OLED err=busy pending` | 上一次 OLED 分页作业还没推完 | 98 ms 窗口内连发 OLED 命令 |
   | `OLED err=busy i2c` | AHT 正在占用 I2C1 | AHT 的 80 ms 窗口内发 OLED |
   | `OLED err=io` | I2C 写失败（AF/BERR/超时） | 见回包里的 `af/berr/to` 计数 |
@@ -137,6 +137,10 @@ HELP KEYS=key press counters, clears them
 
 `up=` 是开机毫秒数；`key1/key2` 是消抖后的按下次数；`uart_rx/uart_tx` 是两路累计字节数。
 
+> `PM_ENABLE_SONAR=ON` 的构建把上面 `DIST` 一行换成
+> `HELP DIST=HC-SR04 PA11/PA10, cm/us (DWT base)`，其余 14 行不变；
+> 默认（OFF）仍是 15 行 638 B 基线。
+
 > 实现位置（S10 起）：`HELP`/`PING`/`STAT`/`I2C` 在 `src/components/sys_cmds/`，
 > 命令表与适配器在 `src/app/app_wiring.c`。命令、回包文本与顺序均未变。
 
@@ -152,22 +156,26 @@ HELP KEYS=key press counters, clears them
 - `rst=0` 表示"STOP 结束触发 + 重新 START 读"，`rst=1` 表示触发后不发 STOP 直接 repeated START 读。
 - `AHTS` 读到的是**上一次**结果（`d[0]` bit7=1 即忙），这是 AHT20 的语义，不是驱动 bug。
 
-### 4.3 HC-SR04 测距（PA11=TRIG / PA10=ECHO）——已停用
+### 4.3 HC-SR04 测距（PA11=TRIG / PA10=ECHO）
 
-> **2026-11-19 起停用**：测距的 1 µs 时间戳源是 TIM2，而 TIM2 已整颗分配给电机
-> PWM（PA0/PA1），两者共用 `PSC/ARR` 无法共存。`DIST` 现在固定回
-> `DIST err=disabled`；引脚配置与边沿逻辑保留，重新启用前必须先确定独立计时源。
-> 详见 `docs/TIM2-CONFLICT.md`。
+> **2026-11-20 起可重新启用**：默认构建 `PM_ENABLE_SONAR=OFF`，`DIST` 固定回
+> `DIST err=disabled`；`-DPM_ENABLE_SONAR=ON` 时 1 µs 时间戳改用
+> `DWT->CYCCNT`（72 MHz），不再占用 TIM2（TIM2 仍归电机 PWM）。
+> 中断优先级：`EXTI15_10` = **5**，低于编码器 `EXTI9_5` 的 **4**（数值越大越低），
+> 保证正交边沿可以抢占回声中断。见决策 0020 与 `docs/TIM2-CONFLICT.md`。
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `DIST` | 无 | 停用期间不会出现 | `DIST err=disabled`（当前固定）/ `DIST err=timeout` / `DIST err=busy` / `DIST err=busy live`（重新启用后才可能出现） | 触发一次测距 |
+| `DIST` | 无 | `DIST cm=99.0 us=5741`（ON）/ `DIST err=disabled`（OFF，默认） | `DIST err=timeout` / `DIST err=busy` / `DIST err=busy live` | 触发一次测距 |
 
-- `cm` 保留 1 位小数（内部按 0.1 cm 整数运算），`us` 是回波宽度（1 MHz 计时）。
+- `cm` 保留 1 位小数（内部按 0.1 cm 整数运算），`us` 是回波宽度（DWT 1 MHz 等效计时）。
 - `timeout` 覆盖两种情况：60 ms 内没有回波（超过约 4 m 或没有反射面），
   以及回波宽度不在 100..25000 µs 的合理区间。
 - live 模式自动触发的测量回包带 `live` 前缀：`DIST live cm=.. us=..` /
   `DIST live err=timeout`，与手动命令区分。
+- 2026-11-20 的 ON 构建实测：连续 20+ 次 `cm=6.2/7.1 us=358/414`，无 timeout；
+  该读数对应的物理遮挡物未由人现场确认（见 `evidence/INDEX.md` §133）。
+- 历史现象仍适用：自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`（HC-SR04 余振）。
 
 ### 4.4 OLED（CH1116，0x7A，128×64，I2C1）
 
@@ -227,9 +235,10 @@ HELP KEYS=key press counters, clears them
   - `NTC`/`POT` 每帧现读（两次单次转换，成本低），读失败显示 `----`。
   - `LIVE ms=` 是最近一次整屏推送耗时，反映 I2C 健康度；还没推过显示 `---`。
 - `live` 期间每 500 ms 刷新一次显示；显示节拍里每 1000 ms 仍会请求一次自动测距
-  （起点比显示周期偏移 250 ms，两者互不阻塞）。但 `DIST` 已停用（§4.3）：
-  `sonar_dev_start(auto_live=1)` 在 `DIST_TIME_BASE_READY==0` 时**静默返回**，
-  不发命令、不发回包、`LAST` 行也不会出现 `DIST ok`。重新启用测距后该节拍才恢复。
+  （起点比显示周期偏移 250 ms，两者互不阻塞）。`PM_ENABLE_SONAR=ON` 时该节拍
+  正常产出 `DIST live cm=..`；默认 OFF 时 `sonar_dev_start(auto_live=1)` 在
+  `DIST_TIME_BASE_READY==0` 时**静默返回**，不发命令、不发回包、`LAST` 行也不会
+  出现 `DIST ok`。
 - 静态图案的 3 s 停留期间（以及 `OLED off` 期间）两者都暂停，恢复 live 后
   立刻重画一帧（实测 `OLED on` 后 98 ms 内出现首条 `OLED live ok`）。
 - `OLED col` 在 live 期间可用，回 `redraw=live` 并立即重画。
@@ -442,7 +451,7 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
    见外设模型契约 §12.3。正常读数请用 `AHT`。
 3. **手动 `DIST` 在自动测距结束后 60 ms 内会回 `err=timeout`**：HC-SR04 余振，
    模块对紧邻的第二次 ping 不返回有效回波。live 的 1 s 间隔不受影响。
-   **测距停用后本条不可达**（`DIST` 在启动前就回 `err=disabled`），保留为重新启用时的判读依据。
+   本条只在 `PM_ENABLE_SONAR=ON` 时可达；默认 OFF 构建在启动前就回 `err=disabled`。
 4. **`ERR unknown=AHTAHTSTAT` 之类**：两个命令被拼成一条，通常是前一条没有行尾
    且间隔 < 100 ms，见第 2 节。
 5. **`BT tx n=..B: ...` 不是命令回包**，只是 USART3 回包在 USART2 的镜像。

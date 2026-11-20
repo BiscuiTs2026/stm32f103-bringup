@@ -28,7 +28,7 @@
 | 项目 | 状态 | 证据 / 数字 |
 | --- | --- | --- |
 | 交叉编译 | 通过 | `arm-none-eabi-gcc 14.3.1`，`-Wall -Wextra -Wshadow`，项目代码无警告 |
-| 尺寸 | 通过 | Flash **31248 B / 64 KB（47.68%）**，RAM **5448 B / 20 KB（26.60%）**（**接入模型 `pm_pwm` / `pm_motor` / `pm_encoder` / `pm_relay` / `pm_track` core 后的默认配置实测**，`PM_ENABLE_SONAR=OFF`，来源：2026-11-20 `build-relay-track` 构建输出；较仅接电机时 30168 B / 5376 B 为 **+1080 B / +72 B**；较接入模型前 28644 B / 5296 B 为 **+2604 B / +152 B**；`-DPM_ENABLE_SONAR=ON` 的旧口径本轮未复测） |
+| 尺寸 | 通过 | Flash **31248 B / 64 KB（47.68%）**，RAM **5448 B / 20 KB（26.60%）**（**接入模型 `pm_pwm` / `pm_motor` / `pm_encoder` / `pm_relay` / `pm_track` core 后的默认配置实测**，`PM_ENABLE_SONAR=OFF`，来源：2026-11-20 `build-relay-track` 构建输出；较仅接电机时 30168 B / 5376 B 为 **+1080 B / +72 B**；较接入模型前 28644 B / 5296 B 为 **+2604 B / +152 B**）。**`-DPM_ENABLE_SONAR=ON`：Flash 32084 B / 48.96%，RAM 5472 B / 26.72%**（较默认 **+836 B / +24 B**，来源 `evidence/sonar-on-build.log`） |
 | 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（31248 B）、`.hex`、`.map` |
 | 主机单测 | 通过 | 175 项断言，0 失败（MSVC 19.51，C11；来源：`evidence/timebase-hosttest.log`，2026-11-20） |
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
@@ -37,8 +37,8 @@
 | USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；2026-11-18 端到端验过（`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后 `HELP` 增至 **638 B / 15 行**（§30、§31、§33、§34、§35），蓝牙侧未再做回归——期间改动不涉及 USART3 收发路径，不丢尾机制见 §11、§14 |
 | I2C1 | 通过 | 扫描到 `0x70`（AHT20）与 `0x7A`（OLED），PB6/PB7，100 kHz（§9） |
 | AHT20 温湿度 | 通过 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0`（§12） |
-| HC-SR04 测距 | **已停用** | 曾通过：`DIST cm=<n> us=<n>`，EXTI + TIM2 1 MHz 计宽（§14）；2026-11-19 起 TIM2 整颗让给电机 PWM，`DIST` 固定回 `DIST err=disabled`，引脚与边沿逻辑保留（§33、`docs/TIM2-CONFLICT.md`） |
-| CH1116 OLED | 通过 | 文字、`frame` 图案（col=2 下 9 条竖线、四边完整）、`live` 500 ms（§15–§19）；live 期间 1 Hz 自动测距已随 DIST 停用 |
+| HC-SR04 测距 | 可选启用（默认 OFF） | 默认 `PM_ENABLE_SONAR=OFF`：`DIST` 固定回 `DIST err=disabled`。`-DPM_ENABLE_SONAR=ON` 时改用 `DWT->CYCCNT`（72 MHz）计宽、`EXTI15_10` 优先级 5（编码器 `EXTI9_5` 仍为 4），2026-11-20 上板连续 20+ 次 `DIST cm=5.9/6.2/7.1 us=340/358/414`、无 timeout（§133、决策 0020）；读数对应的物理遮挡物未由人现场确认 |
+| CH1116 OLED | 通过 | 文字、`frame` 图案（col=2 下 9 条竖线、四边完整）、`live` 500 ms（§15–§19）；live 期间的 1 Hz 自动测距在 `PM_ENABLE_SONAR=ON` 时恢复，默认 OFF 下静默跳过 |
 | 按键 | 通过（带限制） | 20 ms 消抖，6 组 pressed/released 无重复无漏（§7）。**限制：主循环每 500 ms 约 98 ms 被 OLED 整页 I2C 占住，短于约 100 ms 的点按可能整段丢失**（M1-e、`evidence/MANUAL-CHECKS.md`、`TECH_DEBT.md` D23） |
 | ADC1 | **部分通过** | PA5 电位器静态 2124–2126（30 次极差 2 LSB）；PA4 NTC 升温 raw 2293→1792、降温回升，判定 NTC 在分压低端（§28）。**电位器转动响应未验证：缺十字螺丝刀** |
 | PWM 舵机 / 蜂鸣器 | **部分通过** | PB8 五档脉宽 500/1000/1500/2000/2500 µs 与回包一致；`PWM dbg` 实测 `psc=71`、`fpwm=50.0Hz`、`CCR3` 0/180→500/2500（§32）。**舵机"有动作"已由用户目视确认；角度精度、到位抖动/回弹、带负载表现未验证；蜂鸣器听感未采集**（§30.3） |
@@ -155,7 +155,7 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 | `I2C` | 扫描 I2C1，列 8 位写地址（本板 `0x70`、`0x7A`） |
 | `KEYS` | 读按键计数并清零 |
 | `AHT` / `AHTS` | 读 AHT20 温湿度；`AHTS` 是 repeated START 对照，拿到的是上一次结果 |
-| `DIST` | 单次 HC-SR04 测距；**已停用**，固定回 `DIST err=disabled`（TIM2 已划给电机，`docs/TIM2-CONFLICT.md`） |
+| `DIST` | 单次 HC-SR04 测距；默认 `PM_ENABLE_SONAR=OFF` 回 `DIST err=disabled`；ON 时用 DWT 时基输出 `cm/us`（决策 0020） |
 | `ADC` | 读 PA5 电位器与 PA4 NTC 的原始值与 mV |
 | `PWM` | `stat` 看舵机/蜂鸣器状态；`servo <0..180>` 设角度；`buz <100..5000> [duty]` 开蜂鸣器、`buz off` 关；`sweep` 0→180→0 慢扫两轮（每档 300 ms，结束回 90°），用于肉眼确认；`dbg` 只读打印 TIM4/RCC/GPIOB 寄存器、两次 CNT 采样与按 PSC/ARR 反算的 `fpwm`；`test` 把 PB8 临时切成 GPIO 推 1 Hz 方波 10 s（诊断用，阻塞 10 s，结束后恢复复用与 90°） |
 | `TRACK` | 读 PB14 循迹模块的原始电平（`raw=1` 未遮挡 / `raw=0` 黑物或遮挡） |
@@ -251,11 +251,11 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 - 输入侧：PB14 只有一路数字量，"单路遮挡"与"全黑"同为 `raw=0`，固件不可区分；编码器 x4 计数为 32 位有符号，两个方向符号相反，但符号与物理顺时针/逆时针的对应**未目视确认**；`dir` 只在有效跳变时更新、停手后不归零；PB15 按键已抓到按下与松开（`btn` 1→0→1，约 3.5 s，M8），极性为 `1`=松开、`0`=按下（PB15 上拉输入）；
 - UART 是逐字节中断，没有 DMA + 空闲中断的接收路径；TX 环 512 B，超长回包靠"边发边等"（`tx_bytes_all`）；
 - live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间静态命令（`clear`/`test`/`show`/`frame`）照常接管，3 s 后自动交回；
-- **测距已停用**：TIM2 的 1 µs 自由运行计时与电机 PWM 共用 `PSC/ARR` 无法共存，TIM2 已整颗划给电机；`DIST` 固定回 `DIST err=disabled`，TRIG/ECHO 引脚与 EXTI 逻辑保留，重新启用前必须先确定独立计时源（`docs/TIM2-CONFLICT.md`）；
+- **测距默认关闭、可编译启用**：默认 `PM_ENABLE_SONAR=OFF`，`DIST` 回 `DIST err=disabled`；`-DPM_ENABLE_SONAR=ON` 时 1 µs 时基换成 `DWT->CYCCNT`（不再占用 TIM2），`EXTI15_10` 优先级 5 低于编码器 `EXTI9_5` 的 4（决策 0020）。ON 构建的绝对距离未与物理尺子对过，且编码器与 sonar 并发时的“不丢计数”未在有人转轮的情况下复测（§133）；
 - 电机：TIM2 `PSC=0 / ARR=3599` → 20 kHz，只有一路通道出 PWM、另一路恒 0（DRV8833 单向驱动）；`duty 0` 与 `stop` 电气等价（两路 CCR=0、全低滑行），`dir` 字段只是状态记忆；`fwd/rev` 只表示选了哪路通道，**对应轴的哪个方向未验证**；电机未接时只能验证寄存器与回包；
 - 分层检查：本仓用 `tools/check_layering.py`（3.4.0，`tools/CHECKER.lock` 固定 `4da1a77`）扫描，当前 0 ERROR / 4 WARN（2026-11-20，`--glue-max-lines 86`；第 4 条为编码器 EXTI 钩子，与 UART 三条同类）；从 3.3.1 升到 3.4.0 只新增第 28 项 `feature_gate`；本仓已在 `.arch-roles` 声明 `feature sonar = off` 并挂 `pm_sonar_init` / `EXTI15_10_IRQn`，该项复跑报 0、无误报（INDEX §131），其余输出不变，升级细节、复跑结果与"是否继续跟随上游"记在 `TECH_DEBT.md` D25；
 - 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；
-- 测距停用期间 `DIST` 在启动前就返回 `err=disabled`，不会进入测量。停用前的现象保留在案：自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`，是 HC-SR04 余振，不是故障；输入侧抓包里未发任何 PWM/BUZ 命令也出现过 3.9–45.8 cm 短读数与一次 `err=timeout`（与手/黑物靠近超声视场时间重合，归因未确认，§31.6）；
+- 默认（OFF）构建里 `DIST` 在启动前就返回 `err=disabled`，不会进入测量。ON 构建的可达现象保留在案：自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`，是 HC-SR04 余振，不是故障；输入侧抓包里未发任何 PWM/BUZ 命令也出现过 3.9–45.8 cm 短读数与一次 `err=timeout`（与手/黑物靠近超声视场时间重合，归因未确认，§31.6）；
 - 没有 CMake presets；CI 只有静态分层检查一步（`.github/workflows/layering.yml`）；对象结构体布局不承诺 ABI 稳定。
 
 ## 第三方代码
