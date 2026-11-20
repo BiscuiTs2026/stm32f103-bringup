@@ -26,3 +26,10 @@ include/pm/*         = common
 # 命令表与命令适配器在 src/app/app_wiring.c，按 app 角色判定，不计入胶水行数。
 # 胶水行数闸门在 .github/workflows/layering.yml，按实测值只降不升，理由见 PATCHES.md §37。
 src/app/main.c       = glue
+
+# 第 28 项 feature_gate：sonar 在本仓真实停用（CMake 默认 PM_ENABLE_SONAR=OFF，
+# main.c 不调用 pm_sonar_init()，sonar_dev 的脉冲/快照调用都在 #if PM_ENABLE_SONAR 内）。
+# 显式声明停用与入口符号/中断号，供检查器核对“停用了但还在无条件编译路径”。
+feature sonar = off
+feature-symbol sonar = pm_sonar_init
+feature-irq sonar = EXTI15_10_IRQn

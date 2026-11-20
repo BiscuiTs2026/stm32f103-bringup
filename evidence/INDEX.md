@@ -1740,3 +1740,16 @@
 | 能证明什么 | 模型 core 与板端 port 的接口打通；编译、链接、烧录校验通过；`ENC` 静态回包字段与既有日志逐字相同；EXTI9_5 优先级仍为 4（源码逐字保留）；体积口径与电机轮一致 |
 | 不能证明什么 | ①手转计数轨迹（24→−12→24）本轮无人工操作，**未验证** ②`btn` 按压跟随**未验证** ③停转后 `dir` 保持方向的动态表现**未验证** ④模型 core 在真实边沿下的去抖/半步进行为未用示波器或逻辑分析仪取证 |
 | 遗留 | 动态 M8 需人工转轮后补测；检查器 WARN 由 3 变 4，属同一设计类别的真实提示，未加豁免 |
+
+## 131. 第 28 项 `feature_gate` 在真实工程生效：sonar 停用声明
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 13:4x |
+| 触发 | 派发方要求让 3.4.0 新增的第 28 项在真实工程上生效：给板端现成的停用特性 sonar 声明 off 并挂入口符号，跑检查器并如实记录 |
+| 改法 | 只在 `.arch-roles` 追加三行：`feature sonar = off`、`feature-symbol sonar = pm_sonar_init`、`feature-irq sonar = EXTI15_10_IRQn`。**未删声明、未加豁免、未改代码** |
+| 事实依据 | CMake 默认 `PM_ENABLE_SONAR=OFF`；`src/app/main.c` 不调用 `pm_sonar_init()`（注释写明原因）；`sonar_dev.c` 的 `pm_sonar_pulse` / `pm_sonar_clear_edge` / `pm_sonar_snapshot` 全部在 `#if PM_ENABLE_SONAR` 内；`pm_sonar_stm32f1.c` 整文件仅在 `PM_ENABLE_SONAR=ON` 时进构建 |
+| 原始输出 | `python tools/check_layering.py . --glue-max-lines 86` → **0 ERROR / 4 WARN**；4 条 WARN 与 §130 完全相同（1 条编码器 EXTI 钩子 + 3 条 UART ISR 钩子），**无任何 feature 相关行**；日志 `evidence/feature-gate-sonar.log` |
+| 能证明什么 | 第 28 项在真实工程上可用：显式声明停用并挂入口符号/中断号后不误报；当前 sonar 确实没有处于无条件编译路径的入口调用或中断使能 |
+| 不能证明什么 | 本轮没有构造"声明停用但仍无条件调用"的反例，因此只证明不误报，**未**在本仓证明其正向检出能力（该规则自身的正向用例不在本仓） |
+| 遗留 | 无。`TECH_DEBT.md` D25 里"无 feature 声明"是升级当刻的记录，保留不改 |
