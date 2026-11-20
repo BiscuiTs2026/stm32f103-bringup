@@ -81,6 +81,7 @@ add_library(pm_port_stm32f1 STATIC
     src/port/stm32f1/pm_encoder_stm32f1.c
     src/port/stm32f1/pm_relay_stm32f1.c
     src/port/stm32f1/pm_motor_stm32f1.c
+    src/port/stm32f1/pm_timer_stm32f1.c
     src/port/stm32f1/pm_i2c1_stm32f1.c
     src/port/stm32f1/pm_adc1_stm32f1.c
     src/port/stm32f1/pm_sonar_stm32f1.c

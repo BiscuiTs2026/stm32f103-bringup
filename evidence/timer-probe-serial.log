@@ -1,0 +1,24 @@
+﻿[   133ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[   555ms] hb\r\n
+[   638ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1143ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1213ms] <<< PWM dbg >>>
+[  1254ms] PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000047 arr=0x00004E1F ccmr2=0x00000068 ccer=0x00000100 ccr3=0x000005DC cnt0=6909 cnt1=6095 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz\r\n
+[  1544ms] hb\r\n
+[  1633ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1916ms] <<< MOTOR fwd 30 >>>
+[  1925ms] MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0\r\n
+[  2132ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  2551ms] hb\r\n
+[  2621ms] <<< MOTOR stat >>>
+[  2638ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\nMOTOR stat dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0\r\n
+[  3137ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  3322ms] <<< MOTOR stop >>>
+[  3338ms] MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0\r\n
+[  3544ms] hb\r\n
+[  3639ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  4027ms] <<< MOTOR stat >>>
+[  4060ms] MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0\r\n
+[  4132ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  4543ms] hb\r\n
+[  4632ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n

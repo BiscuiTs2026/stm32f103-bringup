@@ -1557,3 +1557,18 @@
 | 板端证据 | 烧录 `Download verified successfully`；`evidence/servo-timebase-serial.log`：`PWM servo 0/90/180` 回 `pulse=500/1500/2500us`，`PWM dbg` 反算 `psc=0x47(71) arr=0x4E1F(19999) fpwm=50.0Hz`，`MOTOR stat` 仍 20 kHz |
 | 能证明什么 | 现行寄存器对在 10‰ 内确实是 50 Hz；判据能拦住 3.6 kHz 事故对；舵机回包与电机均无回归 |
 | 不能证明什么 | 判据是编译期折叠验证，**没有在主机上运行**（本机无 x86 编译器）；"复核失败返回 -1" 的运行路径未触发过，只能靠常量为真的现有配置证明不误判 |
+
+## 123. `pm_timer` 占用探测（契约对齐第 3 轮）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 13:35–14:00 |
+| 依据 | 决策 0018 第五条：先只做 `CR1.CEN` 或 `AFIO->MAPR` 重映射位两条判据的只读探测；运行期 claim/release 占用表、角色/通道仲裁、`PM_ERR_CONFLICT` 留待后续独立轮 |
+| 改动 | 新增 `include/pm/pm_timer.h`（`pm_timer_hw_t` 取 TIM2/3/4，返回位 `CEN`/`REMAP`/`UNKNOWN`，0 为空闲）与 `src/port/stm32f1/pm_timer_stm32f1.c`（只读、不写任何寄存器）；`pm_motor_stm32f1.c` 的两条内联判据改为调用探测函数，`-1`/`-2` 映射保持不变（两条同时成立时 CEN 优先，与原顺序一致） |
+| 等价性 | CEN 成立 → `-1`（同）；CEN 不成立且重映射位非 0 → `-2`（同）；本板无任何代码写 `AFIO->MAPR`，`PWM dbg` 读回 `mapr=0x00000000`，两条判据在本板结果一致。**唯一差别**：TIM2 重映射从只看 bit0 扩到 2-bit 字段，partial remap（10）以前漏判、现在会报忙；本板上不可达 |
+| 编译 | FLASH 29152 B (44.48%) / RAM 5320 B (25.98%)，比上一轮 +76 B（探测函数跨 TU 未内联） |
+| 静态检查 | `0 ERROR / 3 WARN`，与基线一致 |
+| 烧录 | `Download verified successfully`，`evidence/timer-probe-flash.log` |
+| 板端证据 | `evidence/timer-probe-serial.log`：`MOTOR fwd 30` → `dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0`，`MOTOR stop` → 全零；全程无 `err=timer`/`err=remap`，说明探测未把自家通道误判为占用 |
+| 能证明什么 | 探测在真实板上对空闲 TIM2 返回空闲；电机初始化行为与回包文本未变 |
+| 不能证明什么 | 占用分支（CEN/REMAP 命中、未知 hw_id）没有在板上触发过——没有第二方去占用 TIM2；只能靠代码审查与哨兵映射确认，未实测 |

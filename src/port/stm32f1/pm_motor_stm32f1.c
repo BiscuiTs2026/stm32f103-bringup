@@ -13,6 +13,8 @@
 
 #include "stm32f1xx.h"
 
+#include "pm_timer.h"
+
 #define MOTOR_TIM_CLK_HZ  72000000u
 #define MOTOR_ARR         ((MOTOR_TIM_CLK_HZ / PM_MOTOR_FREQ_HZ) - 1u)  /* 3599 */
 #define MOTOR_CCMR1_PWM   ((0x6u << 4) | (0x1u << 3) | (0x6u << 12) | (0x1u << 11))
@@ -29,12 +31,14 @@ int pm_motor_init(void)
 {
     /* "Occupied" means someone else's time base, decided by two register
      * facts only: TIM2 already counting (CR1.CEN) or CH1/CH2 moved away from
-     * PA0/PA1 (AFIO_MAPR.TIM2_REMAP bit 0). No software owner flags. */
-    if ((TIM2->CR1 & TIM_CR1_CEN) != 0u) {
-        return -1;
-    }
-    if ((AFIO->MAPR & AFIO_MAPR_TIM2_REMAP_0) != 0u) {
-        return -2;
+     * PA0/PA1 (AFIO_MAPR.TIM2_REMAP). No software owner flags. The probe is
+     * the shared port helper added for the pm_timer contract (decision 0018);
+     * the -1/-2 split keeps the existing MOTOR err=timer / err=remap wording,
+     * with CEN winning when both facts are set, as before. */
+    uint32_t busy = pm_timer_probe(PM_TIMER_T2);
+
+    if (busy != PM_TIMER_FREE) {
+        return ((busy & PM_TIMER_BUSY_CEN) != 0u) ? -1 : -2;
     }
 
     RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_AFIOEN;
