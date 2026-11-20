@@ -1,0 +1,23 @@
+﻿# HELP 比对  2026-11-20  S6a(evidence/split-s6a-board.log) vs S9c(evidence/split-s9c-oled.log)
+S6a 行数=15  S9c 行数=15
+## S6a 原文
+ 1. HELP HELP=list commands
+ 2. HELP PING=reply PONG
+ 3. HELP STAT=clk/up/tick/keys/uart counters
+ 4. HELP I2C=scan I2C1 bus, list 8-bit addresses
+ 5. HELP AHT=read AHT20, rh and t in 0.1 units
+ 6. HELP AHTS=same but read via repeated START
+ 7. HELP DIST=disabled, TIM2 given to motor
+ 8. HELP ADC=pot PA5 and NTC PA4, raw and mV
+ 9. HELP OLED=on/off/clear/test/show/frame/col/live/dump
+10. HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
+11. HELP TRACK=raw level of PB14 line sensor
+12. HELP ENC=count/clear, dir, a/b, button PB15
+13. HELP RELAY=on/off/stat, PB5 relay coil
+14. HELP MOTOR=fwd/rev/stop/duty/stat, PA0/PA1 TIM2 PWM
+15. HELP KEYS=key press counters, clears them
+## Compare-Object（空 = 无差异）
+(none)
+S6a SHA256=BC-D7-BE-C3-39-A6-CF-1D-3E-45-FA-66-5C-29-08-0E-39-B2-54-87-5F-B9-D3-C4-F1-72-69-D5-BF-D6-ED-3F
+S9c SHA256=BC-D7-BE-C3-39-A6-CF-1D-3E-45-FA-66-5C-29-08-0E-39-B2-54-87-5F-B9-D3-C4-F1-72-69-D5-BF-D6-ED-3F
+same=True

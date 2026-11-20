@@ -1,4 +1,4 @@
-# 上板抓包证据登记表
+﻿# 上板抓包证据登记表
 
 本目录是 `2026-11-18/board-bringup/work` 这一轮上板验证留下的串口抓包归档。
 共 65 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
@@ -1246,7 +1246,7 @@
 | 项 | 内容 |
 | --- | --- |
 | 规模 | 75 行；S6a 烧录后复位抓包，发 DIST / HELP / OLED dump / STAT |
-| 关键内容 | 横幅 7 行与 S9c 逐字一致；`DIST err=disabled`；`HELP` 14 行含 `DIST=disabled, TIM2 given to motor`；live ok 每 500 ms 不断 |
+| 关键内容 | 横幅 7 行与 S9c 逐字一致；`DIST err=disabled`；`HELP` **15 行**含 `DIST=disabled, TIM2 given to motor`（此条 2026-11-20 更正：首版误写 14 行，`split-s6a-help-compare.log` 证实 15 行且与 S9c 逐字节相同）；live ok 每 500 ms 不断 |
 | 能证明什么 | S6a 搬迁未改变启动顺序、命令表与 live 节拍 |
 | 不能证明什么 | `OLED dump` 当时全空是排版时序（见 97），不证明页面内容 |
 | 局限 | 四条命令挤在同一毫秒发出 |
@@ -1263,33 +1263,33 @@
 | 局限 | 未发测距有效回包（DIST 处于 disabled） |
 | PATCHES 引用 | 未引用（S6a 拆分证据） |
 
-## 98. split-s6-build.log
+## 98. split-s6a-build.log
 
 | 项 | 内容 |
 | --- | --- |
-| 规模 | 配置 + 增量构建日志，`build-split-s6/` |
+| 规模 | 配置 + 增量构建日志，`build-split-s6/`；2026-11-20 由 `split-s6-build.log` 更名，6b 另存 `split-s6b-build.log` |
 | 关键内容 | 编译 0 告警；仅链接期 `_close/_lseek/_read/_write` 与 RWX 段提示（既有） |
 | 能证明什么 | S6a 源码可编译、可链接，产物 `pm_f103_demo.hex` 27.82 KB |
 | 不能证明什么 | 运行期行为（见 96/97） |
 | 局限 | 未做 -Werror 全量重建 |
 | PATCHES 引用 | 未引用（S6a 拆分证据） |
 
-## 99. split-s6-layering.log
+## 99. split-s6a-layering.log
 
 | 项 | 内容 |
 | --- | --- |
-| 规模 | 检查器 3.3.1；**0 ERROR / 4 WARN** |
+| 规模 | 检查器 3.3.1；**0 ERROR / 4 WARN**；2026-11-20 由 `split-s6-layering.log` 更名，6b 另存 `split-s6b-layering.log` |
 | 关键内容 | 4 条 WARN：胶水层 323 行（上限 200）+ `pm_port_stm32f1.c` 三条 `*_hw_*` ISR 钩子；原 `dist_start` 寄存器访问与忙等两条已消失 |
 | 能证明什么 | 6a 判据达成（基线 6 WARN 见 `split-s9c-layering.log`，361 行） |
 | 不能证明什么 | 功能等价性（见 96/97） |
 | 局限 | 基线未单独落 `split-s6-before.log`，直接引用 `split-s9c-layering.log` |
 | PATCHES 引用 | 未引用（S6a 拆分证据） |
 
-## 100. split-s6-flash.log
+## 100. split-s6a-flash.log
 
 | 项 | 内容 |
 | --- | --- |
-| 规模 | 烧录日志，`build-split-s6/pm_f103_demo.hex` |
+| 规模 | 烧录日志，`build-split-s6/pm_f103_demo.hex`；2026-11-20 由 `split-s6-flash.log` 更名，6b 另存 `split-s6b-flash.log` |
 | 关键内容 | Size 27.82 KB，`Download verified successfully`，`MCU Reset`，exit 0 |
 | 能证明什么 | 板载固件与 `build-split-s6` 产物一致 |
 | 不能证明什么 | 运行期行为（见 96/97） |
@@ -1306,3 +1306,71 @@
 | 不能证明什么 | 不覆盖新文件内容审查（行数单列） |
 | 局限 | 只统计行数，不看语义 |
 | PATCHES 引用 | 未引用（S6a 拆分证据） |
+
+## 102. split-s6a-help-compare.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 22 行；S6a 板端 HELP 与 S9c 基线逐行/逐字节比对 |
+| 关键内容 | 两边均 **15 行**，`Compare-Object` 无差异，SHA256 同为 `BC-D7-BE-C3…ED-3F` |
+| 能证明什么 | 命令表在 S6a 未丢条目、未改顺序；首版汇报写"14 行"是数错，不是回归 |
+| 不能证明什么 | 各命令功能（见 96/97 与既有 Sx 证据） |
+| 局限 | 只比 HELP 文本，不含执行结果 |
+| PATCHES 引用 | 未引用（S6a 拆分证据，更正记录） |
+
+## 103. split-s6b-build.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 配置 + 增量构建日志，`build-split-s6/`（6b） |
+| 关键内容 | 编译 0 告警；仅链接期 `_close/_lseek/_read/_write` 与 RWX 段提示（既有）；产物 27.85 KB |
+| 能证明什么 | 6b 源码可编译可链接 |
+| 不能证明什么 | 运行期行为（见 105） |
+| 局限 | 未做 -Werror 全量重建 |
+| PATCHES 引用 | 未引用（S6b 拆分证据） |
+
+## 104. split-s6b-layering.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 检查器 3.3.1；**0 ERROR / 4 WARN**（实测，非 3 WARN） |
+| 关键内容 | 4 条 WARN：`main.c:1` 胶水 **216 行**（上限 200）+ `pm_port_stm32f1.c:352/362/374` 三条 `*_hw_*` 钩子 |
+| 能证明什么 | 6b 把 DIST 作业下沉后无反向依赖/寄存器/忙等新增告警 |
+| 不能证明什么 | 未达原定 `main.c ≤200`：DIST 区 165 行中 38 行 6a 已搬、107 行 6b 搬、20 行按 S9b 约定必须留胶水层；`361−145=216` 为真下限，≤200 的判定点已移交 S10 |
+| 局限 | 216 属实测棘轮值（216 < 361），不为凑数删注释或合并行 |
+| PATCHES 引用 | 未引用（S6b 拆分证据） |
+
+## 105. split-s6b-board.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 75 行；6b 烧录后复位抓包，按序发 DIST / HELP / OLED dump / STAT |
+| 关键内容 | 横幅 7 行与 S9c 一致；`DIST err=disabled`；`HELP` **15 行**；`OLED dump` **8 行**全有内容（`UP=   3S` … `LIVE ms= 98`）；`STAT clk=72000000 up=5026 uart_rx=28`；live ok 每 500 ms 不断 |
+| 能证明什么 | 6b 搬迁未改变启动顺序、命令表、测距禁用语义与 live 节拍 |
+| 不能证明什么 | 屏上实际像素与背光（M9/M10，目视项） |
+| 局限 | DIST 处于 disabled，未产生有效测距回包 |
+| PATCHES 引用 | 未引用（S6b 拆分证据） |
+
+## 106. split-s6b-diff-numstat.txt
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | S6b 工作树 `--numstat` 与 `-w --numstat` 对照 |
+| 关键内容 | 两口径逐条相同；新文件 `sonar_dev.h`、`sonar_dev.c` 行数单列 |
+| 能证明什么 | 6b 无空白夹带 |
+| 不能证明什么 | 不覆盖新文件内容审查 |
+| 局限 | 只统计行数 |
+| PATCHES 引用 | 未引用（S6b 拆分证据） |
+
+> 更正随本笔提交：条目 96 的 `HELP 14 行` 已就地改为 **15 行**（依据 102 的逐字节比对）。
+
+## 107. split-s6b-flash.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 6b 烧录日志，`build-split-s6/pm_f103_demo.hex` |
+| 关键内容 | Size **27.85 KB**，`Download verified successfully`，`MCU Reset`，exit 0 |
+| 能证明什么 | 板载固件与 6b 产物一致 |
+| 不能证明什么 | 运行期行为（见 105） |
+| 局限 | 只校验写入内容 |
+| PATCHES 引用 | 未引用（S6b 拆分证据） |

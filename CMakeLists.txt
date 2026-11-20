@@ -113,6 +113,7 @@ add_library(pm_components STATIC
     src/components/track_dev/track_dev.c
     src/components/encoder_dev/encoder_dev.c
     src/components/relay_dev/relay_dev.c
+    src/components/sonar_dev/sonar_dev.c
     src/components/motor_dev/motor_dev.c
 )
 target_include_directories(pm_components
@@ -126,6 +127,7 @@ target_include_directories(pm_components
             ${PM_ROOT}/src/components/track_dev
             ${PM_ROOT}/src/components/encoder_dev
             ${PM_ROOT}/src/components/relay_dev
+            ${PM_ROOT}/src/components/sonar_dev
             ${PM_ROOT}/src/components/motor_dev
             ${PM_ROOT}/include/pm
 )

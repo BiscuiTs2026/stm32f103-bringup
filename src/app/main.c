@@ -23,6 +23,7 @@
 #include "pm_i2c1.h"
 #include "pm_adc1.h"
 #include "pm_sonar.h"
+#include "sonar_dev.h"
 #include "adc_dev.h"
 #include "pm_platform.h"
 #include "board_f103c8.h"
@@ -119,169 +120,21 @@ static void adc_boot(void)
 }
 
 /* ---------------------------------------------- HC-SR04 distance, PA11/PA10
- * Board header (HARDWARE.md §3 第 6 条 + 附录引脚表): 1=GND, 2=PA10 (ECHO),
- * 3=PA11 (TRIG), 4=3.3V. PA10/PA11 are FT (5 V tolerant) on STM32F103x8/xB,
- * and this header feeds the module 3.3 V (HC-SR04P), so ECHO swings 0..3.3 V
- * here; no divider is fitted on the board.
- * Pins, the EXTI10 handler and the TIM2 time stamp live in
- * src/port/stm32f1/pm_sonar_stm32f1.c; DIST never blocks: it fires the 10 us
- * pulse and replies later from dist_service() when the falling edge or the
- * timeout arrives.
- * 2026-11-19: DIST is disabled. TIM2 is handed to the motor PWM, so the
- * timestamps have no time base; dist_start() replies "DIST err=disabled" and
- * the counter is no longer started. Pins and edge logic are kept as-is so a
- * future time source can re-enable it. */
+ * The job (DIST command, reply formatting, last-good value) lives in
+ * src/components/sonar_dev; the pins, the EXTI10 handler and the TIM2 time
+ * stamp live in src/port/stm32f1/pm_sonar_stm32f1.c. This layer only wires
+ * them to the command table and the main loop. */
 
-#define DIST_TIMEOUT_MS  60u
-#define DIST_MIN_US      100u      /* < 2 cm: noise */
-#define DIST_MAX_US      25000u    /* > 4.3 m: the module tops out at 4 m */
-/* 0 = DIST disabled: its 1 us time base (TIM2) was reassigned to the motor
- * PWM. Set back to 1 only after a different time source is chosen. */
-#define DIST_TIME_BASE_READY 0
-
-typedef struct {
-    cmd_port_t       *c;
-    uint32_t          t0_ms;
-    uint8_t           active;
-    uint8_t           auto_live;   /* this measurement was started by live mode */
-} dist_job_t;
-
-static dist_job_t s_dist;
-
-/* Last good distance, kept for OLED show. Cleared on a timeout so the screen
- * never claims a stale reading. */
-static uint32_t s_dist_last_cm10;
-static uint8_t  s_dist_last_ok;
-
-/* One-line summary for the live page's LAST row: "DIST ok 99.0". */
-static void dist_last_ok(uint32_t cm10)
-{
-    char        b[16];
-    char       *p = b;
-    const char *pre = "DIST ok ";
-
-    while (*pre != '\0') {
-        *p++ = *pre++;
-    }
-    p = pm_cmd_sput_u32(p, cm10 / 10u);
-    *p++ = '.';
-    *p++ = (char)('0' + (cm10 % 10u));
-    *p = '\0';
-    pm_cmd_out_last_set(b);
-}
-
-static void dist_start(cmd_port_t *c, uint8_t auto_live)
-{
-    /* DIST is disabled: TIM2, the 1 us timestamp source, now belongs to the
-     * motor PWM. Manual DIST explains the reason; live mode skips silently so
-     * the screen is not flooded once per second. */
-    if (DIST_TIME_BASE_READY == 0) {
-        if (auto_live == 0u) {
-            pm_cmd_out_tx_str(c, "DIST err=disabled\r\n");
-        }
-        return;
-    }
-
-    if (s_dist.active != 0u) {
-        if (auto_live != 0u) {
-            return;                        /* live skips this period */
-        }
-        /* Manual DIST must not run a second HC-SR04 sequence next to the
-         * measurement live started. */
-        pm_cmd_out_tx_str(c, (s_dist.auto_live != 0u) ? "DIST err=busy live\r\n"
-                                           : "DIST err=busy\r\n");
-        return;
-    }
-
-    s_dist.c         = c;
-    s_dist.auto_live = auto_live;
-    pm_sonar_clear_edge();
-    pm_sonar_pulse();
-
-    s_dist.t0_ms  = pm_osal_now_ms();
-    s_dist.active = 1u;
-    if (auto_live == 0u) {
-        oled_ui_now_row();      /* the echo window is ~20 ms, show it */
-    }
-}
-
-static void dist_service(uint32_t now)
-{
-    uint32_t us;
-    uint32_t cm10;
-    pm_sonar_snapshot_t snap;
-
-    if (s_dist.active == 0u) {
-        return;
-    }
-
-    pm_sonar_snapshot(&snap);
-    if (snap.done == 0u) {
-        if ((uint32_t)(now - s_dist.t0_ms) < DIST_TIMEOUT_MS) {
-            return;
-        }
-        s_dist.active    = 0u;
-        pm_sonar_clear_edge();
-        s_dist_last_ok   = 0u;
-        pm_cmd_out_last_set("DIST err=tout");
-        if (s_dist.auto_live != 0u) {
-            pm_cmd_out_tx_str(s_dist.c, "DIST live ");
-            s_dist.auto_live = 0u;
-        } else {
-            pm_cmd_out_tx_str(s_dist.c, "DIST ");
-        }
-        pm_cmd_out_tx_str(s_dist.c, "err=timeout\r\n");
-        return;
-    }
-
-    us = (uint32_t)snap.width_us;
-    s_dist.active = 0u;
-
-    if ((us < DIST_MIN_US) || (us > DIST_MAX_US)) {
-        /* HC-SR04 holds ECHO high ~38 ms when nothing reflects the burst. */
-        s_dist_last_ok = 0u;
-        pm_cmd_out_last_set("DIST err=tout");
-        if (s_dist.auto_live != 0u) {
-            pm_cmd_out_tx_str(s_dist.c, "DIST live ");
-            s_dist.auto_live = 0u;
-        } else {
-            pm_cmd_out_tx_str(s_dist.c, "DIST ");
-        }
-        pm_cmd_out_tx_str(s_dist.c, "err=timeout\r\n");
-        return;
-    }
-
-    cm10 = (us * 10u + 29u) / 58u;         /* us / 58 => cm, kept x10 */
-
-    s_dist_last_cm10 = cm10;
-    s_dist_last_ok   = 1u;
-    if (s_dist.auto_live == 0u) {
-        dist_last_ok(cm10);
-    }
-
-    if (s_dist.auto_live != 0u) {
-        pm_cmd_out_tx_str(s_dist.c, "DIST live ");
-        s_dist.auto_live = 0u;
-    } else {
-        pm_cmd_out_tx_str(s_dist.c, "DIST ");
-    }
-    pm_cmd_out_tx_str(s_dist.c, "cm=");
-    pm_cmd_out_tx_fixed1(s_dist.c, (int32_t)cm10);
-    pm_cmd_out_tx_str(s_dist.c, " us=");
-    pm_cmd_out_tx_u32(s_dist.c, us);
-    pm_cmd_out_tx_str(s_dist.c, "\r\n");
-}
-
-/* DIST lives in the entry layer until S6 moves it to sonar_dev; the screen
- * component gets the two interactions it needs as hooks. */
+/* The screen component reaches the measurement job through two hooks; both
+ * are thin adapters over sonar_dev. */
 static int oled_ui_dist_busy(void)
 {
-    return (s_dist.active != 0u) ? 1 : 0;
+    return sonar_dev_busy();
 }
 
 static void oled_ui_dist_poke(cmd_port_t *port)
 {
-    dist_start(port, 1u);
+    sonar_dev_live_poke(port);
 }
 
 static const oled_ui_hooks_t s_oled_hooks = {
@@ -319,7 +172,7 @@ static void run_ahts(cmd_port_t *c, const char *line)
 static void run_dist(cmd_port_t *c, const char *line)
 {
     PM_UNUSED(line);
-    dist_start(c, 0u);
+    sonar_dev_start(c, 0u);
 }
 
 static void run_adc(cmd_port_t *c, const char *line)
@@ -459,7 +312,7 @@ int main(void)
         pm_cmd_console_flush_idle(t);
         aht20_bg_tick(t);
         aht20_service(t);
-        dist_service(t);
+        sonar_dev_service(t);
         oled_ui_service();
         oled_ui_live_tick(pm_osal_now_ms());
 

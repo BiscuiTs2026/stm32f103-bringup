@@ -1,0 +1,32 @@
+﻿# S6b diff vs d6c9808
+## git diff --numstat
+2	0	CMakeLists.txt
+63	6	evidence/INDEX.md
+-	-	evidence/split-s6-build.log
+-	-	evidence/split-s6-flash.log
+0	8	evidence/split-s6-layering.log
+11	158	src/app/main.c
+## git diff --ignore-all-space --numstat
+2	0	CMakeLists.txt
+63	6	evidence/INDEX.md
+-	-	evidence/split-s6-build.log
+-	-	evidence/split-s6-flash.log
+0	8	evidence/split-s6-layering.log
+11	158	src/app/main.c
+## new files (physical lines)
+src/components/sonar_dev/sonar_dev.h: 31
+src/components/sonar_dev/sonar_dev.c: 169
+## untracked/modified
+ M CMakeLists.txt
+ M evidence/INDEX.md
+ D evidence/split-s6-build.log
+ M evidence/split-s6-flash.log
+ D evidence/split-s6-layering.log
+ M src/app/main.c
+?? evidence/split-s6a-build.log
+?? evidence/split-s6a-help-compare.log
+?? evidence/split-s6a-layering.log
+?? evidence/split-s6b-board.log
+?? evidence/split-s6b-build.log
+?? evidence/split-s6b-layering.log
+?? src/components/sonar_dev/
