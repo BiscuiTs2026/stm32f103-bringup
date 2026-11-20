@@ -1,0 +1,24 @@
+[       0ms] ===== manual acceptance capture 2026-11-20 19:43:14 port=COM11 phase=m4-human =====
+[       0ms] 来源：网页串口助手 records-2026-11-20-19-46-21.json（附件，只读）；本文件按 JSON 的 write/read 事件逐条转写
+[       0ms] 说明：JSON 只记录命令与回包，不含"电机是否转动/转向"的标注；转向与起转判定来自用户现场口述
+[       0ms] >> MOTOR stat
+[     202ms] MOTOR stat dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0
+[   35835ms] >> MOTOR fwd 30
+[   35948ms] MOTOR fwd ok dir=fwd duty=30% hz=20000 arr=3599 ccr1=1080 ccr2=0
+[   62747ms] >> MOTOR fwd 60
+[   62873ms] MOTOR fwd ok dir=fwd duty=60% hz=20000 arr=3599 ccr1=2160 ccr2=0
+[   79920ms] >> MOTOR fwd 100
+[   80064ms] MOTOR fwd ok dir=fwd duty=100% hz=20000 arr=3599 ccr1=3600 ccr2=0
+[   95047ms] >> MOTOR fwd 80
+[   95154ms] MOTOR fwd ok dir=fwd duty=80% hz=20000 arr=3599 ccr1=2880 ccr2=0
+[  105339ms] >> MOTOR fwd 70
+[  105459ms] MOTOR fwd ok dir=fwd duty=70% hz=20000 arr=3599 ccr1=2520 ccr2=0
+[  111264ms] >> MOTOR fwd 50
+[  111400ms] MOTOR fwd ok dir=fwd duty=50% hz=20000 arr=3599 ccr1=1800 ccr2=0
+[  133457ms] >> MOTOR fwd 101
+[  133525ms] MOTOR err=range duty=101
+[  140631ms] >> MOTOR fwd 100
+[  140741ms] MOTOR fwd ok dir=fwd duty=100% hz=20000 arr=3599 ccr1=3600 ccr2=0
+[  153421ms] >> MOTOR duty 50
+[  153536ms] MOTOR duty ok dir=fwd duty=50% hz=20000 arr=3599 ccr1=1800 ccr2=0
+[  153536ms] ===== capture end =====
