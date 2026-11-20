@@ -1891,4 +1891,4 @@ HELP KEYS=key press counters, clears them
 | 体积 | **FLASH 31324 B（47.80%）/ RAM 5448 B（26.60%）**，与删除前逐字节相同（该文件本就不在构建里），未增 |
 | 检查器 | `--version --lock tools/CHECKER.lock` → 3.4.0 / `4da1a77` / `[LOCK] 一致`；`--glue-max-lines 86` → **0 ERROR / 4 WARN**（存量） |
 | 文档 | `INDEX.md` §132 遗留行改为"已删除"；`PATCHES.md` 与历史扫描输出按史实保留；README 的 `build-arm` 示例尺寸同步为 31324/5448，并修正"DIST 已停用"旧表述 |
-| 遗留 | `build-clean-final/` 是首次配置失败留下的空目录（相对路径 toolchain 写法问题），未删除；有效构建在 `build-clean-final2/` |
+| 遗留 | `build-clean-final/` 是首次配置失败留下的目录（相对路径 toolchain 写法问题），内含 `CMakeCache.txt` 与 `CMakeFiles/` 配置标记、无日志；**2026-11-20 已删除**（配置产物可再生）；有效构建在 `build-clean-final2/` |
