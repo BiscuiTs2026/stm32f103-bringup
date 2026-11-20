@@ -391,8 +391,9 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
      寄存器。
   2. `MOTOR err=timer`，TIM2 已在计数：占用探测 `pm_timer_probe(PM_TIMER_T2)`
      读到 `TIM2->CR1.CEN` 已置位（别人已占用）。与第 3 条同时成立时按本条优先。
-  3. `MOTOR err=remap`，通道已被移走：`AFIO->MAPR` 的 `TIM2_REMAP` **2 位字段**
-     （掩码 `0x300`）非 0，即 CH1/CH2 不在 PA0/PA1（完全重映射与部分重映射都算）。
+  3. `MOTOR err=remap`，通道重映射字段非 0：`AFIO->MAPR` 的 `TIM2_REMAP` **2 位字段**
+     （掩码 `0x300`）非 0 即判占用。其中 `01`/`11` 把 CH1/CH2 移出 PA0/PA1；`10`
+     （partial remap 2）保留 CH1/CH2，但字段非 0 说明 AFIO 已被配置，按保守策略同样拒绝。
   判据只读寄存器，不看任何软件占用标记，因此不会因状态变量失步而误报。
 - 测距停用期间 TIM2 不再有第二个使用者；重新启用 HC-SR04 前必须先解决计时源
   （`docs/TIM2-CONFLICT.md`）。

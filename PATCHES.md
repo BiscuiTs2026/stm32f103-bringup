@@ -1947,6 +1947,29 @@ source-commit: 7facd2b0039acd407d91c96ee043ef95dfc4b446
 - `arch-allow`：`adc_dev.h` 与 `app_wiring.c` 各 1 条，只为绕开检查器对 `adc_` 前缀的误判，
   已登记为 `TECH_DEBT.md` D22，不豁免任何真实越层。
 
+### 38. 2026-11-20 `TIM2_REMAP` 判据从 bit0 扩到 2 位字段（契约对齐第 3 轮）
+
+- 位置（按符号）：`src/port/stm32f1/pm_timer_stm32f1.c` 的 `pm_timer_probe()`；判据常量在
+  `include/pm/pm_timer.h`（`PM_TIMER_BUSY_REMAP 2u`，注释 "AFIO->MAPR remap field non-zero"）。
+- 改动：§35 的旧判据只查 `AFIO->MAPR.TIM2_REMAP` 的 **bit0**（`AFIO_MAPR_TIM2_REMAP_0`），
+  第 3 轮（`e10686e`）改为读**整个 2 位字段**（`AFIO_MAPR_TIM2_REMAP`，掩码 `0x300`）：非 0 即置
+  `PM_TIMER_BUSY_REMAP`，`pm_motor_init()` 回 `-2`/`err=remap`。
+- 理由：
+  1. `01`（partial remap）与 `11`（full remap）都把 CH1/CH2 移出 PA0/PA1，必须判占用；
+     `01` 的 bit0=1，旧判据能抓到。
+  2. `10`（partial remap 2）的 bit0=0，旧判据漏判；该档虽保留 CH1/CH2 在 PA0/PA1，
+     但 remap 字段非 0 说明 AFIO 已被别人配置，按"非 0 即占用"保守拒绝，避免与其它
+     重映射组合混用。
+  3. TIM2/TIM3/TIM4 三路探测统一读整个重映射字段，少一条"按位拆"的特例。
+- 行为等价：本板 `AFIO->MAPR = 0`，探测结果仍为 `PM_TIMER_FREE`，`MOTOR` 回包与寄存器
+  读回不变；`err=timer`（时基复核/`CEN` 已置位）与 `err=remap`（重映射字段非 0）的先后
+  顺序不变，二者同时成立时 `err=timer` 优先。
+- 文档同步：`docs/PROTOCOL.md` §4.9 判据第 3 条已改为"`TIM2_REMAP` **2 位字段**（掩码
+  `0x300`）非 0 即判占用"，并写明 `01`/`11` 会移走 CH1/CH2、`10` 保留但同样拒绝。
+- 遗留（不改代码）：`pm_timer_stm32f1.c:22` 的注释写 "partial remap (10) moves CH1/CH2
+  as well"，与 RM0008 的 10 档（CH1/CH2 仍在 PA0/PA1）不符；判据本身按非 0 处理不受影响，
+  注释留待下次触碰该文件时更正。
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，
