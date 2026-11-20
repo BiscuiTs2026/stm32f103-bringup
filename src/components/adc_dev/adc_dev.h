@@ -13,6 +13,11 @@
 
 #include "pm_cmd_out.h"
 
+/* Brings up ADC1 and prints the boot banner ("ADC1 PA4=IN4 ntc, ...").
+ * Moved out of the entry glue by split S10 so the banner stays with the
+ * component that owns the ADC. */
+void adc_dev_boot(void);   // arch-allow: plain C prototype, not an SPL call
+
 /* ADC command reply: pot= pot_mv= ntc= ntc_mv= vref=3300. */
 void adc_dev_cmd(cmd_port_t *c);   // arch-allow: plain C prototype, not an SPL call
 

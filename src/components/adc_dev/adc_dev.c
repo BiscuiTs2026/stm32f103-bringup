@@ -10,6 +10,21 @@
 
 #include "pm_adc1.h"
 
+void adc_dev_boot(void)
+{
+    int rc = pm_adc1_init();
+
+    if (rc == 1) {
+        pm_cmd_out_uart_write_str("ADC1 init FAILED\r\n");
+        return;
+    }
+    if (rc == 2) {
+        pm_cmd_out_uart_write_str("ADC1 calibration FAILED\r\n");
+        return;
+    }
+    pm_cmd_out_uart_write_str("ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit\r\n");
+}
+
 uint32_t adc_dev_to_mv(uint16_t raw)
 {
     return ((uint32_t)raw * 3300u + 2047u) / 4095u;

@@ -1374,3 +1374,91 @@
 | 不能证明什么 | 运行期行为（见 105） |
 | 局限 | 只校验写入内容 |
 | PATCHES 引用 | 未引用（S6b 拆分证据） |
+
+## 108. s10-stale-scan-1.log / s10-stale-refs-1.txt
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | S10 修前过期引用扫描：控制台输出 + CSV（`文本位置,标识符,分类,依据`） |
+| 关键内容 | 28 条 STALE（TECH_DEBT 行号引用、README 的 `pm_i2c` 旧句、OLED/TIM2 文档与源码注释旧函数名） |
+| 能证明什么 | 修前清单可复查；扫描范围与豁免（PATCHES.md 历史、evidence/、third_party/）明确 |
+| 不能证明什么 | 不判定语义正确性，只按符号是否存在分类 |
+| 局限 | 脚本存 `%TEMP%`（SHA256 记在日志首行），未入仓 |
+| PATCHES 引用 | §37 |
+
+## 109. s10-stale-scan-2.log / s10-stale-refs.txt
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | S10 修后复扫，同一脚本、同一范围 |
+| 关键内容 | **STALE=0**（OK/EXTERNAL 分类保留可核对） |
+| 能证明什么 | S10 完成判据之一达成 |
+| 不能证明什么 | 不覆盖 evidence/ 与 PATCHES.md 历史引用的时效性 |
+| 局限 | 同 108 |
+| PATCHES 引用 | §37 |
+
+## 110. s10-build.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | `build-split-s10/` 从零配置 + `ninja` 全量构建 |
+| 关键内容 | 0 error / 0 warning；Flash **28564 B**、RAM **5128 B**（S6b 为 28516 / 5128，+48 B / +0） |
+| 能证明什么 | S10 代码搬迁可编译，警告策略（`-Wall -Wextra -Wshadow -Wundef`）下零新增 |
+| 不能证明什么 | 运行期行为 |
+| 局限 | 单次构建，未做重复构建哈希比对 |
+| PATCHES 引用 | §37 |
+
+## 111. s10-layering.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | `python tools/check_layering.py . --glue-max-lines 87`（3.3.1） |
+| 关键内容 | **0 ERROR / 3 WARN**；WARN 全为 `pm_port_stm32f1.c:352/362/374` 端口层 ISR 钩子；`main.c` 87 行 |
+| 能证明什么 | 胶水行数 WARN 消失，闸门 87 下退出码 0 |
+| 不能证明什么 | 不覆盖 §8 十一条的语义判断（见 114） |
+| 局限 | 检查器为静态文本扫描 |
+| PATCHES 引用 | §37 |
+
+## 112. split-s10-flash.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | `build-split-s10/pm_f103_demo.hex` 烧录 |
+| 关键内容 | `Download verified successfully`、`MCU Reset`、exit 0 |
+| 能证明什么 | 板载固件与 S10 产物一致 |
+| 不能证明什么 | 运行期行为（见 113） |
+| 局限 | 只校验写入内容 |
+| PATCHES 引用 | §37 |
+
+## 113. split-s10-board.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | COM11 115200 抓包 12 s，复位 + `DIST`/`HELP`/`OLED dump`/`STAT` |
+| 关键内容 | 横幅 7 行；`DIST err=disabled`；`HELP` **15 行**且与 `split-s6b-board.log` 逐行一致；`OLED dump` 8 行；`OLED live ok` 每 500 ms 持续 |
+| 能证明什么 | 命令表外移后协议与显示调度无回归 |
+| 不能证明什么 | 背光/像素等目视项（M1–M9 仍 PENDING，M10 已按用户目视记 PASS） |
+| 局限 | 单次上电抓包 |
+| PATCHES 引用 | §37 |
+
+## 114. s10-glue-rules.md
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | SPLIT-PLAN §8 十一条 glue 命中的逐条销账表 |
+| 关键内容 | 11 条 × 清除步骤 × 现状证据；`main.c` 中 `GPIO_PIN_`/`GPIOA`/`HAL_`/`while` 均为 0 |
+| 能证明什么 | 第 18–21 项在 3.3.1 下零命中，11 条全部消除 |
+| 不能证明什么 | 不替代板端行为验证 |
+| 局限 | 依赖检查器版本 3.3.1 |
+| PATCHES 引用 | §37 |
+
+## 115. split-s10-diff-numstat.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | S10 工作树 `--numstat` 与 `-w --numstat` 对照 |
+| 关键内容 | `src/app/main.c` **+7/−179**；新增 `sys_cmds.c` 75 行、`sys_cmds.h` 28 行、`app_wiring.c` 117 行、`app_wiring.h` 16 行；两口径逐条相同 |
+| 能证明什么 | S10 无空白夹带，搬迁净减 172 物理行 |
+| 不能证明什么 | 不覆盖新文件内容审查 |
+| 局限 | 只统计行数（本日志不含自身） |
+| PATCHES 引用 | §37 |

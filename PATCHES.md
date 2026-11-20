@@ -1929,6 +1929,24 @@ source-commit: 7facd2b0039acd407d91c96ee043ef95dfc4b446
   `dist_start`、`oled_i2c_wait`、`oled_bus_write` 本轮不修。
 - 等 `main.c` 拆分全部完成后单独开一轮，按外设分 2–3 轮下沉，每轮上板验 I2C。
 
+### 37. `main.c` 拆分收口（S10）：命令表外移与过期引用清理
+
+- 新增 `src/components/sys_cmds/`：`HELP`/`PING`/`STAT`/`I2C` 的回包实现。`STAT` 要读
+  `pm_platform_core_clock()`（端口层），按分层规则只能留在 components，不能放进 `src/app/`。
+- 新增 `src/app/app_wiring.c`：`s_cmds` 命令表（15 条，顺序与 `HELP` 输出一致）与命令适配器；
+  `main.c` 只保留 `s_console.execute = app_cmd_execute`。
+- `adc_boot` 并入 `adc_dev_boot()`（`src/components/adc_dev/`），上电横幅文本不变。
+- 结果：`src/app/main.c` 检查器口径 **216 → 87 行**（物理 328 → 156）；3.3.1 扫描
+  **0 ERROR / 3 WARN**（只剩端口层 3 条 ISR 钩子）。Flash 28516 → 28564 B（+48 B），RAM 未变。
+- 闸门：`.github/workflows/layering.yml` 落 `--glue-max-lines 87`，此后**只降不升**：
+  不传更大值，也不为达标拆函数、删注释。取值说明：实测 87 按"向下取整到 10"是 80，
+  会让已合规的文件立刻报 WARN，与"无新 WARN"验收冲突，故按 D1 的"闸门 = 实测 N 行"落 87。
+- 过期引用：`TECH_DEBT.md` 的行号字段全部改按符号，D0–D19 清账；`README.md`、
+  `docs/PROTOCOL.md`、`docs/TIM2-CONFLICT.md` 与四处源码注释里的旧函数名同步更正。
+  扫描脚本（存 `%TEMP%`，不入仓）与两轮输出在 `evidence/s10-stale-*`。
+- `arch-allow`：`adc_dev.h` 与 `app_wiring.c` 各 1 条，只为绕开检查器对 `adc_` 前缀的误判，
+  已登记为 `TECH_DEBT.md` D22，不豁免任何真实越层。
+
 ## 已知遗留
 
 - 链接时出现 `_write/_read/_close/_lseek not implemented` 警告，来自 nano.specs + nosys.specs，

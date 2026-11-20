@@ -1,9 +1,9 @@
 /*
  * pm_cmd_console.c - debug/BLE UART transport, line framing, idle flush.
  *
- * Moved out of main.c by S9c. The command table and its handlers stay in the
- * entry glue; this file only frames bytes into lines and hands them to the
- * executor installed in pm_cmd_console_t.
+ * Moved out of main.c by S9c. The command table and its handlers live in
+ * src/app/app_wiring.c (S10); this file only frames bytes into lines and hands
+ * them to the executor installed in pm_cmd_console_t.
  */
 #include "pm_common.h"
 #include "pm_osal.h"

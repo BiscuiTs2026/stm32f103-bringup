@@ -220,7 +220,7 @@ void oled_ui_cmd(cmd_port_t *c, const char *arg)
     const char   *rest = NULL;
 
     /* A pattern command, `show`, `on`/`off` or `live off` takes the panel back
-     * even in the middle of a live refresh. Command handling and oled_service()
+     * even in the middle of a live refresh. Command handling and oled_ui_service()
      * both run in the main loop, so this always lands on a page boundary and no
      * I2C frame is cut in half. */
     if (s_oled_live_job != 0u) {
@@ -451,7 +451,7 @@ static void oled_live_tick(uint32_t now)
     (void)oled_start_live_job(s_oled_live_port, "live", now);
 }
 
-/* Live mode triggers the HC-SR04 itself: one non-blocking dist_start() per
+/* Live mode triggers the HC-SR04 itself: one non-blocking sonar_dev_start() per
  * second, reusing the manual path (no second copy of the sequence). It is
  * offset half an OLED period from the display refresh, so the 10 us pulse and
  * the <=23 ms echo window sit in the gap between two page transfers. The result

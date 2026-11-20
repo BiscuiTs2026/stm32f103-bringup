@@ -17,8 +17,8 @@ jobs:
         run: python3 tools/check_layering.py --version --lock tools/CHECKER.lock
 
       # 第二步：扫描。ERROR 必须为 0；WARN 只打印，不判失败。
-      # 2026-11-19 起不再传 --glue-max-lines：3.3.1 里行数规则已降为 WARN（默认 200），
-      # 只作体积兜底；继续传 1700 等于把 main.c 的行数债藏起来。
-      # 存量命中记在 TECH_DEBT.md，按拆分进度消除（PATCHES.md §36）。
+      # 闸门按 `src/app/main.c` 的实测行数设定，只降不升：
+      # 当前实测 87 行，闸门 87（S10 收口时写入；抬高闸门等于把行数债藏起来）。
+      # 存量与清账记录见 TECH_DEBT.md（PATCHES.md §37）。
       - name: Four-layer static check
-        run: python3 tools/check_layering.py .
+        run: python3 tools/check_layering.py . --glue-max-lines 87

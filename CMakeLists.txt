@@ -115,6 +115,7 @@ add_library(pm_components STATIC
     src/components/relay_dev/relay_dev.c
     src/components/sonar_dev/sonar_dev.c
     src/components/motor_dev/motor_dev.c
+    src/components/sys_cmds/sys_cmds.c
 )
 target_include_directories(pm_components
     PUBLIC  ${PM_ROOT}/src/components/oled_ch1116
@@ -129,13 +130,16 @@ target_include_directories(pm_components
             ${PM_ROOT}/src/components/relay_dev
             ${PM_ROOT}/src/components/sonar_dev
             ${PM_ROOT}/src/components/motor_dev
+            ${PM_ROOT}/src/components/sys_cmds
             ${PM_ROOT}/include/pm
+    PRIVATE ${PM_PLATFORM}
 )
 target_compile_options(pm_components PRIVATE
     ${PM_CPU_FLAGS} ${PM_WARN_FLAGS} ${PM_OPT_FLAGS})
 
 add_executable(pm_f103_demo
     src/app/main.c
+    src/app/app_wiring.c
     platform/stm32f103/startup_stm32f103xb.s
     third_party/cmsis/device/source/system_stm32f1xx.c
 )

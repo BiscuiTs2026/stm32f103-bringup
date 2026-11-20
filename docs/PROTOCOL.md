@@ -134,6 +134,9 @@ HELP KEYS=key press counters, clears them
 
 `up=` 是开机毫秒数；`key1/key2` 是消抖后的按下次数；`uart_rx/uart_tx` 是两路累计字节数。
 
+> 实现位置（S10 起）：`HELP`/`PING`/`STAT`/`I2C` 在 `src/components/sys_cmds/`，
+> 命令表与适配器在 `src/app/app_wiring.c`。命令、回包文本与顺序均未变。
+
 ### 4.2 AHT20 温湿度（I2C1，0x70）
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |

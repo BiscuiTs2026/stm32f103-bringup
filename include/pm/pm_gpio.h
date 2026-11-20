@@ -4,7 +4,7 @@
  * GPIO is synchronous: no ISR, no queue, no event.
  *
  * Rules:
- *  - Ids are board-defined logical pins (pm_board_gpio_id_t in the board
+ *  - Ids are board-defined logical pins (board_gpio_id_t in the board
  *    header). Upper layers never see GPIOA / GPIO_PIN_x.
  *  - Every call validates the id against the port table and returns
  *    PM_ERR_RANGE instead of touching an unknown pin.

@@ -2,9 +2,10 @@
  * pm_cmd_console.h - console transport for the shared command parser.
  *
  * Owns the debug/BLE UART instances, the two command ports, line framing and
- * the idle flush. The parser itself stays in the entry glue: the entry layer
- * installs its executor through pm_cmd_console_t.execute, so this component
- * never calls back into glue code by name.
+ * the idle flush. The parser itself stays in the entry layer (src/app/
+ * app_wiring.c, S10): the entry layer installs its executor through
+ * pm_cmd_console_t.execute, so this component never calls back into glue code
+ * by name.
  */
 #ifndef PM_CMD_CONSOLE_H
 #define PM_CMD_CONSOLE_H

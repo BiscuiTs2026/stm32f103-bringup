@@ -1,7 +1,7 @@
 /*
  * keypad_dev.h - debounced keys with LED mirror and press counters.
  *
- * The pin mapping is injected by the entry layer (keypad_map_t), so this
+ * The pin mapping is injected by the entry layer (pm_keypad_map_t), so this
  * component never includes a board header and never sees a GPIO port name.
  * Keys are active-low with the internal pull-up, as on the KEYSKING board
  * where KEY2 has no external pull-up.

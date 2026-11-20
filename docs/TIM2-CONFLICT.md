@@ -54,7 +54,9 @@ TIM2 只有一套 `PSC/ARR/CNT`，两个用途必须共用同一时基，而两�
   OLED live 的自动测距静默跳过；TRIG/ECHO 引脚配置与 EXTI 边沿逻辑保留不删，
   重新启用前必须先确定独立计时源（见 §4 第一行）。
 - **TIM2 整颗让给电机 PWM**：不再有任何代码写 `TIM2->PSC/ARR/CNT`。
-- 相关代码：`src/app/main.c`（`dist_hw_init`/`dist_start`）、`src/port/stm32f1/pm_motor_stm32f1.c`。
+- 相关代码：`src/port/stm32f1/pm_sonar_stm32f1.c`（`pm_sonar_init`/`pm_sonar_pulse`，S6 已从
+  `main.c` 迁出）、`src/components/sonar_dev/sonar_dev.c`（`sonar_dev_start`）、
+  `src/port/stm32f1/pm_motor_stm32f1.c`。
 
 ## 6. 建议检查器规则
 

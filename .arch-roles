@@ -22,7 +22,7 @@ src/core/*           = components
 src/components/*     = components
 # 公共契约头：类型、常量、函数原型，任何层可包含
 include/pm/*         = common
-# 入口胶水：时钟、按键、命令解析、I2C1 轮询、HC-SR04 计时、OLED 调度。
-# 这些是尚未回灌成 pm_* 契约的板级集成代码，允许碰寄存器与 HAL；
-# 取舍与理由见 PATCHES.md §20。
+# 入口胶水：仅初始化顺序与主循环调度（S10 起）。
+# 命令表与命令适配器在 src/app/app_wiring.c，按 app 角色判定，不计入胶水行数。
+# 胶水行数闸门在 .github/workflows/layering.yml，按实测值只降不升，理由见 PATCHES.md §37。
 src/app/main.c       = glue

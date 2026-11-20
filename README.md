@@ -57,8 +57,8 @@ include/pm/             公共头，无厂商类型
 src/core/               与硬件无关的模型（可在主机编译）
 src/osal/               Cortex-M3 的时基与临界区
 src/port/stm32f1/       HAL 后端、UART ISR、pm_port_get()
-src/components/         CH1116 驱动（总线访问由回调注入）、pwm_dev、track_dev、encoder_dev（命令解析）
-src/app/main.c          入口胶水：时钟、按键、命令解析、I2C 轮询、测距、OLED 调度
+src/components/         CH1116 驱动（总线访问由回调注入）、各器件组件（aht20_dev、adc_dev、sonar_dev 等）、sys_cmds（HELP/PING/STAT/I2C）
+src/app/                main.c 只做初始化顺序与主循环调度；app_wiring.c 放命令表与命令适配器
 platform/stm32f103/     板级引脚表、启动文件、链接脚本、HAL 配置
 tests/host/             内存 mock 后端 + 主机单测
 evidence/               上板抓包日志 + INDEX.md 登记表
@@ -240,7 +240,7 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 
 ## 已知限制
 
-- `pm_*` 契约只有 GPIO、UART、PWM、输入侧、继电器与电机（`pm_pwm.h`、`pm_track.h`、`pm_encoder.h`、`pm_relay.h`、`pm_motor.h`）；I2C1 时序、HC-SR04 捕获、OLED 调度仍在 `src/app/main.c` 里用裸寄存器与胶水实现，尚未抽成 `pm_i2c` 等契约；
+- `pm_*` 契约只有 GPIO、UART、PWM、输入侧、继电器与电机（`pm_pwm.h`、`pm_track.h`、`pm_encoder.h`、`pm_relay.h`、`pm_motor.h`）；I2C1 轮询主机、HC-SR04 捕获已下沉到 `src/port/stm32f1/pm_i2c1_stm32f1.c` 与 `pm_sonar_stm32f1.c`，OLED 调度在 `src/components/oled_ui/`，`src/app/main.c` 只剩初始化与主循环；
 - SPI 只有 HAL 源和默认关闭的 `PM_DEMO_SPI` 开关，本树没有 demo 实现；RTC、Flash 编程、看门狗、DMA 均未实现（ADC1 已在胶水里上板）；
 - PWM：TIM4 固定 50 Hz 只服务舵机 PB8（`PSC=71` → 1 µs 刻度、`ARR=19999`），蜂鸣器 PB9 由 TIM3 更新中断翻转 GPIO（100–5000 Hz，回包频率是 10 µs 量化后的实际值）；舵机"有动作"已目视确认，但角度精度/到位抖动/回弹与蜂鸣器听感未采集；`PWM sweep` 阻塞约 5.4 s，期间 live 页与 `hb` 暂停、结束后补发；
 - 输入侧：PB14 只有一路数字量，"单路遮挡"与"全黑"同为 `raw=0`，固件不可区分；编码器 x4 计数为 32 位有符号，两个方向符号相反，但符号与物理顺时针/逆时针的对应**未目视确认**；PB15 按键按下尚未在抓包里复现（全程 `btn=1`），按下判定依赖端口上拉与模块接线；

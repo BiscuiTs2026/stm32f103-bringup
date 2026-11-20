@@ -1,0 +1,4 @@
+﻿S10 stale-ref scan #2 (after fixes)
+date: 2026-11-20
+script: C:\Users\CHforeve\AppData\Local\Temp\s10-stale-scan.py  sha256=1F5CD5F4E1BF8D951CF31DDE583DF596623F46BC4078DD74D71E98F8B9C8958B
+rows=6396 OK=2121 STALE=0 EXTERNAL=4275

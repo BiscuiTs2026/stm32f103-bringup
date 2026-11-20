@@ -1,0 +1,39 @@
+﻿=== cmake configure ===
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: D:/All the work/TRAEwork/AI-STM32F1-1/2026-11-18/board-bringup/work/build-split-s10
+=== configure exit=0 ===
+=== ninja build ===
+ninja: Entering directory `build-split-s10'
+[1/13] Building C object CMakeFiles/pm_port_stm32f1.dir/src/port/stm32f1/pm_keypad_stm32f1.c.obj
+[2/13] Building C object CMakeFiles/pm_core.dir/src/core/pm_gpio.c.obj
+[3/13] Building C object CMakeFiles/pm_components.dir/src/components/keypad_dev/keypad_dev.c.obj
+[4/13] Building C object CMakeFiles/pm_components.dir/src/components/oled_ui/oled_ui_page.c.obj
+[5/13] Building C object CMakeFiles/pm_components.dir/src/components/sys_cmds/sys_cmds.c.obj
+[6/13] Building C object CMakeFiles/pm_f103_demo.dir/src/app/main.c.obj
+[7/13] Building C object CMakeFiles/pm_components.dir/src/components/oled_ui/oled_ui_job.c.obj
+[8/13] Building C object CMakeFiles/pm_f103_demo.dir/src/app/app_wiring.c.obj
+[9/13] Building C object CMakeFiles/pm_components.dir/src/components/pm_cmd/pm_cmd_console.c.obj
+[10/13] Linking C static library libpm_core.a
+[11/13] Linking C static library libpm_components.a
+[12/13] Linking C static library libpm_port_stm32f1.a
+[13/13] Linking C executable pm_f103_demo; Generating .bin/.hex and reporting size
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-closer.o): in function `_close_r':
+(.text._close_r+0xc): warning: _close is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-closer.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-lseekr.o): in function `_lseek_r':
+(.text._lseek_r+0x10): warning: _lseek is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-lseekr.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-readr.o): in function `_read_r':
+(.text._read_r+0x10): warning: _read is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-readr.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-writer.o): in function `_write_r':
+(.text._write_r+0x10): warning: _write is not implemented and will always fail
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libc_nano.a(libc_a-writer.o): note: the message above does not take linker garbage collection into account
+C:/Users/CHforeve/AppData/Local/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/bin/ld.exe: warning: pm_f103_demo has a LOAD segment with RWX permissions
+Memory region         Used Size  Region Size  %age Used
+           FLASH:       28564 B        64 KB     43.59%
+             RAM:          5 KB        20 KB     25.00%
+   text	   data	    bss	    dec	    hex	filename
+  28136	    428	   4700	  33264	   81f0	D:/All the work/TRAEwork/AI-STM32F1-1/2026-11-18/board-bringup/work/build-split-s10/pm_f103_demo
+=== build exit=0 ===
