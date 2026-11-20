@@ -4,6 +4,8 @@
  */
 #include "motor_dev.h"
 
+#include <stddef.h>
+
 #include "pm_motor.h"
 
 #define MOTOR_REPLY_MAX 96u
@@ -11,6 +13,7 @@
 static char    s_reply[MOTOR_REPLY_MAX];
 static uint8_t s_ready;
 static const char *s_init_err;
+static motor_dev_dbg_fn s_dbg;
 
 static char *put_s(char *p, const char *s)
 {
@@ -183,6 +186,11 @@ void motor_dev_init(void)
     }
 }
 
+void motor_dev_set_dbg(motor_dev_dbg_fn fn)
+{
+    s_dbg = fn;
+}
+
 const char *motor_dev_cmd(const char *line)
 {
     const char *p = skip_sp(line);
@@ -230,6 +238,15 @@ const char *motor_dev_cmd(const char *line)
             return reply_lit("MOTOR err=usage");
         }
         return reply_state("MOTOR stat");
+    }
+    if (is_word(p, "DBG", 3u) != 0) {
+        if (p[3] != '\0') {
+            return reply_lit("MOTOR err=usage");
+        }
+        if (s_dbg == NULL) {
+            return reply_lit("MOTOR err=unsupported");
+        }
+        return s_dbg();
     }
     return reply_lit("MOTOR err=usage");
 }

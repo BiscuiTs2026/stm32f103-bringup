@@ -366,6 +366,7 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
 | `MOTOR stop` | 无 | `MOTOR stop ok dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0` | 同上 | **是**：两路全低（滑行） |
 | `MOTOR duty <0..100>` | 占空比 | `MOTOR duty ok dir=fwd duty=80% ...` | `MOTOR err=idle`（还没给过方向）/ 同上 | **是**：保持方向改占空比 |
 | `MOTOR` / `MOTOR stat` | 无 | `MOTOR stat dir=<fwd\|rev\|stop> duty=<n>% hz=<n> arr=<n> ccr1=<n> ccr2=<n>` | 同上 | 否（只读） |
+| `MOTOR dbg` | 无 | `MOTOR dbg apb1enr=<hex> cr1=<hex> ccer=<hex> ccmr1=<hex> arr=<n> psc=<n> cnt=<a>+<b>+<c> crl=<hex>` | `MOTOR err=usage`（带多余参数）/ `MOTOR err=unsupported`（固件未绑实现） | 否（只读） |
 | 其它子命令 | — | — | `MOTOR err=usage` | 否 |
 
 - `hz` 由 `PSC/ARR` 现算、`arr` 与 `ccr1/ccr2` 从 `TIM2` 寄存器读回，不是回显请求值；
@@ -378,6 +379,39 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
   不看任何软件占用标记，因此不会因状态变量失步而误报。
 - 测距停用期间 TIM2 不再有第二个使用者；重新启用 HC-SR04 前必须先解决计时源
   （`docs/TIM2-CONFLICT.md`）。
+
+#### `MOTOR dbg`（临时诊断，不进 HELP）
+
+定位用命令，只回一行原始寄存器快照，不改变任何状态。**不在 `HELP` 列表里**，
+是刻意保留的排查入口，不是通用接口。实现在端口层
+（`platform/stm32f103/pm_platform.c` 的 `pm_platform_motor_dbg()`），
+组件层 `motor_dev` 只持有一个 `const char *(*)(void)` 钩子，由入口胶水层绑定：
+`pm_motor` 契约不含板级寄存器细节。
+
+字段按回包顺序：
+
+| 字段 | 来源 | 判读 |
+| --- | --- | --- |
+| `apb1enr` | `RCC->APB1ENR` | bit0 = `TIM2EN`；为 0 说明时钟没开，后面所有 TIM2 值都不可信 |
+| `cr1` | `TIM2->CR1` | `CEN`(bit0)=1 计数器在跑；`=0x81` 即 CEN + ARPE |
+| `ccer` | `TIM2->CCER` | `CC1E`/`CC2E` 决定两路输出是否使能；`=0x11` 为两路都开 |
+| `ccmr1` | `TIM2->CCMR1` | `OC1M`/`OC2M` 应在 PWM 模式 1（110），并带预装载位 |
+| `arr` / `psc` | `TIM2->ARR` / `TIM2->PSC` | 正常为 3599 / 0 → 20 kHz |
+| `cnt=<a>+<b>+<c>` | `TIM2->CNT` 三次采样 | 见下条"采样口径" |
+| `crl` | `GPIOA->CRL` | PA0/PA1 的 nibble 应为 `0xB`（复用推挽 50 MHz） |
+
+- **`cnt` 采样口径**：三个值之间有两次固定 6000 次的 `__NOP()` 空转，不是瞬时连读。
+  20 kHz 下一个 ARR 周期只有 50 µs，连读很可能三次落到同一个计数值而看不出计数器
+  是否在动；空转把两次采样拉开到约 0.4 ms（>8 个周期）。判读方法是看三值是否递增：
+  全相等说明计数器停着（查 `cr1.CEN`），递增说明在跑。
+- **阻塞时长有界**：空转按反汇编是 `nop/subs/bne` 三条指令，Cortex-M3 上约 5 周期/次，
+  6000 次约 0.4 ms，两次合计约 0.8 ms，加上格式化整条回包 < 1 ms。**这是推算值，
+  未用示波器或计时器实测**；两次循环都是有限次数，计数器停转也不会挂住主循环。
+  实测回包 `cnt=2701+3023+2069` 与此相符：`CNT` 只有 0–3599，0.4 ms 已跨 8 个周期，
+  按 29122 计数（≈404 µs）折算 `2701+29122 mod 3600 = 3023`，看不出误差。
+  即便如此它也不是实时命令：采样点之间有约 0.8 ms 的空档，用来测占空比会失真。
+- `MOTOR err=unsupported` 只在入口层没有绑定钩子时出现（组件被别处复用、或板级实现
+  被裁掉）；正常固件里不会看到。
 
 ---
 

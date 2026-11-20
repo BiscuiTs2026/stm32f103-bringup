@@ -47,6 +47,91 @@ uint32_t pm_platform_core_clock(void)
     return SystemCoreClock;
 }
 
+static char *dbg_s(char *p, const char *s)
+{
+    while (*s != '\0') {
+        *p++ = *s++;
+    }
+    return p;
+}
+
+/* 0x + 8 hex digits, upper case: a register dump must be readable digit by
+ * digit, so nothing is shortened. */
+static char *dbg_hex(char *p, uint32_t v)
+{
+    static const char digits[] = "0123456789ABCDEF";
+    int i;
+
+    p = dbg_s(p, "0x");
+    for (i = 28; i >= 0; i -= 4) {
+        *p++ = digits[(v >> (unsigned)i) & 0xFu];
+    }
+    return p;
+}
+
+static char *dbg_u32(char *p, uint32_t v)
+{
+    char  b[11];
+    char *q = &b[sizeof(b) - 1];
+
+    *q = '\0';
+    do {
+        *--q = (char)('0' + (v % 10u));
+        v /= 10u;
+    } while (v != 0u);
+    return dbg_s(p, q);
+}
+
+/* "MOTOR dbg" text (temporary, 2026-11-20). The model layer reported a duty
+ * but the shaft did not move, so dump what the peripherals actually hold.
+ * CNT is sampled three times around bounded spins: at 20 kHz one ARR period
+ * is 50 us, so a single short gap can land on the same value even while the
+ * counter runs. The loops are finite on purpose, a stalled counter must not
+ * hang the main loop. Fields, in reply order:
+ *   apb1enr  RCC->APB1ENR, bit 0 = TIM2EN
+ *   cr1      TIM2->CR1, CEN says whether the counter runs
+ *   ccer     TIM2->CCER, CC1E/CC2E say whether the outputs are on
+ *   ccmr1    TIM2->CCMR1, OC1M/OC2M and the preload bits
+ *   arr/psc  TIM2->ARR / TIM2->PSC, period and prescaler
+ *   cnt=a+b+c three CNT samples
+ *   crl      GPIOA->CRL, PA0/PA1 nibbles should read 0xB (AF push-pull) */
+const char *pm_platform_motor_dbg(void)
+{
+    static char s_dbg[192];
+    char    *p = s_dbg;
+    uint32_t i;
+
+    p = dbg_s(p, "MOTOR dbg apb1enr=");
+    p = dbg_hex(p, RCC->APB1ENR);
+    p = dbg_s(p, " cr1=");
+    p = dbg_hex(p, TIM2->CR1);
+    p = dbg_s(p, " ccer=");
+    p = dbg_hex(p, TIM2->CCER);
+    p = dbg_s(p, " ccmr1=");
+    p = dbg_hex(p, TIM2->CCMR1);
+    p = dbg_s(p, " arr=");
+    p = dbg_u32(p, TIM2->ARR);
+    p = dbg_s(p, " psc=");
+    p = dbg_u32(p, TIM2->PSC);
+    p = dbg_s(p, " cnt=");
+    p = dbg_u32(p, TIM2->CNT);
+    for (i = 0u; i < 6000u; i++) {
+        __NOP();
+    }
+    p = dbg_s(p, "+");
+    p = dbg_u32(p, TIM2->CNT);
+    for (i = 0u; i < 6000u; i++) {
+        __NOP();
+    }
+    p = dbg_s(p, "+");
+    p = dbg_u32(p, TIM2->CNT);
+    p = dbg_s(p, " crl=");
+    p = dbg_hex(p, GPIOA->CRL);
+    p = dbg_s(p, "\r\n");
+    *p = '\0';
+    return s_dbg;
+}
+
 /* One ISR feeds both time bases. HAL uses its own tick for HAL_Delay and
  * timeouts; the library uses the OSAL counter. They stay coherent because
  * both are incremented here, in the same interrupt.

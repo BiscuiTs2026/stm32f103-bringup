@@ -119,7 +119,7 @@ int main(void)
     oled_ui_boot(&s_oled_hooks, s_console.debug_port);
     aht20_init(&s_aht_hooks);
     pwm_dev_init();
-    track_dev_init(); encoder_dev_init(); relay_dev_init(); motor_dev_init();
+    track_dev_init(); encoder_dev_init(); relay_dev_init(); motor_dev_init(); motor_dev_set_dbg(pm_platform_motor_dbg);
 
     next_led_ms = pm_osal_now_ms();
     next_hb_ms  = next_led_ms;

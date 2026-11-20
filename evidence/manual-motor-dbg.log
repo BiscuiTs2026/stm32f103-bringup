@@ -1,0 +1,14 @@
+﻿[     9ms] hb\r\n
+[   110ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[   603ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1022ms] hb\r\n
+[  1104ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  1504ms] <<< MOTOR dbg >>>
+[  1516ms] MOTOR dbg apb1enr=0x00260007 cr1=0x00000081 ccer=0x00000011 ccmr
+[  1532ms] 1=0x00006868 arr=3599 psc=0 cnt=2701+3023+2069 crl=0x22008BBB\r\n
+[  1616ms] OLED live ok ms=99 col=2 af=0 berr=0 to=0\r\n
+[  2027ms] hb\r\n
+[  2098ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  2610ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n
+[  3015ms] hb\r\n
+[  3110ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0\r\n

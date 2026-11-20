@@ -1499,3 +1499,20 @@
 | 分叉消除 | 网络恢复后 `git fetch origin` + `git reset --mixed origin/main`：三份文档 blob 相同故无差异，`MOTOR dbg` 未提交修改不受影响；不得直推 `7583e47` |
 | 能证明什么 | MCP 写入内容与本地逐字节一致；分叉只源于提交哈希不同，不源于内容差异 |
 | 局限 | MCP 每次写文件会各自产生提交，无法复用本地哈希，故必须用 blob 验收而非提交号 |
+
+## 119. `MOTOR dbg` 归位端口层并收录（PROTOCOL 记明 + 板端回包）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 11:40–12:05 |
+| 背景 | M4 期间为定位"占空比有值但不转"临时加了 `MOTOR dbg`，实现写在 `pm_motor_stm32f1.c`、声明进了 `include/pm/pm_motor.h`，把板级寄存器细节漏到了通用契约里 |
+| 改法 | 实现在 `platform/stm32f103/pm_platform.c`（`pm_platform_motor_dbg()`，bsp 层），声明在 `pm_platform.h`；组件 `motor_dev` 只持 `const char *(*)(void)` 钩子（`motor_dev_set_dbg`），由入口胶水层 `main.c` 绑定。`pm_motor.h` / `pm_motor_stm32f1.c` 里的 dbg 代码全部删除。未采用"组件直接含端口头"：`pm_port_stm32f1.h` 自述禁止上层包含；也未让 `app_wiring.c` 绑定：规则 9 禁止 APP 直调 BSP |
+| 编译 | `cmake --build build-split-s10` 通过，FLASH 29184 B (44.53%) / RAM 5312 B (25.94%)；无新增编译告警 |
+| 静态检查 | `python tools/check_layering.py . --glue-max-lines 87` → **0 ERROR / 3 WARN**，与基线一致（3 条均为 `pm_port_stm32f1.c` 既有 `*_hw_*` ISR 钩子）；`main.c` 绑定行并入既有初始化行后仍为 87 行，未触发 glue 超限 |
+| 烧录 | `STM32_Programmer_CLI -c port=SWD mode=UR reset=HWrst -w build-split-s10/pm_f103_demo.hex -v -rst` → `Download verified successfully`，`evidence/motordbg-flash.log` |
+| 板端证据 | COM11 115200 实跑一条（`evidence/manual-motor-dbg.log`）：`MOTOR dbg apb1enr=0x00260007 cr1=0x00000081 ccer=0x00000011 ccmr1=0x00006868 arr=3599 psc=0 cnt=2701+3023+2069 crl=0x22008BBB` |
+| 字段核对 | `apb1enr` bit0=1（TIM2EN 开）；`cr1=0x81`（CEN+ARPE）；`ccer=0x11`（两路输出使能）；`ccmr1=0x6868`（两通道 PWM 模式 1 + 预装载）；`arr/psc=3599/0` → 20 kHz；`crl` 低两 nibble 均为 `0xB`（PA0/PA1 复用推挽）。与 M4 记录的寄存器值一致 |
+| `cnt` 口径 | 三值递增说明计数器在跑；每 3600 计数回绕一次（50 µs），故相邻差值是模 3600 的余数。按 29122 计数（≈404 µs，即两次 6000 次空转之一）折算 `2701+29122 mod 3600 = 3023`，与实测第二个采样相符 |
+| 能证明什么 | 归位后的实现与旧路径输出逐字相同（回包字段顺序、格式、单位不变）；`MOTOR dbg` 在板端可用；分层检查无新增违规 |
+| 不能证明什么 | 空转耗时是反汇编推算（`nop/subs/bne` ≈5 周期/次 @72 MHz → 约 0.4 ms/次，两次 <1 ms），**未用示波器或计时器实测**；回包只在调试口验证，未走蓝牙侧 |
+| 局限 | 临时诊断命令，刻意不进 `HELP`；`err=unsupported` 只在入口层未绑钩子时出现，本轮固件走不到该分支，未做板端验证 |
