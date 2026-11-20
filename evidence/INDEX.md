@@ -1,7 +1,7 @@
 ﻿# 上板抓包证据登记表
 
 本目录是 `2026-11-18/board-bringup/work` 这一轮上板验证留下的串口抓包归档。
-登记表按 §1–§146 编号（正文逐条给出）：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
+登记表按 §1–§147 编号（正文逐条给出）：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
 根目录原件保留（`PATCHES.md` 里的路径引用仍然有效），但根目录副本被 `.gitignore` 忽略，
 只有本目录的副本进版本库；第 10–23 个（`retest-20261119*.log`、`dist-probe-20261119-*.log`、
 `autolive-20261119*.log`、`adc-20261119-*.log`）是 2026-11-19 复测与排查时**直接写在本目录**的，
@@ -17,8 +17,8 @@
 第 60–65 项是拆分 S5（AHT20 作业下沉组件）的拆前/拆后回归、编译、分层扫描、AHT 定点用例与
 60 s live 窗口（含 RH/T 行变化与忙态两例）；第 66 项是同一固件的烧录回读校验。
 第 67–145 项继续登记 S6–S10 拆分、契约对齐、模型 core 接入、sonar/舵机人工验收、
-v0.8.0 claim 表与最终固件的构建/烧录/诊断取证；第 146 项是文档对齐任务新建的
-HEAD OFF 构建（未上板，见文末）。
+v0.8.0 claim 表与最终固件的构建/烧录/诊断取证；第 146 项是文档对齐任务新建的 HEAD OFF 构建（构建核算，见文末），第 147 项是同一 OFF 构建的
+上板烧录与 `HELP` 串口实测（结清 `TECH_DEBT.md` D26）。
 
 ## 怎么读这些日志
 
@@ -2043,6 +2043,22 @@ HELP KEYS=key press counters, clears them
 | 编译 | `arm-none-eabi-gcc 14.3.1`、Ninja；FLASH **35132 B / 64 KB（53.61%）**，RAM **6024 B / 20 KB（29.41%）** |
 | 对照 ON | `build-v080-force-diag` 为 35968 / 6048 B；OFF 少 **836 B / 24 B** |
 | HELP | 15 行，按 `HELP ` + 描述 + CRLF 从 ELF 提取核算为 **654 B**（ON 同日上板实测 660 B，只差 `DIST` 行 6 字节） |
-| 未验 | 未烧录、未上板；OFF `HELP` 字节是构建产物核算值，不是串口实测 |
+| 未验 | 未烧录、未上板；OFF `HELP` 字节是构建产物核算值，不是串口实测（**已由 §147 上板实测补足**） |
 | 日志 | `evidence/v080-off-doc-align-build.log` |
 | 构建目录 | `build-doc-align/`（本任务保留，不提交） |
+
+## 147. v1.0.0 OFF 上板实测 `HELP` 654 B + 恢复 ON 发布版（结清 D26）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 23:07（OFF 串口 23:07:07，ON 串口 23:07:32） |
+| 目的 | 结清 `TECH_DEBT.md` D26：把 v1.0.0 OFF 构建的 `HELP` 654 B 从 ELF 核算升级为串口实测，并把板子恢复为 ON 发布版 |
+| 源码 | `v1.0.0`（`91a4f49`）；与当前 HEAD 的 `src`/`include`/`cmake`/`CMakeLists.txt` 无差异 |
+| OFF 构建 | `build-doc-align`，`-DPM_ENABLE_SONAR=OFF`；Flash **35132 B / 64 KB（53.61%）**，RAM **6024 B / 20 KB（29.41%）** |
+| OFF 烧录 | `STM32_Programmer_CLI -c port=SWD mode=UR -w pm_f103_demo.hex -v -rst` → `Download verified successfully`、`MCU Reset`（`evidence/v1.0.0-off-flash.log`） |
+| OFF 实测 | COM11 115200 8N1，`HELP` **15 行 / 654 B**；`DIST err=disabled`；`STAT clk=72000000 up=12321 tick=1 key1=0 key2=0 uart_rx=17 uart_tx=2064`（`evidence/v1.0.0-off-help-serial.log`） |
+| ON 构建 | `build-v080-force-diag`，`-DPM_ENABLE_SONAR=ON`；Flash **35968 B / 64 KB（54.88%）**，RAM **6048 B / 20 KB（29.53%）** |
+| ON 恢复 | 同一 CLI 命令 → `Download verified successfully`、`MCU Reset`（`evidence/v1.0.0-on-flash.log`） |
+| ON 实测 | `HELP` **15 行 / 660 B**，`DIST` 行为 `HC-SR04 PA11/PA10, cm/us (DWT base)`；`DIST err=timeout`（`DIST` 已启用，当前超声无回波，属接线/器件观察，不是固件失败）；`STAT clk=72000000 up=11095 tick=1 key1=0 key2=0 uart_rx=23 uart_tx=2209`（`evidence/v1.0.0-on-help-serial.log`） |
+| 计字节方法 | 逐行累加实际收到的 `HELP ` 行长度 + 2（CRLF），剔除 `hb`/`OLED live` 等旁路行；不按气泡个数 |
+| 结论 | OFF 654 B 与 §146 核算值逐字节一致，D26 结清；最终板上为 v1.0.0 **ON** 发布版（35968 / 6048） |

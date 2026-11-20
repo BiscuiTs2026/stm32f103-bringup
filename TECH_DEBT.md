@@ -48,7 +48,7 @@
 | D23 | 主循环实时性（非检查器命中） | `main()` 主循环、`keypad_dev_service()`、`oled_ui_service()` | 每 500 ms 约 98 ms 被 OLED 整页 I2C 占住，期间按键零采样 | 短于约 100–118 ms 的点按可能整段丢失（实测两轮各丢 1–2 记）；建议 EXTI 双边沿采样或整页写拆半插采样 | **待处理，不在本轮范围**（详见下节） |
 | D24 | 诊断命令副作用说明（非检查器命中，非缺陷） | `oled_ch1116_service()`、`oled_ch1116_set_col_offset()`、`OLED col` 处理 | 每次页写只从当前 offset 起写 128 字节，改变 offset 后窗口外的 RAM 列保留旧内容 | **触发条件是主动用 `OLED col n` 切档**；缺省 col=2 时窗口盖满玻璃 RAM2..129，不可能出现；用户已确认不算缺陷 | **已消除（2026-11-20）**：新增 `oled_ch1116_clear_all()`，`OLED col` 切档后先清全 RAM 再重画，竖边不再出现（用户目视确认） |
 | D25 | 检查器版本漂移（工具链，不属代码缺陷） | `tools/CHECKER.lock`、`tools/check_layering.py` | 本仓锁已升到上游 `4da1a77`（checker-version 3.4.0），2026-11-20 同步；此前锁在 `7facd2b`（3.3.1） | 3.3.1→3.4.0 只新增第 28 项 `feature_gate`；本仓 `.arch-roles` 无 `feature` 声明，该项报 0；复跑 `--glue-max-lines 86` 仍 `0 ERROR / 3 WARN`，3 条 WARN 与升级前逐条相同（`pm_port_stm32f1.c:352/362/374`） | **已升级（2026-11-20）**：锁、文件、README 同源；是否继续跟随上游按需再定 |
-| D26 | 验证边界（非检查器命中） | `docs/PROTOCOL.md` §4.1 `HELP` 字节说明；`README.md` 尺寸/`HELP` 行；`evidence/INDEX.md` §146 | OFF 构建 `HELP` 15 行 **654 B** 仅从 `build-doc-align` 的 ELF 提取 15 条 help 串核算，未上板抓串口 | 2026-11-20 首次发版时无板；ON 版 660 B 已上板实测，OFF 与 ON 只差 `DIST` 行 6 字节 | **待补实测**：拿到板子后烧 `-DPM_ENABLE_SONAR=OFF` 抓一次 `HELP`，654 B 吻合即结清 |
+| D26 | 验证边界（非检查器命中） | `docs/PROTOCOL.md` §4.1 `HELP` 字节说明；`README.md` 尺寸/`HELP` 行；`evidence/INDEX.md` §146、§147 | OFF 构建 `HELP` 15 行 **654 B**：2026-11-20 23:07 上板实测（`build-doc-align`，COM11 115200 8N1），与构建核算一致 | 登记时无板，仅从 ELF 核算；本次烧 OFF 后实测 654 B 吻合，`DIST err=disabled` 证明确为 OFF 版 | **已结清（2026-11-20 23:07）**：OFF 654 B、ON 660 B 均上板实测，两次烧录均 `Download verified successfully`，证据见 `evidence/INDEX.md` §147 |
 
 ### D23 按键轮询被 OLED 整页 I2C 阻塞（2026-11-20 登记，待处理）
 
@@ -102,17 +102,21 @@
 - 目视确认（2026-11-20）：用户按 `OLED col 2 → OLED frame → OLED col 3 → OLED col 4 → OLED show`
   复核，确认最左侧贯 8 行的竖边**已消失**；`evidence/MANUAL-CHECKS.md` M9 按 PASS 收项。
 
-### D26 OFF 版 `HELP` 654 B 仅构建核算（2026-11-20 登记，待补实测）
+### D26 OFF 版 `HELP` 654 B 上板实测（2026-11-20 登记，2026-11-20 23:07 结清）
 
-- 条款/归属：验证边界记录（非检查器命中）。首次发版时无板，OFF 版未烧录、未抓串口。
+- 条款/归属：验证边界记录（非检查器命中）。首次发版时无板，OFF 版仅由 ELF 核算。
 - 位置（按符号）：`docs/PROTOCOL.md` §4.1 的 `HELP` 字节说明；`README.md` 的尺寸行与
-  `HELP` 行；`evidence/INDEX.md` §146。
-- 数值：OFF 15 行 **654 B**，由 `build-doc-align` 的 ELF 提取 15 条 help 串，
-  按 `HELP ` + 描述 + `\r\n` 核算；ON 同日上板实测 **660 B**，两者只差 `DIST` 行 6 字节。
-- 原因：OFF 构建只用于文档对齐（`evidence/v080-off-doc-align-build.log`），没有烧录；
-  当前无板可做串口复核。
-- 结清条件：拿到板子后烧一次 `-DPM_ENABLE_SONAR=OFF`，串口抓 `HELP`，实测 15 行 654 B
-  即结清；若不符，把文档改回“未验证”并核对描述串差异。
+  `HELP` 行；`evidence/INDEX.md` §146、§147。
+- 数值：OFF 15 行 **654 B**，2026-11-20 **23:07:07** 上板实测（`build-doc-align`，
+  `-DPM_ENABLE_SONAR=OFF`，COM11 115200 8N1），与构建核算逐字节一致；
+  ON 15 行 **660 B** 同日 **23:07:32** 实测，两者只差 `DIST` 行 6 字节。
+- 旁证：OFF 下 `DIST err=disabled`、`STAT ... uart_rx=17 uart_tx=2064`；
+  ON 下 `DIST err=timeout`（`DIST` 已启用，当前超声无回波，属接线/器件观察，不是固件失败）。
+- 烧录：两次均回读校验通过（`evidence/v1.0.0-off-flash.log`、`evidence/v1.0.0-on-flash.log`，
+  `Download verified successfully`）；最终板上为 v1.0.0 ON 发布版。
+- 证据：`evidence/v1.0.0-off-help-serial.log`、`evidence/v1.0.0-on-help-serial.log`、
+  `evidence/INDEX.md` §147。
+- 结论：654 B 与登记值吻合，**结清**；文档中 OFF `HELP` 一律按上板实测表述。
 
 ### 附：边界与撤销条件
 

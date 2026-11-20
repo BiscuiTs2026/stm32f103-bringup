@@ -37,7 +37,7 @@ ERR unknown=<原始行内容>
 
 | 关键字原文 | 参数 | 范围/单位 | 默认 | 合法回包样例 | 不合法回包 |
 | --- | --- | --- | --- | --- | --- |
-| `HELP`（整行） | 无 | — | — | 15 行，每行 `HELP <NAME>=<说明>`；ON 构建实测 660 B、OFF 构建核算 654 B | `ERR unknown=HELP `（带尾随空格） |
+| `HELP`（整行） | 无 | — | — | 15 行，每行 `HELP <NAME>=<说明>`；ON/OFF 两版均上板实测，660 B / 654 B | `ERR unknown=HELP `（带尾随空格） |
 | `PING`（整行） | 无 | — | — | `PONG` | 同上 |
 | `STAT`（整行） | 无 | — | — | `STAT clk=72000000 up=12345 tick=1 key1=9 key2=7 uart_rx=123 uart_tx=456` | 同上 |
 | `I2C`（整行） | 无 | — | — | `I2C found=0x70,0x7A` | `I2C found=none`（总线上没有器件） |

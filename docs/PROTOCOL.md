@@ -109,7 +109,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 15 行 `HELP ...`；ON 构建实测 **660 B**，OFF 构建核算 **654 B**（见下） | — | 否 |
+| `HELP` | 无 | 15 行 `HELP ...`；两版均上板实测：ON **660 B**、OFF **654 B**（见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -139,10 +139,10 @@ HELP KEYS=key press counters, clears them
 
 > `PM_ENABLE_SONAR=ON` 的构建把上面 `DIST` 一行换成
 > `HELP DIST=HC-SR04 PA11/PA10, cm/us (DWT base)`，其余 14 行不变。
-> 每行格式是 `HELP ` + 描述 + `\r\n`，两版都按 15 条描述串逐条核算：
+> 每行格式是 `HELP ` + 描述 + `\r\n`，两版都按实际串口回包逐字节核对：
 > **ON 15 行 660 B**（2026-11-20 上板实测，`evidence/v080-force-diag-help.log`）；
-> **OFF 15 行 654 B**（从 `build-doc-align` 的 ELF 中提取 15 条串核算，见
-> `evidence/v080-off-doc-align-build.log`；只差 `DIST` 一行 6 字节，未单独上板抓 `HELP`）。
+> **OFF 15 行 654 B**（2026-11-20 23:07 烧 `build-doc-align` 实测，
+> `evidence/v1.0.0-off-help-serial.log`；只差 `DIST` 一行 6 字节，OFF 下 `DIST` 回 `err=disabled`）。
 
 > 实现位置（S10 起）：`HELP`/`PING`/`STAT`/`I2C` 在 `src/components/sys_cmds/`，
 > 命令表与适配器在 `src/app/app_wiring.c`。命令、回包文本与顺序均未变。
@@ -423,7 +423,7 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
   brake、寄存器里不会残留 1000‰。只实现快衰减（一路 PWM、另一路低），不提供慢衰减。
   寄存器层可证的是两路 CCR 到 3600 与退出后复原；**“电机是否真的制动、制动多快”
   未验证**，需人上板看转子。
-- `brake` 已列入 `HELP` 的 `MOTOR` 行（2026-11-20）；当前 `HELP` 共 15 行：ON 实测 660 B、OFF 核算 654 B（见 §4.1）。
+- `brake` 已列入 `HELP` 的 `MOTOR` 行（2026-11-20）；当前 `HELP` 共 15 行：ON 660 B、OFF 654 B，均上板实测（见 §4.1）。
 - 初始化失败按下列顺序判定，回包与判据（2026-11-20 起由模型 `pm_timer` claim 表驱动，
   回包文本与优先级不变）：
   1. `MOTOR err=timer`，时基复核不通过：`pm_timebase_ok(72 MHz, PSC 0, ARR 3599,
@@ -542,7 +542,7 @@ TIM4 CH3 = `0x24`（36），role 都是 PWM。表是 8 条静态表；`claim/rel
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **15 行**：ON 构建 660 B（上板实测）、OFF 构建 654 B（按 15 条描述串 + `HELP ` 前缀 + CRLF 核算）；含每条 CRLF。
+   当前 `HELP` 是 **15 行**：ON 构建 660 B、OFF 构建 654 B，均为上板实测；含每条 CRLF。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。

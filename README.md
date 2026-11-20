@@ -29,13 +29,13 @@
 | 项目 | 状态 | 证据 / 数字 |
 | --- | --- | --- |
 | 交叉编译 | 通过 | `arm-none-eabi-gcc 14.3.1`，`-Wall -Wextra -Wshadow`，项目代码无警告 |
-| 尺寸 | 通过 | **最终固件 `-DPM_ENABLE_SONAR=ON`**：Flash **35968 B / 64 KB（54.88%）**，RAM **6048 B / 20 KB（29.53%）**（`build-v080-force-diag`，`evidence/v080-force-diag-build.log`、`v080-force-diag-flash.log`、INDEX §145；较 claim 移植时 35032 / 6040 B 为 **+936 B / +8 B**，来自两条调试用故障注入命令）。**默认 `PM_ENABLE_SONAR=OFF`（HEAD）**：Flash **35132 B / 64 KB（53.61%）**，RAM **6024 B / 20 KB（29.41%）**（本任务新建 `build-doc-align`，`evidence/v080-off-doc-align-build.log`，2026-11-20，未烧录；比 ON 少 836 B / 24 B）。旧 31324 / 5448 是 claim 表与故障诊断之前的数字，已不代表 HEAD |
+| 尺寸 | 通过 | **最终固件 `-DPM_ENABLE_SONAR=ON`**：Flash **35968 B / 64 KB（54.88%）**，RAM **6048 B / 20 KB（29.53%）**（`build-v080-force-diag`，`evidence/v080-force-diag-build.log`、`v080-force-diag-flash.log`、INDEX §145；较 claim 移植时 35032 / 6040 B 为 **+936 B / +8 B**，来自两条调试用故障注入命令）。**默认 `PM_ENABLE_SONAR=OFF`（HEAD）**：Flash **35132 B / 64 KB（53.61%）**，RAM **6024 B / 20 KB（29.41%）**（本任务新建 `build-doc-align`，`evidence/v080-off-doc-align-build.log`，2026-11-20；同日 23:07 烧录验证后恢复 ON，见 INDEX §147；比 ON 少 836 B / 24 B）。旧 31324 / 5448 是 claim 表与故障诊断之前的数字，已不代表 HEAD |
 | 产物 | 已生成 | `pm_f103_demo`（ELF）、`.bin`（ON 35968 B；OFF 35132 B）、`.hex`、`.map` |
 | 主机单测 | 通过 | 175 项断言，0 失败（MSVC 19.51，C11；来源：`evidence/timebase-hosttest.log`，2026-11-20） |
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
 | USART2 调试口 | 通过 | 115200 8N1 双向收发，`hb` 每秒一行（§5） |
-| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；2026-11-18 端到端验过（`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后 `HELP` 增至 **15 行**（ON 实测 660 B、OFF 核算 654 B，§135），蓝牙侧未再做回归——期间改动不涉及 USART3 收发路径，不丢尾机制见 §11、§14 |
+| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；2026-11-18 端到端验过（`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后 `HELP` 增至 **15 行**（ON 实测 660 B、OFF 上板实测 654 B，§135、INDEX §147），蓝牙侧未再做回归——期间改动不涉及 USART3 收发路径，不丢尾机制见 §11、§14 |
 | I2C1 | 通过 | 扫描到 `0x70`（AHT20）与 `0x7A`（OLED），PB6/PB7，100 kHz（§9） |
 | AHT20 温湿度 | 通过 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0`（§12） |
 | HC-SR04 测距 | 可选启用（默认 OFF） | 默认 `PM_ENABLE_SONAR=OFF`：`DIST` 固定回 `DIST err=disabled`。`-DPM_ENABLE_SONAR=ON` 时改用 `DWT->CYCCNT`（72 MHz）计宽、`EXTI15_10` 优先级 5（编码器 `EXTI9_5` 仍为 4），2026-11-20 上板连续 20+ 次 `DIST cm=5.9/6.2/7.1 us=340/358/414`、无 timeout（§133、决策 0020）；读数对应的物理遮挡物未由人现场确认 |
@@ -93,7 +93,7 @@ cmake -S . -B build-arm -G Ninja `
 cmake --build build-arm
 ```
 
-换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用。**HEAD 两版实测**：最终固件 `-DPM_ENABLE_SONAR=ON` 为 **35968 B / 6048 B（54.88% / 29.53%）**（`build-v080-force-diag`，`evidence/v080-force-diag-build.log`、INDEX §145）；默认 `PM_ENABLE_SONAR=OFF` 为 **35132 B / 6024 B（53.61% / 29.41%）**（本任务新建 `build-doc-align`，`evidence/v080-off-doc-align-build.log`，2026-11-20，未烧录）。两版都含 v0.8.0 claim 表与故障诊断；ON 比 OFF 多 836 B / 24 B。旧 31324 / 5448 与 32084 / 5472 是接入 claim 表之前的数字，不再代表 HEAD。
+换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用。**HEAD 两版实测**：最终固件 `-DPM_ENABLE_SONAR=ON` 为 **35968 B / 6048 B（54.88% / 29.53%）**（`build-v080-force-diag`，`evidence/v080-force-diag-build.log`、INDEX §145）；默认 `PM_ENABLE_SONAR=OFF` 为 **35132 B / 6024 B（53.61% / 29.41%）**（本任务新建 `build-doc-align`，`evidence/v080-off-doc-align-build.log`，2026-11-20；同日烧录验证后恢复 ON，见 INDEX §147）。两版都含 v0.8.0 claim 表与故障诊断；ON 比 OFF 多 836 B / 24 B。旧 31324 / 5448 与 32084 / 5472 是接入 claim 表之前的数字，不再代表 HEAD。
 
 烧录（ST-Link，带校验、烧完复位）：
 
