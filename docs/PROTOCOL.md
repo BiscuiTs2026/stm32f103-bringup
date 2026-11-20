@@ -109,7 +109,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 15 行 `HELP ...`，共 **644 B**（2026-11-20 起；见下） | — | 否 |
+| `HELP` | 无 | 15 行 `HELP ...`，共 **654 B**（2026-11-20 关键字可见性修正由 644 B 增至 654 B；见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -127,7 +127,7 @@ HELP AHTS=same but read via repeated START
 HELP DIST=disabled, TIM2 given to motor
 HELP ADC=pot PA5 and NTC PA4, raw and mV
 HELP OLED=on/off/clear/test/show/frame/col/live/dump
-HELP PWM=servo 0..180 deg, buzzer 100..5000 Hz, sweep
+HELP PWM=servo N / buz HZ [duty] / buz off / sweep / dbg / stat
 HELP TRACK=raw level of PB14 line sensor
 HELP ENC=count/clear, dir, a/b, button PB15
 HELP RELAY=on/off/stat, PB5 relay coil
@@ -139,7 +139,7 @@ HELP KEYS=key press counters, clears them
 
 > `PM_ENABLE_SONAR=ON` 的构建把上面 `DIST` 一行换成
 > `HELP DIST=HC-SR04 PA11/PA10, cm/us (DWT base)`，其余 14 行不变；
-> 默认（OFF）是 **15 行 644 B**（2026-11-20 起，`MOTOR` 行加入 `/brake`）。
+> 默认（OFF）是 **15 行 654 B**（2026-11-20：`MOTOR` 行加入 `/brake` 后为 644 B，同日把 `PWM` 行改成可直接照敲的关键字形式，再 +10 B）。
 > ON 构建的总字节数未重新上板实测。
 
 > 实现位置（S10 起）：`HELP`/`PING`/`STAT`/`I2C` 在 `src/components/sys_cmds/`，
@@ -285,6 +285,10 @@ PB8 = TIM4_CH3，固定 **50 Hz** 帧（1 µs 刻度，ARR=19999）；PB9 不是
 | `PWM dbg` | 无 | 1 行：`PWM dbg apb1enr=… apb2enr=… cr1=… psc=… arr=… ccmr2=… ccer=… ccr3=… cnt0=<n> cnt1=<n> dt=20ms crh=… mapr=… fpwm=<Hz>` | `PWM err=init` | 否（只读，中间 `delay_ms(20)`） |
 | `PWM test` | 无 | `PWM test done 1Hz 10s pb8=af servo=<deg> pulse=<us>us` | — | **是**：PB8 切普通 GPIO 推 1 Hz 方波 10 s，结束后恢复 TIM4 复用并回 90° |
 | 其它子命令 | — | — | `PWM err=usage` | 否 |
+
+可直接照敲的用法（大小写不敏感）：`PWM servo <0..180>`、`PWM buz <100..5000>`（占空比默认 **20%**，
+可在频率后加第二参数 `1..99`）、`PWM buz off`、`PWM sweep`、`PWM dbg`、`PWM stat`；
+另有诊断命令 `PWM test`（PB8 推 1 Hz 方波 10 s）。
 
 说明：
 
@@ -466,7 +470,7 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **15 行 644 B**（含每条 CRLF，2026-11-20 实测）。
+   当前 `HELP` 是 **15 行 654 B**（含每条 CRLF；2026-11-20 关键字可见性修正后的实测推导：644 + 10）。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。

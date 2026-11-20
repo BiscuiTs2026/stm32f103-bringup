@@ -1856,6 +1856,9 @@
 | 回包 | `evidence/help-brake-20261120.log`：`PING` → `PONG`；`HELP` 15 行，`MOTOR` 行含 `/brake`，`DIST` 行仍为默认 OFF 的 `disabled` 文本 |
 | 未验证 | 蓝牙侧未重新回归（`HELP` 变长 6 B，仍远小于 USART3 的发送路径容量；上一轮 638 B 后的蓝牙回归结论见 §14.1/README） |
 
+> 2026-11-20 晚：`HELP` 的 `PWM` 行改为可直接照敲的关键字形式（`buz`），总字节 644 → **654 B**；
+> 本节 644 B 为当时实测，保留不改，变化原因是关键字可见性修正，不是回包被改坏。
+
 原始回包（逐字）：
 
 ```
@@ -1906,3 +1909,14 @@ HELP KEYS=key press counters, clears them
 | 起转阈值 | 试过 30/50/60/70/80/100%；用户口述"占空比太小不转"；结合操作顺序（30% 后 26 s 改试 60%，降序试验止于 50%）判定 **30% 不转、50% 起转**；JSON 本身无转向标注，此判定以口述为主 |
 | 结论 | **人工验收 A 组（电机）通过**（用户判定）；证据 = 本记录 + 用户口述 |
 | 硬件事实 | 起转死区已写入 `HARDWARE.md` 4.6 |
+
+## 138. `HELP` 关键字可见性修正 + 合体固件编译
+
+| 项 | 内容 |
+| --- | --- |
+| 触发 | 用户按 `HELP` 的 "buzzer" 说明敲 `PWM buzzer 4000` 得到 `PWM err=usage`；说明文字与真实关键字 `buz` 不一致 |
+| 改动 | `src/app/app_wiring.c` 的 `PWM` 行改为 `PWM=servo N / buz HZ [duty] / buz off / sweep / dbg / stat`（描述串 48 → 58 字符）；回包语义未改 |
+| HELP 字节 | 15 行 **654 B**（644 + 10；逐行字符串长度核算，未上板复测） |
+| 编译 | `build-servo-pwm-on`（`PM_ENABLE_SONAR=ON`，含未提交的舵机 `pm_pwm` 改动）：0 error；FLASH **33136 B / 50.56%**、RAM **5504 B / 26.88%**（`evidence/servo-help-build.log`） |
+| 文档 | `docs/PROTOCOL.md` 4.6 增补可直接照敲的六条子命令与默认 20%；`README.md` 的 `HELP` 字节数同步为 654 |
+| 未验证 | 板上 `HELP` 回包与蜂鸣器命令实际执行未复测；舵机改动仍待上板，不记为本条证明 |
