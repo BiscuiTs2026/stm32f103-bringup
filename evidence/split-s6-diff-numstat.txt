@@ -1,0 +1,24 @@
+﻿# S6a diff vs HEAD 7125e3c
+## git diff --numstat
+1	0	CMakeLists.txt
+21	0	evidence/MANUAL-CHECKS.md
+13	66	src/app/main.c
+## git diff --ignore-all-space --numstat
+1	0	CMakeLists.txt
+21	0	evidence/MANUAL-CHECKS.md
+13	66	src/app/main.c
+## new files (whole file, physical lines)
+include/pm/pm_sonar.h: 37
+src/port/stm32f1/pm_sonar_stm32f1.c: 88
+## status
+ M CMakeLists.txt
+ M evidence/MANUAL-CHECKS.md
+ M src/app/main.c
+?? evidence/split-s6-build.log
+?? evidence/split-s6-flash.log
+?? evidence/split-s6-layering.log
+?? evidence/split-s6a-board.log
+?? evidence/split-s6a-board2.log
+?? evidence/split-s6a-oled.log
+?? include/pm/pm_sonar.h
+?? src/port/stm32f1/pm_sonar_stm32f1.c

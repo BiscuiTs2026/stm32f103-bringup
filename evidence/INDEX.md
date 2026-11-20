@@ -1229,3 +1229,80 @@
 | 不能证明什么 | 不覆盖新文件内容审查（行数单列） |
 | 局限 | 只统计行数，不看语义 |
 | PATCHES 引用 | 未引用（S9c 拆分证据） |
+
+## 95. split-s6a-oled.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 22 行；2026-11-20 09:36 复位抓 COM11 头 9 秒 |
+| 关键内容 | 第 14–15 行 `OLED CH1116 addr=7A init ok, col=2, clearing` → `OLED ready (128x64, 6x8 font)`；此后每 500 ms `OLED live ok ms=98 col=2 af=0 berr=0 to=0` |
+| 能证明什么 | 固件侧 OLED 初始化与逐帧推送正常，af/berr/to 全 0 |
+| 不能证明什么 | 屏是否肉眼可见（硬件侧，见 MANUAL-CHECKS M10） |
+| 局限 | 只抓串口，不含照片 |
+| PATCHES 引用 | 未引用（S6a 前 OLED 现场确认） |
+
+## 96. split-s6a-board.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 75 行；S6a 烧录后复位抓包，发 DIST / HELP / OLED dump / STAT |
+| 关键内容 | 横幅 7 行与 S9c 逐字一致；`DIST err=disabled`；`HELP` 14 行含 `DIST=disabled, TIM2 given to motor`；live ok 每 500 ms 不断 |
+| 能证明什么 | S6a 搬迁未改变启动顺序、命令表与 live 节拍 |
+| 不能证明什么 | `OLED dump` 当时全空是排版时序（见 97），不证明页面内容 |
+| 局限 | 四条命令挤在同一毫秒发出 |
+| PATCHES 引用 | 未引用（S6a 拆分证据） |
+
+## 97. split-s6a-board2.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 32 行；不复位，稳态下发 OLED dump / DIST |
+| 关键内容 | L0–L7 全部有内容（`MODE=LIVE UP=  30S` … `LIVE ms= 98`）；`DIST err=disabled` |
+| 能证明什么 | 96 的空页面是首帧未排版，不是回归；页面生成链路正常 |
+| 不能证明什么 | 屏上实际像素对齐（M9） |
+| 局限 | 未发测距有效回包（DIST 处于 disabled） |
+| PATCHES 引用 | 未引用（S6a 拆分证据） |
+
+## 98. split-s6-build.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 配置 + 增量构建日志，`build-split-s6/` |
+| 关键内容 | 编译 0 告警；仅链接期 `_close/_lseek/_read/_write` 与 RWX 段提示（既有） |
+| 能证明什么 | S6a 源码可编译、可链接，产物 `pm_f103_demo.hex` 27.82 KB |
+| 不能证明什么 | 运行期行为（见 96/97） |
+| 局限 | 未做 -Werror 全量重建 |
+| PATCHES 引用 | 未引用（S6a 拆分证据） |
+
+## 99. split-s6-layering.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 检查器 3.3.1；**0 ERROR / 4 WARN** |
+| 关键内容 | 4 条 WARN：胶水层 323 行（上限 200）+ `pm_port_stm32f1.c` 三条 `*_hw_*` ISR 钩子；原 `dist_start` 寄存器访问与忙等两条已消失 |
+| 能证明什么 | 6a 判据达成（基线 6 WARN 见 `split-s9c-layering.log`，361 行） |
+| 不能证明什么 | 功能等价性（见 96/97） |
+| 局限 | 基线未单独落 `split-s6-before.log`，直接引用 `split-s9c-layering.log` |
+| PATCHES 引用 | 未引用（S6a 拆分证据） |
+
+## 100. split-s6-flash.log
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 烧录日志，`build-split-s6/pm_f103_demo.hex` |
+| 关键内容 | Size 27.82 KB，`Download verified successfully`，`MCU Reset`，exit 0 |
+| 能证明什么 | 板载固件与 `build-split-s6` 产物一致 |
+| 不能证明什么 | 运行期行为（见 96/97） |
+| 局限 | 只校验写入内容 |
+| PATCHES 引用 | 未引用（S6a 拆分证据） |
+
+## 101. split-s6-diff-numstat.txt
+
+| 项 | 内容 |
+| --- | --- |
+| 规模 | 20 行；S6a 工作树 `--numstat` 与 `-w --numstat` 对照 |
+| 关键内容 | 两口径逐条相同：`CMakeLists.txt 1/0`、`MANUAL-CHECKS.md 21/0`、`main.c 13/66`；新文件 `pm_sonar.h` 37 行、`pm_sonar_stm32f1.c` 88 行 |
+| 能证明什么 | S6a 无空白夹带 |
+| 不能证明什么 | 不覆盖新文件内容审查（行数单列） |
+| 局限 | 只统计行数，不看语义 |
+| PATCHES 引用 | 未引用（S6a 拆分证据） |

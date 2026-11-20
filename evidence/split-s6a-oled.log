@@ -1,0 +1,37 @@
+[   0ms] ===== capture start 2026-11-20 09:35:09.242 port=COM11 =====
+[   17ms] OLED live ok ms=98 col=2 af=1 berr=0 to=0
+[   338ms] hb
+[   508ms] OLED live ok ms=98 col=2 af=1 berr=0 to=0
+[   1017ms] OLED live ok ms=98 col=2 af=1 berr=0 to=0
+[   1217ms] ===== reset issued =====
+[   1395ms] hb
+[   1510ms] OLED live ok ms=98 col=2 af=1 berr=0 to=0
+[   1618ms] board-bringup
+[   1618ms] core clock = 72000000 Hz
+[   1618ms] USART2 115200 8N1, command channel ready
+[   1618ms] BT USART3 9600 8N1, command channel ready
+[   1635ms] ADC1 PA4=IN4 ntc, PA5=IN5 pot, 12-bit
+[   1635ms] OLED CH1116 addr=7A init ok, col=2, clearing
+[   1712ms] OLED ready (128x64, 6x8 font)
+[   2334ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2721ms] hb
+[   2814ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3322ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3727ms] hb
+[   3821ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4321ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4727ms] hb
+[   4821ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5334ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5721ms] hb
+[   5815ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6310ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   6728ms] hb
+[   6821ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7322ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   7727ms] hb
+[   7821ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8321ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   8726ms] hb
+[   8835ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   9020ms] ===== capture end =====

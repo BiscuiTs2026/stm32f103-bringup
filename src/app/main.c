@@ -22,6 +22,7 @@
 #include "pm_cmd_console.h"
 #include "pm_i2c1.h"
 #include "pm_adc1.h"
+#include "pm_sonar.h"
 #include "adc_dev.h"
 #include "pm_platform.h"
 #include "board_f103c8.h"
@@ -34,8 +35,6 @@
 #include "encoder_dev.h"
 #include "relay_dev.h"
 #include "motor_dev.h"
-
-#include "stm32f1xx.h"     /* bring-up only: EXTI/DWT pulse measurement */
 
 #include <string.h>
 
@@ -124,16 +123,15 @@ static void adc_boot(void)
  * 3=PA11 (TRIG), 4=3.3V. PA10/PA11 are FT (5 V tolerant) on STM32F103x8/xB,
  * and this header feeds the module 3.3 V (HC-SR04P), so ECHO swings 0..3.3 V
  * here; no divider is fitted on the board.
- * ECHO is captured by EXTI10 and timestamped by TIM2 at 1 MHz, so DIST never
- * blocks: it fires the 10 us pulse and replies later from dist_service() when
- * the falling edge or the timeout arrives.
+ * Pins, the EXTI10 handler and the TIM2 time stamp live in
+ * src/port/stm32f1/pm_sonar_stm32f1.c; DIST never blocks: it fires the 10 us
+ * pulse and replies later from dist_service() when the falling edge or the
+ * timeout arrives.
  * 2026-11-19: DIST is disabled. TIM2 is handed to the motor PWM, so the
  * timestamps have no time base; dist_start() replies "DIST err=disabled" and
  * the counter is no longer started. Pins and edge logic are kept as-is so a
  * future time source can re-enable it. */
 
-#define DIST_TRIG_BIT    (1u << 11)
-#define DIST_ECHO_BIT    (1u << 10)
 #define DIST_TIMEOUT_MS  60u
 #define DIST_MIN_US      100u      /* < 2 cm: noise */
 #define DIST_MAX_US      25000u    /* > 4.3 m: the module tops out at 4 m */
@@ -144,10 +142,6 @@ static void adc_boot(void)
 typedef struct {
     cmd_port_t       *c;
     uint32_t          t0_ms;
-    volatile uint16_t rise_us;
-    volatile uint16_t width_us;
-    volatile uint8_t  have_rise;
-    volatile uint8_t  done;
     uint8_t           active;
     uint8_t           auto_live;   /* this measurement was started by live mode */
 } dist_job_t;
@@ -176,48 +170,8 @@ static void dist_last_ok(uint32_t cm10)
     pm_cmd_out_last_set(b);
 }
 
-static void dist_hw_init(void)
-{
-    RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_AFIOEN;
-
-    /* PA11 push-pull output 2 MHz, PA10 floating input */
-    GPIOA->CRH = (GPIOA->CRH & ~((0xFu << 12) | (0xFu << 8)))
-               | (0x2u << 12) | (0x4u << 8);
-    GPIOA->BRR = DIST_TRIG_BIT;
-
-    /* TIM2 is no longer configured here: it belongs to the motor PWM. DIST is
-     * disabled until a new time base is chosen (see dist_start()). */
-
-    /* EXTI10 <- port A, both edges */
-    AFIO->EXTICR[2] = (AFIO->EXTICR[2] & ~(0xFu << 8));
-    EXTI->IMR  |= DIST_ECHO_BIT;
-    EXTI->RTSR |= DIST_ECHO_BIT;
-    EXTI->FTSR |= DIST_ECHO_BIT;
-    EXTI->PR    = DIST_ECHO_BIT;
-    NVIC_EnableIRQ(EXTI15_10_IRQn);
-}
-
-void EXTI15_10_IRQHandler(void)
-{
-    if ((EXTI->PR & DIST_ECHO_BIT) == 0u) {
-        return;
-    }
-    EXTI->PR = DIST_ECHO_BIT;              /* write 1 to clear */
-
-    if ((GPIOA->IDR & DIST_ECHO_BIT) != 0u) {
-        s_dist.rise_us   = (uint16_t)TIM2->CNT;
-        s_dist.have_rise = 1u;
-    } else if (s_dist.have_rise != 0u) {
-        s_dist.width_us  = (uint16_t)((uint16_t)TIM2->CNT - s_dist.rise_us);
-        s_dist.have_rise = 0u;
-        s_dist.done      = 1u;
-    }
-}
-
 static void dist_start(cmd_port_t *c, uint8_t auto_live)
 {
-    uint16_t t0;
-
     /* DIST is disabled: TIM2, the 1 us timestamp source, now belongs to the
      * motor PWM. Manual DIST explains the reason; live mode skips silently so
      * the screen is not flooded once per second. */
@@ -241,17 +195,8 @@ static void dist_start(cmd_port_t *c, uint8_t auto_live)
 
     s_dist.c         = c;
     s_dist.auto_live = auto_live;
-    s_dist.done      = 0u;
-    s_dist.have_rise = 0u;
-    s_dist.width_us  = 0u;
-    EXTI->PR = DIST_ECHO_BIT;
-
-    /* 10 us TRIG pulse, timed by TIM2 so it does not depend on loop speed. */
-    t0 = (uint16_t)TIM2->CNT;
-    GPIOA->BSRR = DIST_TRIG_BIT;
-    while ((uint16_t)((uint16_t)TIM2->CNT - t0) < 10u) {
-    }
-    GPIOA->BRR = DIST_TRIG_BIT;
+    pm_sonar_clear_edge();
+    pm_sonar_pulse();
 
     s_dist.t0_ms  = pm_osal_now_ms();
     s_dist.active = 1u;
@@ -264,17 +209,19 @@ static void dist_service(uint32_t now)
 {
     uint32_t us;
     uint32_t cm10;
+    pm_sonar_snapshot_t snap;
 
     if (s_dist.active == 0u) {
         return;
     }
 
-    if (s_dist.done == 0u) {
+    pm_sonar_snapshot(&snap);
+    if (snap.done == 0u) {
         if ((uint32_t)(now - s_dist.t0_ms) < DIST_TIMEOUT_MS) {
             return;
         }
         s_dist.active    = 0u;
-        s_dist.have_rise = 0u;
+        pm_sonar_clear_edge();
         s_dist_last_ok   = 0u;
         pm_cmd_out_last_set("DIST err=tout");
         if (s_dist.auto_live != 0u) {
@@ -287,7 +234,7 @@ static void dist_service(uint32_t now)
         return;
     }
 
-    us = (uint32_t)s_dist.width_us;
+    us = (uint32_t)snap.width_us;
     s_dist.active = 0u;
 
     if ((us < DIST_MIN_US) || (us > DIST_MAX_US)) {
@@ -486,7 +433,7 @@ int main(void)
     pm_cmd_out_uart_write_str(" Hz\r\nUSART2 115200 8N1, command channel ready\r\n");
 
     pm_cmd_console_init_bt();
-    dist_hw_init();
+    pm_sonar_init();
     adc_boot();
     oled_ui_boot(&s_oled_hooks, s_console.debug_port);
     aht20_init(&s_aht_hooks);

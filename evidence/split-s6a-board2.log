@@ -1,0 +1,32 @@
+[   0ms] ===== capture start 2026-11-20 09:39:22.032 port=COM11 (no reset) =====
+[   66ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   552ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   956ms] hb
+[   1049ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1548ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   1966ms] hb
+[   2013ms] >> OLED dump
+[   2044ms] OLED dump mode=live screen=live
+[   2044ms] OLED L0=MODE=LIVE    UP=  30S
+[   2044ms] OLED L1=NOW : IDLE           
+[   2045ms] OLED L2=LAST: OLED dump      
+[   2045ms] OLED L3=RH=55.9 T=19.0C
+[   2045ms] OLED L4=NTC=2370 POT=1976
+[   2060ms] OLED L5=K1=    0 K2=    0
+[   2060ms] OLED L6=I2C af= 0 berr= 0
+[   2060ms] OLED L7=LIVE ms= 98
+[   2060ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2553ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   2614ms] >> DIST
+[   2630ms] DIST err=disabled
+[   2954ms] hb
+[   3047ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3545ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   3965ms] hb
+[   4043ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4554ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   4960ms] hb
+[   5054ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5553ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   5953ms] hb
+[   6014ms] ===== capture end =====

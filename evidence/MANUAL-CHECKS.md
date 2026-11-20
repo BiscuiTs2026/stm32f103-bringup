@@ -34,6 +34,7 @@
 | M7 | 蓝牙双向镜像（S2 欠账 + S9c 控制台搬迁） | 手机 BLE 发字节 | SPLIT-PLAN §5.4、§8.3 核账 S2 行、§3 S9c | PENDING | — |
 | M8 | 编码器按键与手感 | 手转 / 手按 | `docs/PROTOCOL.md` §4.7 | PENDING | — |
 | M9 | OLED 面板图案与对齐 | 目视 | SPLIT-PLAN §3 S9、`HARDWARE.md` 第 9 条 | PENDING | — |
+| M10 | OLED 面板是否点亮（背光/供电） | 目视 | 2026-11-20 09:35 复位抓包 `split-s6a-oled.log` | PENDING | 串口侧正常，屏不亮待目视 |
 
 ---
 
@@ -228,6 +229,26 @@ COM11 开抓包（115200）。蓝牙侧固件是 `build-split-s9`（S9c 提交�
 
 判据：图案/文字与上述一致，肉眼无花屏、无错位、无残影到下一屏。
 证据：照片或视频文件名；无照片则记 `PENDING`，不得只凭串口 `dump` 判 PASS。
+
+---
+
+## M10 OLED 面板是否点亮（硬件侧排查）
+
+背景：2026-11-20 上午现场报告"OLED 不亮"。09:35 用 `-rst` 复位并抓 COM11
+（`evidence/split-s6a-oled.log`），固件侧完全正常：
+
+- 第 14–15 行：`OLED CH1116 addr=7A init ok, col=2, clearing` → `OLED ready (128x64, 6x8 font)`；
+- 第 16 行起每 500 ms 一条 `OLED live ok ms=98 col=2 af=0 berr=0 to=0`（I2C 写无仲裁失败、无总线错误、无超时）。
+
+即：**固件认为屏在正常收帧**。屏不亮只能是硬件侧，按下列顺序看：
+
+1. 目视机头：屏幕玻璃是否全黑（背光也没了）还是有暗字。
+2. 量 OLED 排针 1 脚 VCC 与 2 脚 GND：应为 3.3 V。
+3. 拔插 I2C 四线（VCC/GND/SCL/SDA），确认没有半插、错位。
+4. 若 VCC 有电且线正常，换一块 CH1116 模块对比（`OLED test` 出花屏即模块故障）。
+
+判据：屏上出现 `OLED test` 的图案或 live 页文本即 PASS；换模块才亮记 FAIL（原模块坏）。
+证据：照片/视频文件名 + 万用表读数。未目视不得写 PASS。
 
 ---
 
