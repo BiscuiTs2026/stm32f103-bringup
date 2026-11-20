@@ -15,6 +15,7 @@
 #include "pm_cmd.h"
 #include "pm_cmd_table.h"
 #include "pm_port_mock.h"
+#include "pm_timebase.h"
 
 void host_time_advance(uint32_t ms);
 void host_time_reset(void);
@@ -548,6 +549,35 @@ static void test_cmd_table(void)
     CHECK(s_arg_runs == 1);
 }
 
+/* -------------------------------------------------------------- timebase */
+
+/* pm_timebase_ok() lives in src/port/stm32f1/pm_timebase.h but touches no
+ * register; it is compiled here to turn the -O2 constant fold of round 2/4
+ * into an executed check. 72 MHz, 10 permille tolerance. */
+static void test_timebase(void)
+{
+    /* The pairs the firmware actually writes. */
+    CHECK(pm_timebase_ok(72000000u, 71u, 19999u, 50u, 10u) == 1);
+    CHECK(pm_timebase_ok(72000000u, 0u, 3599u, 20000u, 10u) == 1);
+    /* Same pairs against the wrong target frequency. */
+    CHECK(pm_timebase_ok(72000000u, 71u, 19999u, 20000u, 10u) == 0);
+    CHECK(pm_timebase_ok(72000000u, 0u, 3599u, 50u, 10u) == 0);
+    CHECK(pm_timebase_ok(72000000u, 0u, 3599u, 1000u, 10u) == 0);
+    /* The 3.6 kHz accident: PSC 0 instead of 71. */
+    CHECK(pm_timebase_ok(72000000u, 0u, 19999u, 50u, 10u) == 0);
+    /* The model's computed proposal is legal, just not used. */
+    CHECK(pm_timebase_ok(72000000u, 21u, 65453u, 50u, 10u) == 1);
+    /* Boundary: 71/19990 is 450 ppm off. The *rounded* frequency is still
+     * 50 Hz, so a rounded comparison would wrongly accept it at tol 0; the
+     * cross-multiplied diff must reject it, and accept it only once the
+     * tolerance really covers the error. */
+    CHECK(pm_timebase_ok(72000000u, 71u, 19990u, 50u, 0u) == 0);
+    CHECK(pm_timebase_ok(72000000u, 71u, 19990u, 50u, 1u) == 1);
+    /* Symmetry: 71/20009 is 500 ppm slow, must be judged the same way. */
+    CHECK(pm_timebase_ok(72000000u, 71u, 20009u, 50u, 0u) == 0);
+    CHECK(pm_timebase_ok(72000000u, 71u, 20009u, 50u, 1u) == 1);
+}
+
 int main(void)
 {
     test_ringbuf();
@@ -559,6 +589,7 @@ int main(void)
     test_uart_timeout();
     test_cmd();
     test_cmd_table();
+    test_timebase();
 
     printf("\n%d checks, %d failure(s)\n", s_checks, s_failures);
     return (s_failures == 0) ? 0 : 1;

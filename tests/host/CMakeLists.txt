@@ -26,6 +26,7 @@ add_executable(pm_host_tests
 target_include_directories(pm_host_tests PRIVATE
     ../../include/pm
     ../../include
+    ../../src/port/stm32f1
 )
 
 if(MSVC)

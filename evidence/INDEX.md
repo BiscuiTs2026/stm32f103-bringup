@@ -1588,3 +1588,17 @@
 | 板端证据 | `evidence/motor-timebase-serial.log`：`MOTOR fwd 50` → `ccr1=1800`；`MOTOR duty 80` → `ccr1=2880`；`MOTOR stop` → 全零；`PWM servo 90` → `pulse=1500us`（舵机侧无回归） |
 | 能证明什么 | 电机现行寄存器对在 10‰ 内确实是 20 kHz；判据能拒绝错误 PSC/目标频率；电机与舵机回包均无回归 |
 | 不能证明什么 | 同第 2 轮：折叠验证，未在主机运行；复核失败路径未触发 |
+
+## 125. `pm_timebase_ok()` 主机单测（更正第 2/4 轮的证据口径）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 15:00–15:20 |
+| 起因 | 第 2/4 轮把 "本机没有 x86 编译器" 当结论写进了证据，但模型仓的主机单测确实在本机跑过；需要先核实再决定是补测试还是写环境限制 |
+| 核实结果 | **本机有可用的主机编译器**：`cl.exe`（MSVC 19.51.36257.0，`C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64`），生成器 `Visual Studio 18 2026`。依据是模型仓 `build-host/CMakeCache.txt` 的 `CMAKE_LINKER`/`CMAKE_GENERATOR` 就是它，说明那套主机单测用的正是 MSVC，不是 MinGW。此前"没有编译器"的结论只对 `gcc`/`cl`/`clang` **在 PATH 上**成立：VS 的 `cl.exe` 不在 PATH，需要先跑 `vcvars64.bat` 或用 CMake 的 VS 生成器 |
+| 改动 | `tests/host/test_main.c` 新增 `test_timebase()`（9 条断言）并登记到 `main()`；`tests/host/CMakeLists.txt` 的 include 目录加 `../../src/port/stm32f1`。测的就是固件里那一份 `pm_timebase.h`，没有复制实现 |
+| 覆盖点 | 舵机 71/19999→50 Hz 与电机 0/3599→20 kHz 判真；同两对反向比错频率判假；3.6 kHz 事故对 `0/19999`→50 Hz 判假；模型提案 21/65453 判真；边界 `71/19990`（450 ppm）与 `71/20009`（500 ppm）在 tol 0 判假、tol 1 判真——这两条专门证明"交叉相乘"而不是"四舍五入后的整数频率"在起作用（该两对四舍五入后都是 50 Hz） |
+| 构建与运行 | `cmake -S tests/host -B build-host-timebase -G "Visual Studio 18 2026" -A x64` → `cmake --build ... --config Release` → `pm_host_tests.exe`，输出 **`175 checks, 0 failure(s)`**，退出码 0。`evidence/timebase-hosttest.log` 含编译器识别行与完整构建/运行输出 |
+| 能证明什么 | `pm_timebase_ok()` 的判据在主机上**真实执行过**并通过，不再只是 `-O2` 常量折叠的观察结果；同时确认本机具备主机单测能力 |
+| 不能证明什么 | 用的是 MSVC 而不是固件所用 arm-none-eabi-gcc；函数是纯整数、无分支依赖，两种编译器语义应一致，但**没有**在 arm 上运行该测试。主机测试不验证 `pm_pwm_init()`/`pm_motor_init()` 的 `return -1` 分支，那条路径仍未被触发 |
+| 对环境限制说法的更正 | 第 122、124 条写的"本机无 x86 编译器"不再成立；正确表述是"本机 `cl.exe` 不在 PATH，需 VS 生成器或 vcvars 环境" |
