@@ -1916,7 +1916,18 @@ HELP KEYS=key press counters, clears them
 | --- | --- |
 | 触发 | 用户按 `HELP` 的 "buzzer" 说明敲 `PWM buzzer 4000` 得到 `PWM err=usage`；说明文字与真实关键字 `buz` 不一致 |
 | 改动 | `src/app/app_wiring.c` 的 `PWM` 行改为 `PWM=servo N / buz HZ [duty] / buz off / sweep / dbg / stat`（描述串 48 → 58 字符）；回包语义未改 |
-| HELP 字节 | 15 行 **654 B**（644 + 10；逐行字符串长度核算，未上板复测） |
+| HELP 字节 | 15 行 **660 B**（`997b38a` 为 650 B：644 的 pre-brake 状态 + `/brake` 6 B；本轮 `PWM` 行再 +10 B；逐条描述串核算） |
 | 编译 | `build-servo-pwm-on`（`PM_ENABLE_SONAR=ON`，含未提交的舵机 `pm_pwm` 改动）：0 error；FLASH **33136 B / 50.56%**、RAM **5504 B / 26.88%**（`evidence/servo-help-build.log`） |
-| 文档 | `docs/PROTOCOL.md` 4.6 增补可直接照敲的六条子命令与默认 20%；`README.md` 的 `HELP` 字节数同步为 654 |
+| 文档 | `docs/PROTOCOL.md` 4.6 增补可直接照敲的六条子命令与默认 20%；`README.md` 的 `HELP` 字节数同步为 660 |
 | 未验证 | 板上 `HELP` 回包与蜂鸣器命令实际执行未复测；舵机改动仍待上板，不记为本条证明 |
+
+## 139. 合体固件（sonar ON + brake + 舵机走 `pm_pwm`）烧录校验
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 晚 |
+| 产物 | `build-servo-pwm-on/pm_f103_demo.hex`，FLASH 33136 B / RAM 5504 B |
+| 命令 | `STM32_Programmer_CLI -c port=SWD mode=UR -w <hex> -v -rst` |
+| 结果 | `Download verified successfully`，已复位；日志 `evidence/servo-pwm-on-flash.log` |
+| HELP | 15 行 **660 B**（源码逐条核算：每行 `HELP ` + 描述串 + CRLF）；`PWM=servo N / buz HZ [duty] / buz off / sweep / dbg / stat`；`MOTOR=fwd/rev/stop/brake/duty/stat, PA0/PA1 TIM2 PWM` |
+| 未验证 | 舵机五档脉宽、DIST 真实距离、sonar 与编码器并发，均由用户在蓝牙侧测试 |

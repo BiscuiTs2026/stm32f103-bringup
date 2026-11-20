@@ -34,7 +34,7 @@
 | 动态分配 | 不存在 | `nm` 中无 `malloc` / `free` / `_sbrk` |
 | 时钟 | 72 MHz | `RCC_CFGR = 0x001D040A`（HSE+PLL×9、APB1÷2）；banner `core clock = 72000000 Hz`（§2） |
 | USART2 调试口 | 通过 | 115200 8N1 双向收发，`hb` 每秒一行（§5） |
-| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；2026-11-18 端到端验过（`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后 `HELP` 增至 **654 B / 15 行**（`638 B` + `/brake` 6 字节 + 2026-11-20 把 `PWM` 行改成关键字形式 10 字节；644 B 只是中间态，§135），蓝牙侧未再做回归——期间改动不涉及 USART3 收发路径，不丢尾机制见 §11、§14 |
+| USART3 蓝牙口 | 通过 | 9600 8N1，与 USART2 同一解析器；2026-11-18 端到端验过（`bt-verify2.log`：`HELP` 266 B 完整、`AHT` 51 B 与页面一致，§14.1）；此后 `HELP` 增至 **660 B / 15 行**（`644 B` 的 pre-brake 状态 + `/brake` 6 字节 = 650 B，2026-11-20 再把 `PWM` 行改成关键字形式 +10 B；§135），蓝牙侧未再做回归——期间改动不涉及 USART3 收发路径，不丢尾机制见 §11、§14 |
 | I2C1 | 通过 | 扫描到 `0x70`（AHT20）与 `0x7A`（OLED），PB6/PB7，100 kHz（§9） |
 | AHT20 温湿度 | 通过 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0`（§12） |
 | HC-SR04 测距 | 可选启用（默认 OFF） | 默认 `PM_ENABLE_SONAR=OFF`：`DIST` 固定回 `DIST err=disabled`。`-DPM_ENABLE_SONAR=ON` 时改用 `DWT->CYCCNT`（72 MHz）计宽、`EXTI15_10` 优先级 5（编码器 `EXTI9_5` 仍为 4），2026-11-20 上板连续 20+ 次 `DIST cm=5.9/6.2/7.1 us=340/358/414`、无 timeout（§133、决策 0020）；读数对应的物理遮挡物未由人现场确认 |
@@ -92,7 +92,7 @@ cmake -S . -B build-arm -G Ninja `
 cmake --build build-arm
 ```
 
-换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（31324 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（默认 `PM_ENABLE_SONAR=OFF` 时 **31324 B / 5448 B**，来源：2026-11-20 `build-relay-track`，接入模型 core、新增 `MOTOR brake` 与 `HELP` 644 B 后的实测（`HELP` 现行 654 B，因 `PWM` 行关键字可见性修正 +10 B，体积待随合体固件复测）；`-DPM_ENABLE_SONAR=ON` 历史上为 **32084 B / 5472 B**；当前合体固件（sonar+brake+舵机走 `pm_pwm`+654 B `HELP`）实测 **33136 B / 5504 B**，舵机改动待上板验证，见 `evidence/servo-help-build.log`）。
+换工具链路径：配置时加 `-DTOOLCHAIN_ROOT=<gcc bin 目录>`。产物在 `build-arm/`：`pm_f103_demo`（ELF）、`.bin`（31324 B）、`.hex`、`.map`，构建结束会打印 Flash/RAM 占用（默认 `PM_ENABLE_SONAR=OFF` 时 **31324 B / 5448 B**，来源：2026-11-20 `build-relay-track`，接入模型 core、新增 `MOTOR brake` 与 `HELP` 644 B 后的实测（`HELP` 现行 660 B：`/brake` +6、`PWM` 行关键字修正 +10）；`-DPM_ENABLE_SONAR=ON` 历史上为 **32084 B / 5472 B**；当前合体固件（sonar+brake+舵机走 `pm_pwm`+660 B `HELP`）实测 **33136 B / 5504 B**，舵机改动待上板验证，见 `evidence/servo-help-build.log`）。
 
 烧录（ST-Link，带校验、烧完复位）：
 
@@ -149,7 +149,7 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 
 | 命令 | 作用 |
 | --- | --- |
-| `HELP` | 列出全部命令（15 行、654 B） |
+| `HELP` | 列出全部命令（15 行、660 B） |
 | `PING` | 回 `PONG` |
 | `STAT` | 时钟、运行秒数、按键计数、串口累计字节 |
 | `I2C` | 扫描 I2C1，列 8 位写地址（本板 `0x70`、`0x7A`） |
@@ -161,7 +161,7 @@ USART2（115200）与 USART3（9600，蓝牙透传）跑**同一个解析器，�
 | `TRACK` | 读 PB14 循迹模块的原始电平（`raw=1` 未遮挡 / `raw=0` 黑物或遮挡） |
 | `ENC` | 读编码器 32 位计数、最后方向、A/B 电平与 PB15 按键（`1`=松开）；`ENC clear` 清零 |
 | `RELAY` | `on` / `off` 驱动 PB5 继电器线圈，`stat` 读回 PB5 实际电平（`pb5=0\|1`） |
-| `MOTOR` | `fwd [duty]` / `rev [duty]` / `stop` / `brake` / `duty <0..100>` / `stat`；PA0/PA1 = TIM2_CH1/CH2，20 kHz，回包带 `hz/arr/ccr1/ccr2` 寄存器读回；`brake` 已列入 `HELP`（`HELP` 15 行 654 B） |
+| `MOTOR` | `fwd [duty]` / `rev [duty]` / `stop` / `brake` / `duty <0..100>` / `stat`；PA0/PA1 = TIM2_CH1/CH2，20 kHz，回包带 `hz/arr/ccr1/ccr2` 寄存器读回；`brake` 已列入 `HELP`（`HELP` 15 行 660 B） |
 | `OLED on\|off\|clear\|test\|show\|frame\|col\|live\|dump` | 显示开关、清屏、测试页、静态文字、边框图案、列偏移、500 ms live（live 期间 1 Hz 自动测距仅在 `PM_ENABLE_SONAR=ON` 时启用） |
 
 参数、成功/失败回包原文、是否改变设备状态、蓝牙端的判读陷阱（回包被拆成多个气泡等），见 **[docs/PROTOCOL.md](docs/PROTOCOL.md)**。
