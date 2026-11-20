@@ -2078,3 +2078,16 @@ HELP KEYS=key press counters, clears them
 | 残留检查 | 全部命令结束后 `MOTOR stat dir=stop duty=0`、`MOTOR claims t2=2 o=33/34`、`PWM dbg mapr=0x00000000`；无故障注入位残留 |
 | 日志 | `evidence/v1.0.0-motor-force-branches.log`、`evidence/v1.0.0-motor-force-postinject.log` |
 | 结论 | 运行中注入（timer/remap）已验证且状态自洽；precond/restore 未能构造，登记 `TECH_DEBT.md` D27 |
+
+## 149. 检查器锁升级 3.4.0 → 3.4.1（2026-11-21）
+
+| 项 | 内容 |
+| --- | --- |
+| 触发 | 上游 `firmware-four-layer-architecture` 提交 `d62c226`（checker-version 3.4.1）；行为变化：删掉 `bsp_`/`osal_` 前缀兜底、函数定义行不再算调用 |
+| 文件 | `tools/check_layering.py` 覆盖为上游原文，`git hash-object` = `dcc1349934ce7ec3b0b7755aa718988c8b2ab7a7`（与上游 blob 一致）；文件头 `source-commit` 注释与 `SOURCE_COMMIT` 常量改为 `d62c226e60f7750eb8124e58ec6ccb00b6ca9756` |
+| 锁 | `tools/CHECKER.lock`：`checker-version` 3.4.0 → **3.4.1**，`source-commit` → `d62c226…`，`source-blob` → `dcc13499…`，`synced-at` → 2026-11-21 |
+| 锁校验 | `python tools/check_layering.py --version --lock tools/CHECKER.lock` → `checker-version: 3.4.1`、`source-commit: d62c226…`、锁一致，退出码 0 |
+| 扫描对比 | 同一棵树分别跑 3.4.0（`git archive HEAD:tools/check_layering.py` 取回）与 3.4.1：8 行输出**逐行相同**，均 `0 ERROR / 4 WARN`（`src/port/stm32f1/pm_encoder_stm32f1.c:43`、`src/port/stm32f1/pm_port_stm32f1.c:360/370/382`） |
+| 少报检查 | `src/` 内不存在 `bsp_*` / `osal_*` 符号，前缀兜底删除无影响；4 条 WARN 全是 `*_hw_*` 钩子调用，不在函数定义行，"定义行不算调用"无影响 |
+| 日志 | `evidence/checker-lock-341-layering.log`（3.4.1 全量输出） |
+| 结论 | 升级前后无行为差异；WARN 数量与内容不变，无少报 |

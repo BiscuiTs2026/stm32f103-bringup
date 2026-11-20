@@ -131,7 +131,7 @@ cmake --build build-host --config Debug
 
 ## 静态分层检查（CI 门禁）
 
-`tools/check_layering.py` 是**从 `firmware-four-layer-architecture` skill 拷来的**四层检查器，不是本仓原创代码。当前同步到上游 **`4da1a77`（checker 3.4.0，2026-11-20 升锁）**，用 `git worktree add --detach` 取干净内容，**代码逐字未改**，只按上游规定把文件头 `SOURCE_COMMIT` 一行改成上游提交哈希。身份记录在 [tools/CHECKER.lock](tools/CHECKER.lock)：`checker-version` / `source-repo` / `source-commit` 三项由检查器自己比对，`source-blob` 是上游该提交里该文件的 git blob 哈希（人工核对用，检查器不读）。
+`tools/check_layering.py` 是**从 `firmware-four-layer-architecture` skill 拷来的**四层检查器，不是本仓原创代码。当前同步到上游 **`d62c226`（checker 3.4.1，2026-11-21 升锁）**，用 `git archive` 从该提交取原文（落地时 CRLF 已逐字节还原为 LF，`git hash-object` 与上游 blob `dcc13499…` 一致），**代码逐字未改**，只按上游规定把文件头 `source-commit` 注释与 `SOURCE_COMMIT` 常量改成上游提交哈希。身份记录在 [tools/CHECKER.lock](tools/CHECKER.lock)：`checker-version` / `source-repo` / `source-commit` 三项由检查器自己比对，`source-blob` 是上游该提交里该文件的 git blob 哈希（人工核对用，检查器不读）。
 
 升级步骤：`git worktree add --detach <临时目录> <新提交>` → 覆盖 `tools/check_layering.py` → 改 `SOURCE_COMMIT` → 同步 `tools/CHECKER.lock` 四行 → 跑下面两条命令，确认锁校验通过、ERROR 仍为 0，并逐条解释 WARN 的变化。
 
@@ -266,7 +266,7 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 - live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间静态命令（`clear`/`test`/`show`/`frame`）照常接管，3 s 后自动交回；
 - **测距默认关闭、可编译启用**：默认 `PM_ENABLE_SONAR=OFF`，`DIST` 回 `DIST err=disabled`；`-DPM_ENABLE_SONAR=ON` 时 1 µs 时基换成 `DWT->CYCCNT`（不再占用 TIM2），`EXTI15_10` 优先级 5 低于编码器 `EXTI9_5` 的 4（决策 0020）。ON 构建的绝对距离**已由用户现场验收（2026-11-20 晚，“没有问题，可通过”）**，但未与物理尺子逐点对照、精度未量化；编码器与 sonar 并发也已由用户口述通过（无记录文件，§142）；
 - 电机：TIM2 `PSC=0 / ARR=3599` → 20 kHz，只有一路通道出 PWM、另一路恒 0（DRV8833 单向驱动）；`duty 0` 与 `stop` 电气等价（两路 CCR=0、全低滑行），`dir` 字段只是状态记忆；`MOTOR brake` 是新增的独立命令（两路 1000‰ → CCR=3600/3600，低边双开），`stop` 仍是滑行、回包不变（M4 基线）；brake 后 `fwd/rev/duty` 会立即退出且不残留 1000‰；**"电机是否真的制动、制动多快"未验证**（需人看转子），`fwd/rev` 对应轴的哪个方向也未验证；电机未接时只能验证寄存器与回包；TIM2/TIM4 的 owner 与时基由 `pm_timer` claim 表仲裁，`PM_ERR_BUSY` 是模型外占用（板端不可修、别重试），`PM_ERR_CONFLICT` 是表内冲突（可修）；隐藏的 `MOTOR claims/conflict/busy/force` 只用于取证，不在 `HELP`、生产不依赖；
-- 分层检查：本仓用 `tools/check_layering.py`（3.4.0，`tools/CHECKER.lock` 固定 `4da1a77`）扫描，当前 0 ERROR / 4 WARN（2026-11-20，`--glue-max-lines 86`；第 4 条为编码器 EXTI 钩子，与 UART 三条同类）；从 3.3.1 升到 3.4.0 只新增第 28 项 `feature_gate`；本仓已在 `.arch-roles` 声明 `feature sonar = off` 并挂 `pm_sonar_init` / `EXTI15_10_IRQn`，该项复跑报 0、无误报（INDEX §131），其余输出不变，升级细节、复跑结果与"是否继续跟随上游"记在 `TECH_DEBT.md` D25；
+- 分层检查：本仓用 `tools/check_layering.py`（3.4.1，`tools/CHECKER.lock` 固定 `d62c226`）扫描，当前 0 ERROR / 4 WARN（2026-11-21，`--glue-max-lines 86`；第 4 条为编码器 EXTI 钩子，与 UART 三条同类）；从 3.3.1 升到 3.4.0 只新增第 28 项 `feature_gate`；本仓已在 `.arch-roles` 声明 `feature sonar = off` 并挂 `pm_sonar_init` / `EXTI15_10_IRQn`，该项复跑报 0、无误报（INDEX §131），其余输出不变；3.4.1 复跑与 3.4.0 在同一棵树上逐行相同、无少报（INDEX §149），升级细节、复跑结果与"是否继续跟随上游"记在 `TECH_DEBT.md` D25；
 - 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；
 - 默认（OFF）构建里 `DIST` 在启动前就返回 `err=disabled`，不会进入测量。ON 构建的可达现象保留在案：自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`，是 HC-SR04 余振，不是故障；输入侧抓包里未发任何 PWM/BUZ 命令也出现过 3.9–45.8 cm 短读数与一次 `err=timeout`（与手/黑物靠近超声视场时间重合，归因未确认，§31.6）；
 - 没有 CMake presets；CI 只有静态分层检查一步（`.github/workflows/layering.yml`）；对象结构体布局不承诺 ABI 稳定。

@@ -2,9 +2,9 @@
 # 检查器只比对 checker-version / source-repo / source-commit 三项；
 # source-blob 是上游该提交里 skill/scripts/check_layering.py 的 git blob 哈希，
 # 用于人工核对"拷来的确实是这个提交的原文"（本仓额外记录，检查器不读）。
-checker-version = 3.4.0
+checker-version = 3.4.1
 source-repo     = https://github.com/BiscuiTs2026/firmware-four-layer-architecture
-source-commit   = 4da1a77ebec3661945722959bf8398800b66dbb3
-source-blob     = 8e584fa355640adeaa8d667a97665334c939bf10
-synced-at       = 2026-11-20
+source-commit   = d62c226e60f7750eb8124e58ec6ccb00b6ca9756
+source-blob     = dcc1349934ce7ec3b0b7755aa718988c8b2ab7a7
+synced-at       = 2026-11-21
 local-patches   = none（只按上游 integration.md §2.1 的规定改了文件头 source-commit 注释与 SOURCE_COMMIT 常量为上游哈希，属规定动作，不是补丁）

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # source-repo: https://github.com/BiscuiTs2026/firmware-four-layer-architecture
-# checker-version: 3.4.0
-# source-commit: 4da1a77ebec3661945722959bf8398800b66dbb3    ← 使用方拷贝：上游提交哈希，须与 tools/CHECKER.lock 一致
-"""check_layering.py — 四层架构启发式静态检查（v3.4.0）。
+# checker-version: 3.4.1
+# source-commit: d62c226e60f7750eb8124e58ec6ccb00b6ca9756    ← 使用方拷贝：上游提交哈希，须与 tools/CHECKER.lock 一致
+"""check_layering.py — 四层架构启发式静态检查（v3.4.1）。
 
 用法：
     python3 check_layering.py <工程根目录> [选项]
@@ -67,9 +67,12 @@
      9. APP 直调 BSP 或越权调用 OSAL → ERROR
     10. 入口胶水层超过 --glue-max-lines → WARN（体积兜底，不承担质量判定）
     11. ISR 内调用阻塞/格式化/动态内存函数 → ERROR（含 SysTick_Handler 等 CMSIS 内核中断）
-    12. 阻塞延时：bsp 之外的 HAL_Delay → ERROR；app/组件层裸 delay_ms 等 → WARN
+    12. 阻塞延时：app/组件层的 HAL_Delay → ERROR；app/组件层的裸 delay_ms / delay_us /
+        mdelay / udelay / osal_sleep_ms → WARN（bsp 与 glue 不走本项）
     13. 固定地址段：同址、未 4 字节对齐、固定段内使用通配符、C 段未在 .ld 显式定义 → ERROR；
-        声明了长度（/* size: 0xNN */）时区间重叠 → ERROR；未标 (NOLOAD) → WARN
+        声明了长度（/* size: 0xNN */、. = . + 0xNN;、区间注释）时区间重叠 → ERROR；未标 (NOLOAD) → WARN。
+        以 .data / .bss / .rodata / .text 开头的标准段名不要求显式定义；
+        工程里没有任何带显式地址的 .ld 段时整项跳过（C 段检查也不执行）
     14. 宏间接越层（上层使用下层定义的硬件宏，或上层本地宏展开到下层调用/寄存器）→ ERROR
     15. 唯一入口：出现第二个 main.c → ERROR
     16. 工程完全没有分层目录或角色清单 → ERROR（可用 --allow-unlayered 显式关闭）
@@ -80,10 +83,10 @@
     21. 胶水层单函数内字符串 else-if 链达到 --glue-dispatch-chain（默认 4）→ WARN
     22. 胶水层职责（--glue-duty，默认 WARN）：
         实现外设驱动（非 init/ISR/故障出口函数体内寄存器 >=3）、常驻协议分帧（strcmp 类 >=3）、
-        常驻状态机（switch case >=4）、ISR 函数体 >40 代码行、
+        多分支 switch 分派（case >=4；不推断是否为状态机）、ISR 函数体 >40 代码行、
         同一 if/else-if 链分支 >= --glue-if-chain（默认 8）、定义板级资源/引脚表
     23. ISR 里做业务：glue 的 ISR 调用 components/app 的非 *_hw_* 函数 → ERROR
-    24. 其它层 include 入口胶水层的文件/头 → ERROR
+    24. 其它层 include 入口胶水层的头文件 → ERROR（只按 .h 文件名索引，`#include "xxx.c"` 不判）
     25. 胶水层 if 嵌套：与其他层同口径，决策型 if 嵌套 >3 层 → ERROR
     26. common 层（纯逻辑）：出现厂商头、厂商/内核符号（HAL_/LL_/__HAL_/NVIC_/SysTick/SCB）、
         寄存器访问，或包含 bsp/components/app/osal/glue 的头 → ERROR；
@@ -95,9 +98,15 @@
         一个活跃 feature-symbol 调用点 → ERROR。条件编译块内不判；未声明 feature 的工程不受影响
 
 豁免：
-    - 行尾 `// arch-allow` 跳过该行全部检查；
-    - 行尾 `// arch-allow:snapshot` 额外允许该行的全局变量声明（固定地址快照块）；
-    - `SystemCoreClock` 属 CMSIS 必需符号，默认豁免。
+    - 行尾 `// arch-allow` 只对部分规则生效，**不是**"跳过该行全部检查"。
+      生效：第 1、2、3、8、9、11、12、14、17、18、19、20、21、22、24、26、27、28 项；
+      第 4 项只有 include 与直接调用子判据生效，本地 extern 声明上层函数子判据不生效。
+      （逐行规则看该行行尾；第 20/21/22 项看函数签名行行尾；第 27 项看契约声明行行尾。）
+      不生效：第 5（跨模块全局变量）、6（extern 变量）、7 / 25（if 嵌套）、10（胶水行数）、
+      13（固定地址段）、15（唯一 main.c）、16（无分层信息）、23（ISR 做业务）项。
+    - 行尾 `// arch-allow:snapshot` 未实现额外语义，按普通 `// arch-allow` 处理
+      （因第 5 项不认该标记，快照全局变量仍会报）。
+    - `SystemCoreClock` / `uwTick` / `uwTickPrio` / `uwTickFreq` 属 CMSIS 必需符号，默认豁免。
 
 退出码：0 = 无 ERROR；1 = 存在 ERROR（含"没有任何分层信息"）；2 = 用法或路径错误。
 """
@@ -109,9 +118,9 @@ import os
 import re
 import sys
 
-CHECKER_VERSION = "3.4.0"
+CHECKER_VERSION = "3.4.1"
 SOURCE_REPO = "https://github.com/BiscuiTs2026/firmware-four-layer-architecture"
-SOURCE_COMMIT = "4da1a77ebec3661945722959bf8398800b66dbb3"  # 使用方拷贝：上游提交哈希；上游仓库内为 self
+SOURCE_COMMIT = "d62c226e60f7750eb8124e58ec6ccb00b6ca9756"  # 上游仓库内保持 self；使用方拷贝后改为上游提交哈希
 
 ROLES = ("bsp", "osal", "components", "app", "glue", "common")
 LAYER_DEPTH = {"common": -1, "bsp": 0, "osal": 1, "components": 2, "app": 3}
@@ -1779,15 +1788,18 @@ def main():
                     name = m.group(1)
                     if name in seen_calls:
                         continue
+                    if _is_local_def(code, name, local_funcs):
+                        continue  # 本文件里的函数定义行，不是调用
                     defs = func_index.get(name)
                     only = next(iter(defs)) if defs and len(defs) == 1 else None
-                    # 判据按定义所在层，不依赖 bsp_ 前缀（pm_* 命名的端口函数同样要判）
-                    if only == "bsp" or name.startswith("bsp_"):
+                    # 判据只看定义所在层；不再用 bsp_ / osal_ 前缀兜底，
+                    # 否则同层同名或同前缀的本地函数会被误判成跨层调用
+                    if only == "bsp":
                         if not has_components:
                             continue  # 两层工程：app → bsp 是唯一向下路径
                         errors.append((rel, no, f"APP 直调 BSP：{name}（应经组件层）"))
                         seen_calls.add(name)
-                    elif (only == "osal" or name.startswith("osal_")) and name not in APP_OSAL_ALLOWED:
+                    elif only == "osal" and name not in APP_OSAL_ALLOWED:
                         errors.append((rel, no, f"APP 越权调用 OSAL：{name}（仅允许时间原语）"))
                         seen_calls.add(name)
 
