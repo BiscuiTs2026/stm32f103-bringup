@@ -1,7 +1,7 @@
 ﻿# 上板抓包证据登记表
 
 本目录是 `2026-11-18/board-bringup/work` 这一轮上板验证留下的串口抓包归档。
-共 65 个日志：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
+登记表按 §1–§146 编号（正文逐条给出）：前 9 个（`bt-*.log`、`key-capture*.log`）是从仓库根目录**复制**来的副本，
 根目录原件保留（`PATCHES.md` 里的路径引用仍然有效），但根目录副本被 `.gitignore` 忽略，
 只有本目录的副本进版本库；第 10–23 个（`retest-20261119*.log`、`dist-probe-20261119-*.log`、
 `autolive-20261119*.log`、`adc-20261119-*.log`）是 2026-11-19 复测与排查时**直接写在本目录**的，
@@ -16,6 +16,9 @@
 下沉 bsp）的拆前/拆后回归、编译、主机单测、分层扫描、60 s live 窗口、OLED 忙态重试与烧录校验；
 第 60–65 项是拆分 S5（AHT20 作业下沉组件）的拆前/拆后回归、编译、分层扫描、AHT 定点用例与
 60 s live 窗口（含 RH/T 行变化与忙态两例）；第 66 项是同一固件的烧录回读校验。
+第 67–145 项继续登记 S6–S10 拆分、契约对齐、模型 core 接入、sonar/舵机人工验收、
+v0.8.0 claim 表与最终固件的构建/烧录/诊断取证；第 146 项是文档对齐任务新建的
+HEAD OFF 构建（未上板，见文末）。
 
 ## 怎么读这些日志
 
@@ -2029,3 +2032,17 @@ HELP KEYS=key press counters, clears them
 | 未验 / 范围外 | 声音、机械动作不在本轮范围，未作判断；`MOTOR err=unsupported`/`err=precond` 分支未现场触发 |
 | 日志 | `evidence/v080-force-diag-build.log`、`evidence/v080-force-diag-serial.log`、`evidence/v080-force-diag-help.log`、`evidence/v080-force-diag-flash.log`、`evidence/v080-force-diag-checker.log` |
 | 说明 | `MOTOR force timer|remap` 是**仅调试用**入口，生产固件不应依赖；正常启动与 `MOTOR fwd/stat/stop` 不经过它 |
+
+## 146. HEAD `PM_ENABLE_SONAR=OFF` 构建（文档对齐用，未上板）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20（文档对齐任务） |
+| 目的 | 给 README / PROTOCOL / COMMANDS 提供 HEAD 的 OFF 版真实体积与 `HELP` 字节，避免沿用 claim 表之前的 31324 / 5448 |
+| 固件 | 当前 HEAD `3c1b932`，新建 `build-doc-align`，`-DPM_ENABLE_SONAR=OFF` |
+| 编译 | `arm-none-eabi-gcc 14.3.1`、Ninja；FLASH **35132 B / 64 KB（53.61%）**，RAM **6024 B / 20 KB（29.41%）** |
+| 对照 ON | `build-v080-force-diag` 为 35968 / 6048 B；OFF 少 **836 B / 24 B** |
+| HELP | 15 行，按 `HELP ` + 描述 + CRLF 从 ELF 提取核算为 **654 B**（ON 同日上板实测 660 B，只差 `DIST` 行 6 字节） |
+| 未验 | 未烧录、未上板；OFF `HELP` 字节是构建产物核算值，不是串口实测 |
+| 日志 | `evidence/v080-off-doc-align-build.log` |
+| 构建目录 | `build-doc-align/`（本任务保留，不提交） |

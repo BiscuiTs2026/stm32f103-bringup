@@ -109,7 +109,7 @@ OLED ready (128x64, 6x8 font)
 
 | 命令 | 参数 | 成功回包 | 失败回包 | 改变状态 |
 | --- | --- | --- | --- | --- |
-| `HELP` | 无 | 15 行 `HELP ...`，共 **660 B**（2026-11-20：`/brake` 使 644→650，`PWM` 行关键字修正再 +10；见下） | — | 否 |
+| `HELP` | 无 | 15 行 `HELP ...`；ON 构建实测 **660 B**，OFF 构建核算 **654 B**（见下） | — | 否 |
 | `PING` | 无 | `PONG` | — | 否 |
 | `STAT` | 无 | `STAT clk=72000000 up=<ms> tick=1 key1=<n> key2=<n> uart_rx=<n> uart_tx=<n>` | — | 否 |
 | `I2C` | 无 | `I2C found=0x70,0x7A`（按升序列出 8 位写地址） | `I2C found=none` | 否（只扫描） |
@@ -138,9 +138,11 @@ HELP KEYS=key press counters, clears them
 `up=` 是开机毫秒数；`key1/key2` 是消抖后的按下次数；`uart_rx/uart_tx` 是两路累计字节数。
 
 > `PM_ENABLE_SONAR=ON` 的构建把上面 `DIST` 一行换成
-> `HELP DIST=HC-SR04 PA11/PA10, cm/us (DWT base)`，其余 14 行不变；
-> 默认（OFF）是 **15 行 660 B**（2026-11-20：`MOTOR` 行加入 `/brake` 后为 650 B，同日把 `PWM` 行改成可直接照敲的关键字形式，再 +10 B）。
-> ON 构建的总字节数未重新上板实测。
+> `HELP DIST=HC-SR04 PA11/PA10, cm/us (DWT base)`，其余 14 行不变。
+> 每行格式是 `HELP ` + 描述 + `\r\n`，两版都按 15 条描述串逐条核算：
+> **ON 15 行 660 B**（2026-11-20 上板实测，`evidence/v080-force-diag-help.log`）；
+> **OFF 15 行 654 B**（从 `build-doc-align` 的 ELF 中提取 15 条串核算，见
+> `evidence/v080-off-doc-align-build.log`；只差 `DIST` 一行 6 字节，未单独上板抓 `HELP`）。
 
 > 实现位置（S10 起）：`HELP`/`PING`/`STAT`/`I2C` 在 `src/components/sys_cmds/`，
 > 命令表与适配器在 `src/app/app_wiring.c`。命令、回包文本与顺序均未变。
@@ -421,7 +423,7 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
   brake、寄存器里不会残留 1000‰。只实现快衰减（一路 PWM、另一路低），不提供慢衰减。
   寄存器层可证的是两路 CCR 到 3600 与退出后复原；**“电机是否真的制动、制动多快”
   未验证**，需人上板看转子。
-- `brake` 已列入 `HELP` 的 `MOTOR` 行（2026-11-20）；`HELP` 由 638 B 增至 644 B。
+- `brake` 已列入 `HELP` 的 `MOTOR` 行（2026-11-20）；当前 `HELP` 共 15 行：ON 实测 660 B、OFF 核算 654 B（见 §4.1）。
 - 初始化失败按下列顺序判定，回包与判据（2026-11-20 起由模型 `pm_timer` claim 表驱动，
   回包文本与优先级不变）：
   1. `MOTOR err=timer`，时基复核不通过：`pm_timebase_ok(72 MHz, PSC 0, ARR 3599,
@@ -442,6 +444,36 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
   端口只负责把 `PM_ERR_BUSY` 还原成 `timer`/`remap` 两个既有文案。
 - TIM2 仍只服务电机；HC-SR04 的可选构建已改用 `DWT->CYCCNT` 时基，不再申请 TIM2
   （决策 0020、`docs/TIM2-CONFLICT.md`）。
+
+#### 定时器占用表（pm_timer v0.8.0）
+
+TIM2（电机 PA0/PA1）与 TIM4（舵机 PB8）不再由端口“看到空闲就写”，而是先向模型
+`pm_timer` 的占用表声明；TIM3（蜂鸣器 PB9）**故意不入表**，用来对照“模型之外占用”。
+
+| 生命周期 | 端口动作 | 模型调用 |
+| --- | --- | --- |
+| open | `pm_pwm_init()` 在写任何寄存器前声明 `hw_id` / `owner_id` / `role` / `psc` / `arr` / `channels` | `pm_timer_claim()` |
+| close | `pm_pwm_deinit()` 先停通道，再释放自己的记录；失败路径也必须释放 | `pm_timer_release()` |
+| 改频 | `pm_pwm_set_frequency()` 改变 PSC/ARR 时先改表，再写寄存器 | `pm_timer_retime()` |
+
+本板固定占用：TIM2 CH1 = owner `0x21`（33）、TIM2 CH2 = `0x22`（34）、
+TIM4 CH3 = `0x24`（36），role 都是 PWM。表是 8 条静态表；`claim/release/retime` 都在
+主循环上下文调用，不在 ISR 里；每次上电重新建立，不持久化。
+
+判据（模型契约 §20）：同 role=PWM、同 PSC/ARR 且通道不重叠可共存；其余组合一律
+`PM_ERR_CONFLICT`；8 条表满为 `PM_ERR_NOMEM`；非法声明（如 PWM 无通道）为
+`PM_ERR_PARAM`。
+
+失败返回怎么读：
+
+| 返回 | 含义 | 本板表现 / 处理 |
+| --- | --- | --- |
+| `PM_ERR_BUSY` | 该定时器已被**模型之外**的代码启动或配置（端口探测到 `CEN` 等）；或同一对象重复 init。板端**不可修，别重试**——重试只会再失败 | TIM2 按 CEN/REMAP 细分为 `MOTOR err=timer` / `err=remap`；TIM4 上舵机统一回 `PWM err=init`。要人去停外部使用者 |
+| `PM_ERR_CONFLICT` | 模型占用表**内部**冲突：同一 `hw_id` 已被不兼容的 role / PSC/ARR / 通道占用。**可修**：换配置、换通道，或等对方 `release` | 组件层按 `err=timer` 返回（舵机为 `PWM err=init`），不会覆盖对方时基 |
+| `PM_ERR_PARAM` / `PM_ERR_NOMEM` | 声明非法或 8 条表已满 | 当前固定配置下不会出现；出现即代码缺陷 |
+
+现场自证用隐藏的 `MOTOR claims`（owner 33/34/36）、`MOTOR conflict`（表内冲突）、
+`MOTOR busy`（模型外占用），见本节末尾。
 
 #### `MOTOR dbg`（临时诊断，不进 HELP）
 
@@ -498,13 +530,19 @@ TIM2 整颗归电机：`PSC=0`、`ARR=3599` → **20 kHz**。控制方式是一�
   的逐字一致，是“没有副作用”的回包证据；`PWM dbg` 里 `mapr=0x00000000` 可再次核对。
 - 2026-11-20 实测：两条文案分别抓到（见 `evidence/v080-force-diag-serial.log`、
   INDEX §145），故障后 `MOTOR fwd 30` / `stat` / `stop` 与故障前逐字一致。
+- `MOTOR claims` 等同样先过 MOTOR 初始化检查：初始化失败时回该初始化错误
+  （`err=timer` / `err=remap`），看不到占用表；先修初始化再看表。
+- `MOTOR busy` 的预期结果取决于蜂鸣器：`PWM buz <hz>` 运行时应为
+  `t3=busy rel=state`；蜂鸣器关闭时应为 `t3=ok rel=ok`（后者未现场抓包，按代码推断）。
+- 这些入口编译进固件（没有 `#if` 裁剪），但不在 `HELP`、不被正常启动或普通 `MOTOR`
+  路径调用；生产固件**不得依赖**它们。
 
 ---
 
 ## 5. 判读陷阱（实测教训）
 
 1. **BLE 会把一条回包拆成多个气泡**。手机页面按"总字节数"判读，不要数气泡个数。
-   当前 `HELP` 是 **15 行 660 B**（含每条 CRLF；按 15 条描述串 + `HELP ` 前缀 + CRLF 逐条核算）。
+   当前 `HELP` 是 **15 行**：ON 构建 660 B（上板实测）、OFF 构建 654 B（按 15 条描述串 + `HELP ` 前缀 + CRLF 核算）；含每条 CRLF。
 2. **`AHT err=busy` 不是驱动故障**：AHT20 在 repeated START 路径下会返回上一次的
    旧数据并置忙标志；`AHTS` 读到 `raw=98 ...`（bit7=1）属于预期语义，
    见外设模型契约 §12.3。正常读数请用 `AHT`。

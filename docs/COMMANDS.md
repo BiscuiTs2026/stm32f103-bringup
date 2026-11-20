@@ -2,7 +2,8 @@
 
 本表**不是**从 `HELP`、`PROTOCOL.md`、注释或旧日志转述的，而是逐条对照
 `src/app/app_wiring.c` 的注册表与各处理函数的解析代码整理。核对基线：work 仓
-`17d4389`（解析逻辑与 `997b38a` 相同，仅 `HELP` 描述串有改动）。
+`3c1b932`（2026-11-20 故障注入诊断提交；相对 `17d4389` 新增 `MOTOR brake`、隐藏
+`claims/conflict/busy/force` 子命令，并改过 `HELP` 描述串）。
 
 读法约定：
 
@@ -36,7 +37,7 @@ ERR unknown=<原始行内容>
 
 | 关键字原文 | 参数 | 范围/单位 | 默认 | 合法回包样例 | 不合法回包 |
 | --- | --- | --- | --- | --- | --- |
-| `HELP`（整行） | 无 | — | — | 15 行，每行 `HELP <NAME>=<说明>`；当前 660 B（源码逐条核算） | `ERR unknown=HELP `（带尾随空格） |
+| `HELP`（整行） | 无 | — | — | 15 行，每行 `HELP <NAME>=<说明>`；ON 构建实测 660 B、OFF 构建核算 654 B | `ERR unknown=HELP `（带尾随空格） |
 | `PING`（整行） | 无 | — | — | `PONG` | 同上 |
 | `STAT`（整行） | 无 | — | — | `STAT clk=72000000 up=12345 tick=1 key1=9 key2=7 uart_rx=123 uart_tx=456` | 同上 |
 | `I2C`（整行） | 无 | — | — | `I2C found=0x70,0x7A` | `I2C found=none`（总线上没有器件） |
@@ -109,9 +110,23 @@ ERR unknown=<原始行内容>
 | `MOTOR DUTY`[4] | duty | 0..100，单位 % | — | `MOTOR duty ok dir=fwd duty=80% hz=20000 arr=3599 ccr1=2880 ccr2=0` | `MOTOR err=idle`（还没给过方向）/ `MOTOR err=range duty=<n>` / `MOTOR err=usage` |
 | `MOTOR STAT`[4] | 无 | — | — | `MOTOR stat dir=fwd duty=60% hz=20000 arr=3599 ccr1=2160 ccr2=0` | 同上；**`MOTOR` 裸命令是 usage，不是 stat** |
 | `MOTOR DBG`[3] | 无 | — | — | `MOTOR dbg apb1enr=… cr1=… ccer=… ccmr1=… arr=3599 psc=<n> cnt=…+…+… crl=…` | `MOTOR err=unsupported`（固件没绑实现）/ `MOTOR err=usage` |
+| `MOTOR CLAIMS`[6] | 无 | — | — | `MOTOR claims t2=2 o=33 r=pwm psc=0 arr=3599 ch=0x01 o=34 r=pwm psc=0 arr=3599 ch=0x02 t3=0 t4=1 o=36 r=pwm psc=21 arr=65453 ch=0x04` | `MOTOR err=usage`；MOTOR 初始化失败时回该初始化错误（`err=timer` / `err=remap`） |
+| `MOTOR CONFLICT`[8] | 无 | — | — | `MOTOR conflict t2=conflict t4=ok rel=ok` | `MOTOR err=usage` / 同上；临时 claim 会自行释放 |
+| `MOTOR BUSY`[4] | 无 | — | — | 蜂鸣器运行时 `MOTOR busy t3=busy rel=state`；蜂鸣器关闭时 `t3=ok rel=ok`（后者未现场抓包） | `MOTOR err=usage` / 同上；成功后自行释放 |
+| `MOTOR FORCE TIMER`（`FORCE`[5] `TIMER`[5]） | 无 | — | — | 两行：`MOTOR err=timer` + `MOTOR force mode=cen bits=1 claims=2->2` | `MOTOR err=usage` / `MOTOR err=unsupported` / `MOTOR force err=precond claims=<n>` / `MOTOR force err=restore claims=<n>`；注入后恢复寄存器与 claim 表 |
+| `MOTOR FORCE REMAP`（`FORCE`[5] `REMAP`[5]） | 无 | — | — | 两行：`MOTOR err=remap` + `MOTOR force mode=remap bits=2 claims=2->2` | 同上；注入后恢复寄存器与 claim 表 |
+
+- `CLAIMS` / `CONFLICT` / `BUSY` / `FORCE` 是**隐藏诊断子命令**：不在 `HELP`，正常启动与
+  `MOTOR fwd/rev/stop/brake/duty/stat` 不会调用它们，既有回包文本不受影响；生产固件
+  **不得依赖**。`FORCE` 会临时注入故障再还原，只用于上板取证（详见 `PROTOCOL.md` §4.9）。
+- 定时器判据：TIM2/TIM4 走模型 `pm_timer` claim 表（open claim / close release / 改频
+  retime）；`PM_ERR_BUSY` = 模型外占用（板端不可修、别重试），`PM_ERR_CONFLICT` =
+  表内不兼容占用（可修：换配置/通道或等对方释放）。
 
 核对：`track_dev.c:101-118`、`encoder_dev.c:154-176`、`relay_dev.c:116-135`、
-`motor_dev.c:219-290`、`platform/stm32f103/pm_platform.c`（`MOTOR dbg` 实现）。
+`motor_dev.c:451-552`（MOTOR 解析）、`motor_dev.c:159-329`（隐藏诊断）、
+`src/common/pm_timer.c:67-217`（claim/release/retime）、
+`platform/stm32f103/pm_platform.c`（`MOTOR dbg` 实现）。
 
 ---
 
