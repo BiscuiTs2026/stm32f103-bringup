@@ -1648,3 +1648,64 @@
 | 证据 | `evidence/checker-lock-340-layering.log`（3.4.0 全量输出） |
 | 能证明什么 | 锁、文件、README 三者同源；新版本在本仓的判定口径不变（0 ERROR / 3 WARN 且逐条一致） |
 | 不能证明什么 | 第 28 项在"有 feature 声明"工程上的行为；板端无此场景，未构造 |
+
+## 129. 电机链改走模型 core（方案 A）：编译、烧录、M4 与 PWM 复跑
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 13:0x–13:19 |
+| 触发 | 派发方裁决"按 A 执行、只改名不改语义"：舵机/蜂鸣器 API 整体迁到 `pm_servo.h`；`pm_pwm.h` 让给模型通道对象契约；`pm_port.h` 只补 PWM 段；板端新增 TIM2 PWM ops，电机改走模型 `pm_pwm.c` / `pm_motor.c` |
+| 模型来源 | `BiscuiTs2026/stm32-peripheral-model` 提交 `69a578d`（v0.7.0）；`include/pm/pm_pwm.h`、`pm_pwm_math.h`、`pm_motor.h`、`src/core/pm_pwm.c`、`src/core/pm_motor.c`、`src/common/pm_pwm_math.c` 逐字进板端，blob 双向核对（`git hash-object --no-filters`）；模型仓 `git status` 干净 |
+| 板端新增/改动 | `include/pm/pm_servo.h`（原舵机/蜂鸣器 API，guard 改 `PM_SERVO_H`，`pm_pwm_init`→`pm_servo_init`，其余零语义改动）；`include/pm/pm_motor_dbg.h` + `pm_motor_hw_snapshot()`（只读 TIM2 快照供 `MOTOR stat`）；`src/port/stm32f1/pm_pwm_tim2_stm32f1.c/.h`（TIM2 CH1/CH2 ops，PSC0/ARR3599/CCMR1 0x6868/CC1E|CC2E/ARPE|CEN 与旧寄存器逻辑逐项一致）；`pm_port.h` 补 PWM 段与三字段；`pm_err.h` 补 `PM_ERR_CONFLICT=-11`（-1..-10 与模型逐行一致）；`motor_dev.c` 改调模型 API（pct×10→permille，回包文本不变）；`CMakeLists.txt` 接入三份模型源文件、`pm_motor_stm32f1.c` 移出构建（文件未删） |
+| 分层归属 | `pm_pwm_math.c` 放 `src/common/`（模型原布局）。放 `src/core/` 会被检查器判"common 声明/调用上层函数"共 4 ERROR，因为 `.arch-roles` 把 `src/core/*` 定为 components；目录名 `common` 自动定角色，**未改 `.arch-roles`** |
+| 编译 | `build-motor-integ`（独立目录）：**0 error / 0 项目代码警告**，62/62；链接期只有既有 libc_nano `_close/_lseek/_read/_write` 与 RWX LOAD 段提示 |
+| 尺寸 | FLASH **30168 B / 64 KB（46.03%）**，RAM **5376 B / 20 KB（26.25%）**；对比上一基线 28644 B / 5296 B 为 **+1524 B / +80 B** |
+| 静态检查 | `python tools/check_layering.py . --glue-max-lines 86` → **0 ERROR / 3 WARN**，3 条仍为 `src/port/stm32f1/pm_port_stm32f1.c:353/363/375` 的 UART ISR 钩子；`--version --lock` = 3.4.0 / `4da1a77` 一致；`src/app/main.c` 未改，86 行闸门通过 |
+| 烧录 | `STM32_Programmer_CLI -c port=SWD mode=UR -w build-motor-integ/pm_f103_demo.hex -v -rst` → `Download verified successfully` + `Software reset is performed`，ST-Link SN `37FF71064E5734366E911343`；日志 `evidence/motor-20261120-flash.log` |
+| M4 复跑 | `evidence/motor-20261120-a.log`（COM11，115200，命令顺序与 `motor-20261119-a.log` 相同） |
+| PWM 复跑 | `evidence/pwm-20261120-a.log`（五档脉宽 + `PWM dbg`） |
+
+### 129.1 M4 逐条对比（升级前 `motor-20261119-a.log` vs 升级后 `motor-20261120-a.log`）
+
+| 命令 | 升级前 | 升级后 | 结论 |
+| --- | --- | --- | --- |
+| `MOTOR stat`（初始） | `dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0` | 同左 | 一致 |
+| `MOTOR fwd 30` | `dir=fwd duty=30% ... ccr1=1080 ccr2=0` | 同左 | 一致 |
+| `MOTOR stat` | `dir=fwd duty=30% ... ccr1=1080 ccr2=0` | 同左 | 一致 |
+| `MOTOR duty 80` | `dir=fwd duty=80% ... ccr1=2880 ccr2=0` | 同左 | 一致 |
+| `MOTOR stat` | `dir=fwd duty=80% ... ccr1=2880 ccr2=0` | 同左 | 一致 |
+| `MOTOR fwd 0` | `dir=fwd duty=0% ... ccr1=0 ccr2=0` | 同左 | 一致（模型 coast 与旧 duty 0 同措辞） |
+| `MOTOR fwd 100` | `dir=fwd duty=100% ... ccr1=3600 ccr2=0` | 同左 | 一致 |
+| `MOTOR fwd 101` | `MOTOR err=range duty=101` | 同左 | 一致 |
+| `MOTOR rev 50` | `dir=rev duty=50% ... ccr1=0 ccr2=1800` | 同左 | 一致 |
+| `MOTOR stat` | `dir=rev duty=50% ... ccr1=0 ccr2=1800` | 同左 | 一致 |
+| `MOTOR stop` | `dir=stop duty=0% ... ccr1=0 ccr2=0` | 同左 | 一致 |
+| `MOTOR duty 50`（停止后） | `MOTOR err=idle` | 同左 | 一致 |
+| `MOTOR rev abc` | `MOTOR err=usage` | 同左 | 一致 |
+| `MOTOR foo` | `MOTOR err=usage` | 同左 | 一致 |
+| `MOTOR`（无参） | `MOTOR err=usage` | 同左 | 一致 |
+| `MOTOR stat`（结束） | `dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0` | 同左 | 一致 |
+| `PWM servo 90` | `PWM servo ok deg=90.0 pulse=1500us` | 同左 | 一致 |
+| `DIST` | `DIST err=disabled` | 同左 | 一致 |
+| `PING` | `PONG` | `PONG` | 一致 |
+| `STAT` | `clk=72000000 ... uart_rx=243 uart_tx=5320` | `clk=72000000 ... uart_rx=243 uart_tx=6353` | 计数为运行时值，字段形状与 `clk` 一致 |
+| `RELAY stat` | `RELAY stat pb5=0` | 同左 | 一致 |
+| `TRACK` | `TRACK raw=0` | `TRACK raw=1` | **环境差异**：PB14 现场反射/黑物状态不同，非电机路径 |
+| `ENC` | `ENC count=0 dir=idle a=1 b=1 btn=1` | 同左 | 一致 |
+
+### 129.2 PWM 五档与 `PWM dbg` 对比（`pwm-20261119-a.log` 五档 / `pwm-fix-20261119-a.log` dbg vs `pwm-20261120-a.log`）
+
+| 命令 | 升级前 | 升级后 | 结论 |
+| --- | --- | --- | --- |
+| `PWM servo 0` + `PWM stat` | `deg=0.0 pulse=500us` / `servo=0.0c pulse=500us` | 同左 | 一致 |
+| `PWM servo 45` + `PWM stat` | `deg=45.0 pulse=1000us` / `servo=45.0c pulse=1000us` | 同左 | 一致 |
+| `PWM servo 90` + `PWM stat` | `deg=90.0 pulse=1500us` / `servo=90.0c pulse=1500us` | 同左 | 一致 |
+| `PWM servo 135` + `PWM stat` | `deg=135.0 pulse=2000us` / `servo=135.0c pulse=2000us` | 同左 | 一致 |
+| `PWM servo 180` + `PWM stat` | `deg=180.0 pulse=2500us` / `servo=180.0c pulse=2500us` | 同左 | 一致 |
+| `PWM dbg` | `psc=0x47 arr=0x4E1F ccmr2=0x68 ccer=0x100 ccr3=0x9C4 ... fpwm=50.0Hz` | 同左（`cnt0/cnt1` 为运行时计数） | 一致 |
+
+| 项 | 内容 |
+| --- | --- |
+| 能证明什么 | 电机命令的全部回包文本、`dir/duty/hz/arr/ccr1/ccr2` 与升级前逐条相同；舵机五档脉宽与 `PWM dbg` 的 PSC/ARR/CCR/频率与既有证据逐条一致；TIM2 寄存器配置与旧实现等价（ARR 3599、20 kHz、CCR=36×pct） |
+| 不能证明什么 | ①舵机**实际角度精度、到位抖动/回弹、带负载表现**仍未验证（沿用 §30.3 的边界），本轮只证明脉宽与回包 ②蜂鸣器听感未采集 ③`MOTOR dbg`（`pm_platform_motor_dbg`）本轮未单独复跑，未纳入对比 |
+| 遗留 | ①`src/port/stm32f1/pm_motor_stm32f1.c` 只移出构建、文件仍在盘上，删除需单独批准 ②README 的"契约基线 aa342e5（v0.1）"与尺寸数字（28644 B / 5296 B）尚未更新到本轮口径 ③`TRACK raw` 的环境差异需现场确认，不属本轮改动 |

@@ -1,0 +1,64 @@
+[       0ms] ===== capture start 2026-11-20 13:17:06.133 port=COM11 phase=pwm =====
+[     325ms] hb
+[     398ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[     840ms] >> PWM stat
+[     854ms] PWM stat servo=90.0c pulse=1500us buz=off
+[     904ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1304ms] hb
+[    1398ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    1754ms] >> PWM servo 0
+[    1785ms] PWM servo ok deg=0.0 pulse=500us
+[    1898ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2293ms] hb
+[    2398ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    2765ms] >> PWM stat
+[    2781ms] PWM stat servo=0.0c pulse=500us buz=off
+[    2899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3309ms] hb
+[    3404ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    3681ms] >> PWM servo 45
+[    3695ms] PWM servo ok deg=45.0 pulse=1000us
+[    3898ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4304ms] hb
+[    4393ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    4687ms] >> PWM stat
+[    4698ms] PWM stat servo=45.0c pulse=1000us buz=off
+[    4898ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5304ms] hb
+[    5399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    5609ms] >> PWM servo 90
+[    5626ms] PWM servo ok deg=90.0 pulse=1500us
+[    5898ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    6292ms] hb
+[    6399ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    6611ms] >> PWM stat
+[    6628ms] PWM stat servo=90.0c pulse=1500us buz=off
+[    6898ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    7315ms] hb
+[    7389ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    7515ms] >> PWM servo 135
+[    7526ms] PWM servo ok deg=135.0 pulse=2000us
+[    7899ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    8304ms] hb
+[    8404ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    8526ms] >> PWM stat
+[    8543ms] PWM stat servo=135.0c pulse=2000us buz=off
+[    8900ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    9307ms] hb
+[    9401ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[    9437ms] >> PWM servo 180
+[    9448ms] PWM servo ok deg=180.0 pulse=2500us
+[    9898ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10301ms] hb
+[   10393ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   10441ms] >> PWM stat
+[   10455ms] PWM stat servo=180.0c pulse=2500us buz=off
+[   10904ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   11304ms] hb
+[   11349ms] >> PWM dbg
+[   11415ms] PWM dbg apb1enr=0x00260007 apb2enr=0x0000020D cr1=0x00000081 psc=0x00000047 arr=0x00004E1F ccmr2=0x00000068 ccer=0x00000100 ccr3=0x000009C4 cnt0=13719 cnt1=12986 dt=20ms crh=0x88888B2B mapr=0x00000000 fpwm=50.0Hz
+[   11416ms] OLED live ok ms=117 col=2 af=0 berr=0 to=0
+[   11898ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12298ms] hb
+[   12396ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0
+[   12893ms] OLED live ok ms=98 col=2 af=0 berr=0 to=0

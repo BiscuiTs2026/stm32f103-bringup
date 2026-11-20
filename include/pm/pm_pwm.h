@@ -1,66 +1,73 @@
 /*
- * pm_pwm.h - PWM outputs used by the KEYSKING learning board.
+ * pm_pwm.h - PWM output channel model (timer compare output).
  *
- * The contract is hardware-free: degrees in 0.1 units, frequency in Hz,
- * duty in percent. Servo is PB8 (TIM4_CH3, 50 Hz); the buzzer is PB9, a plain
- * GPIO toggled by the TIM3 update ISR (10 us phase counter), so it can run at
- * its own frequency while the servo keeps its 50 Hz frame. Only the servo
- * uses a TIM4 channel; PB9 merely sits next to it on the header.
+ * Lifecycle:  init -> (set_duty / set_frequency / set_pulse_us / enable)*
+ *             -> deinit
+ *
+ * Capabilities:
+ *  - One logical channel per object: a timer instance plus one compare
+ *    channel. init() configures the pin, the time base and the compare unit,
+ *    and starts the output with the configured duty.
+ *  - Duty is expressed in permille (0..1000) so no floating point is needed.
+ *  - `set_frequency` changes the shared timer period. Channels that live on
+ *    the same timer also share that period: if another channel of the same
+ *    timer is open, a frequency change that differs from the current one
+ *    returns PM_ERR_BUSY instead of silently retiming the sibling. Channels
+ *    on the same timer may still have independent duty cycles.
+ *  - No interrupt, no event queue, no timeout: PWM output is level-driven by
+ *    hardware once configured.
  */
 #ifndef PM_PWM_H
 #define PM_PWM_H
 
-#include <stdint.h>
+#include "pm_common.h"
+#include "pm_err.h"
+#include "pm_port.h"
+#include "pm_pwm_math.h"   /* common layer: the PSC/ARR rule the ports call */
 
-#define PM_PWM_SERVO_MIN_DEG10   0
-#define PM_PWM_SERVO_MAX_DEG10   1800
+#define PM_PWM_DUTY_MAX  1000u
 
-#define PM_PWM_BUZ_MIN_HZ        100u
-#define PM_PWM_BUZ_MAX_HZ        5000u
-#define PM_PWM_BUZ_DUTY_DEFAULT  20u
+struct pm_pwm {
+    uint32_t magic;          /* set by pm_pwm_init, cleared by deinit */
+    uint8_t  state;
+    uint8_t  hw_id;
+    uint8_t  enabled;        /* 1 while the compare output is running */
+    uint8_t  reserved;
 
-/* Returns 0 on success, negative if the timer setup failed. */
-int pm_pwm_init(void);
+    uint16_t duty_permille;
+    uint32_t freq_hz;        /* effective frequency reported by the port */
 
-/* deg10: 0.1 degree, 0..1800. Returns 0 or -1 when out of range. */
-int pm_pwm_servo_set(int32_t deg10);
+    const pm_pwm_ops_t *ops;
+    void               *port_ctx;
+};
 
-/* Pulse width the servo output is currently programmed with, in microseconds. */
-uint32_t pm_pwm_servo_pulse_us(void);
-int32_t  pm_pwm_servo_deg10(void);
+/* Configures the channel and starts the output. The object must be
+ * zero-initialized. Returns PM_ERR_PARAM for an out-of-range frequency or
+ * duty, PM_ERR_RANGE for an unknown hw_id, PM_ERR_BUSY when the object is
+ * already open or the shared timer already runs a different period. */
+pm_err_t pm_pwm_init(pm_pwm_t *p, const pm_pwm_cfg_t *cfg);
 
-/* hz: 100..5000, duty: 1..99 percent. Returns 0 or -1 when out of range. */
-int pm_pwm_buzzer_set(uint32_t hz, uint8_t duty_pct);
-void pm_pwm_buzzer_off(void);
+/* Stops the output and releases the channel. Idempotent. */
+pm_err_t pm_pwm_deinit(pm_pwm_t *p);
 
-/* Effective values after integer rounding of the phase counter. */
-uint32_t pm_pwm_buzzer_hz(void);
-uint8_t  pm_pwm_buzzer_duty(void);
-int      pm_pwm_buzzer_on(void);
+/* Changes the period. `actual_hz` receives the frequency the timer can
+ * actually generate; pass NULL if not needed. */
+pm_err_t pm_pwm_set_frequency(pm_pwm_t *p, uint32_t freq_hz, uint32_t *actual_hz);
 
-/* Read-only snapshot for `PWM dbg`. STM32F1 has no MODER/OSPEEDR/AFRH; the
- * PB8 pin mode lives in GPIOB->CRH bits 3:0 and remap state in AFIO->MAPR. */
-typedef struct {
-    uint32_t rcc_apb1enr;
-    uint32_t rcc_apb2enr;
-    uint32_t tim4_cr1;
-    uint32_t tim4_psc;
-    uint32_t tim4_arr;
-    uint32_t tim4_ccmr2;
-    uint32_t tim4_ccer;
-    uint32_t tim4_ccr3;
-    uint32_t gpiob_crh;
-    uint32_t afio_mapr;
-    uint32_t frame_hz10;   /* PWM frame frequency from PSC/ARR, 0.1 Hz */
-} pm_pwm_dbg_t;
+/* 0 = always low, 1000 = always high (one timer tick of resolution is lost
+ * at the top of a 16-bit period). */
+pm_err_t pm_pwm_set_duty(pm_pwm_t *p, uint16_t permille);
 
-void     pm_pwm_dbg_read(pm_pwm_dbg_t *out);
-uint32_t pm_pwm_counter(void);
+/* Convenience for servos: pulse width in microseconds at the current
+ * frequency, converted to permille. Values longer than the period clamp to
+ * 1000 permille. */
+pm_err_t pm_pwm_set_pulse_us(pm_pwm_t *p, uint16_t pulse_us);
 
-/* Temporary PB8 test: begin() detaches TIM4_CH3 and turns PB8 into a plain
- * push-pull GPIO; end() restores alternate function and 90 degrees. */
-void pm_pwm_test_begin(void);
-void pm_pwm_test_level(int high);
-void pm_pwm_test_end(void);
+/* Starts or stops the compare output without changing the configuration. */
+pm_err_t pm_pwm_enable(pm_pwm_t *p, bool on);
+
+/* Effective values; 0 for an object that is not initialized. */
+uint32_t pm_pwm_frequency_hz(const pm_pwm_t *p);
+uint16_t pm_pwm_duty_permille(const pm_pwm_t *p);
 
 #endif /* PM_PWM_H */

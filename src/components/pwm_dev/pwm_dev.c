@@ -6,7 +6,7 @@
 #include "pwm_dev.h"
 
 #include "pm_osal.h"
-#include "pm_pwm.h"
+#include "pm_servo.h"
 
 #define PWM_REPLY_MAX 384u
 #define PWM_SWEEP_MAX 768u
@@ -330,7 +330,7 @@ static const char *cmd_test(void)
 
 void pwm_dev_init(void)
 {
-    s_ready = (pm_pwm_init() == 0) ? 1u : 0u;
+    s_ready = (pm_servo_init() == 0) ? 1u : 0u;
 }
 
 const char *pwm_dev_cmd(const char *line)

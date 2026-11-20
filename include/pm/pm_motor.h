@@ -1,52 +1,114 @@
 /*
- * pm_motor.h - DRV8833 motor drive on PA0/PA1 (TIM2_CH1/CH2).
+ * pm_motor.h - brushed DC motor behind a DRV8833-class dual H-bridge.
  *
- * The schematic names the two module inputs PWM1 = PA0 (header pin 4) and
- * PWM2 = PA1 (pin 3); the PCB silkscreen prints A0/A1. Both are plain
- * direction inputs on the DRV8833, so the drive scheme is:
- *   forward: CH1 = PWM, CH2 = 0
- *   reverse: CH1 = 0,   CH2 = PWM
- *   stop:    both 0 (coast)
- * Which shaft direction "forward" actually is must be checked on the board.
+ * DEVICE SHAPE (read this first)
+ * ---------------------------------------------------------------------------
+ * This model targets the DRV8833 shape: TWO input pins per bridge, both of
+ * them PWM inputs, no enable pin.
+ *
+ *   IN1 IN2   OUT       meaning
+ *    0   0    Z Z       coast   (fast decay)
+ *    1   0    H L       forward
+ *    0   1    L H       reverse
+ *    1   1    L L       brake   (slow decay, both low-side FETs on)
+ *
+ * It does NOT fit L298N-style wiring (ENA + IN1 + IN2). There the duty goes
+ * on the shared enable pin and direction lives on two plain GPIOs; reversing
+ * a DRV8833 by contrast moves the duty onto the *other* input pin, which a
+ * GPIO cannot produce. Do not use this model with an L298N.
+ *
+ * Contract (docs/00-contract.md section 23):
+ *  - Both channels must run at the same frequency. init() compares them and
+ *    returns PM_ERR_CONFLICT otherwise: two channels of one timer with
+ *    different PSC/ARR is the same class of bug as the TIM2 collision.
+ *  - set(duty, FWD) drives IN1 with `duty` and holds IN2 low; REV is the
+ *    mirror image. `invert` swaps the two.
+ *  - set(0, any dir) IS a coast and lands in PM_MOTOR_STATE_STOP_COAST.
+ *    It is electrically identical to stop(COAST) and NOT to stop(BRAKE).
+ *  - stop(BRAKE) drives both inputs to 1000 permille, i.e. "approximately
+ *    constant high" (pm_pwm loses one tick at the top). It is not a cut of
+ *    the PWM output; it is a 100% duty request.
+ *  - Any set() while braked leaves the brake immediately; duty is never left
+ *    sitting at 1000.
+ *  - Only fast decay (PWM on one input, the other low) is supported. Slow
+ *    decay (PWM on one input, the other high) is deliberately not offered.
+ *  - `invert` defaults to "no swap": PM_MOTOR_INVERT_UNSET (the
+ *    zero-initialised value) means OFF. Any value outside UNSET/OFF/ON is
+ *    rejected with PM_ERR_PARAM.
  */
 #ifndef PM_MOTOR_H
 #define PM_MOTOR_H
 
-#include <stdint.h>
-
-#define PM_MOTOR_FREQ_HZ 20000u
+#include "pm_common.h"
+#include "pm_err.h"
+#include "pm_pwm.h"
+#include <stdbool.h>
 
 typedef enum {
-    PM_MOTOR_STOP = 0,
-    PM_MOTOR_FWD  = 1,
-    PM_MOTOR_REV  = 2
+    PM_MOTOR_INVERT_UNSET = 0,   /* default: no swap (same as OFF) */
+    PM_MOTOR_INVERT_OFF   = 1,
+    PM_MOTOR_INVERT_ON    = 2
+} pm_motor_invert_t;
+
+typedef enum {
+    PM_MOTOR_DIR_FORWARD = 0,
+    PM_MOTOR_DIR_REVERSE = 1
 } pm_motor_dir_t;
 
+typedef enum {
+    PM_MOTOR_STOP_COAST = 0,
+    PM_MOTOR_STOP_BRAKE = 1
+} pm_motor_stop_t;
+
+typedef enum {
+    PM_MOTOR_STATE_STOP_COAST = 0,
+    PM_MOTOR_STATE_STOP_BRAKE = 1,
+    PM_MOTOR_STATE_RUN        = 2
+} pm_motor_state_t;
+
 typedef struct {
-    uint32_t       freq_hz;   /* derived from the live PSC/ARR pair */
-    uint32_t       arr;
-    uint16_t       psc;
-    uint8_t        duty_pct;  /* last requested duty */
-    pm_motor_dir_t dir;       /* last requested direction */
-    uint32_t       ccr1;      /* read back from TIM2->CCR1 */
-    uint32_t       ccr2;      /* read back from TIM2->CCR2 */
-} pm_motor_stat_t;
+    pm_pwm_t         *in1;      /* PWM channel wired to DRV8833 IN1 */
+    pm_pwm_t         *in2;      /* PWM channel wired to DRV8833 IN2 */
+    pm_motor_invert_t invert;   /* swaps the IN1/IN2 roles */
+} pm_motor_cfg_t;
 
-/* 20 kHz PWM on CH1/CH2, both channels low. Returns 0, -1 if TIM2 is already
- * counting (another owner), -2 if CH1/CH2 are remapped off PA0/PA1. */
-int pm_motor_init(void);
+typedef struct pm_motor pm_motor_t;
 
-/* Direction plus duty 0..100 (100 = CCR above ARR, output always active).
- * PM_MOTOR_STOP forces both channels low. Returns -1 on a bad argument. */
-int pm_motor_set(pm_motor_dir_t dir, uint8_t duty_pct);
+struct pm_motor {
+    uint32_t magic;
+    uint8_t  state;
+    uint8_t  run_state;
+    uint8_t  invert;
+    uint8_t  dir;
 
-/* Change duty and keep the current direction. Returns -1 on a bad value or
- * when no direction has been commanded yet. */
-int pm_motor_duty(uint8_t duty_pct);
+    uint16_t duty_permille;
 
-void pm_motor_stop(void);
+    pm_pwm_t *in1;
+    pm_pwm_t *in2;
+};
 
-/* Snapshot of the timer registers plus the requested state. */
-void pm_motor_stat(pm_motor_stat_t *out);
+/* Both channels must already be open and share one frequency. Returns
+ * PM_ERR_PARAM for an invert outside UNSET/OFF/ON or identical channel
+ * pointers, PM_ERR_STATE for a closed channel, PM_ERR_CONFLICT for a
+ * frequency mismatch, PM_ERR_BUSY when the object is already open. */
+pm_err_t pm_motor_init(pm_motor_t *m, const pm_motor_cfg_t *cfg);
+
+/* Coasts the bridge and releases the model. Idempotent. */
+pm_err_t pm_motor_deinit(pm_motor_t *m);
+
+/* duty in permille (0..1000); duty 0 is a coast whatever `dir` says. */
+pm_err_t pm_motor_set(pm_motor_t *m, uint16_t duty_permille, pm_motor_dir_t dir);
+
+/* COAST = both inputs low (Z, what the board does today).
+ * BRAKE = both inputs at 1000 permille (L/L). New capability, not the
+ * current board behaviour. */
+pm_err_t pm_motor_stop(pm_motor_t *m, pm_motor_stop_t mode);
+
+uint16_t         pm_motor_duty_permille(const pm_motor_t *m);
+pm_motor_dir_t   pm_motor_dir(const pm_motor_t *m);
+pm_motor_state_t pm_motor_state(const pm_motor_t *m);
+
+/* True only in PM_MOTOR_STATE_RUN. False in coast and in brake. */
+bool pm_motor_is_running(const pm_motor_t *m);
 
 #endif /* PM_MOTOR_H */

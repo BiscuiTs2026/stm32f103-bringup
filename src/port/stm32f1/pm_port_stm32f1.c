@@ -14,6 +14,7 @@
 #include "pm_osal.h"
 #include "pm_uart.h"
 #include "board_f103c8.h"
+#include "pm_pwm_tim2_stm32f1.h"
 
 #include "stm32f1xx_hal.h"
 
@@ -401,6 +402,9 @@ static const pm_port_t s_port = {
     .uart           = &s_uart_ops,
     .uart_ctx       = NULL,
     .uart_count     = (uint8_t)PM_F1_UART_COUNT,
+    .pwm            = &pm_f1_tim2_pwm_ops,
+    .pwm_ctx        = NULL,
+    .pwm_count      = 2u,
 };
 
 const pm_port_t *pm_port_get(void)

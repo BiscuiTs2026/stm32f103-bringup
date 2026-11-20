@@ -9,7 +9,7 @@
  * train undisturbed while the buzzer runs, and the interrupt rate is only
  * 2x the tone (2..10 kHz at 100..5000 Hz).
  */
-#include "pm_pwm.h"
+#include "pm_servo.h"
 
 #include "stm32f1xx.h"
 
@@ -43,7 +43,7 @@ static uint32_t servo_pulse_from_deg(uint32_t deg10)
     return SERVO_PULSE_MIN + ((deg10 * span) / 1800u);
 }
 
-int pm_pwm_init(void)
+int pm_servo_init(void)
 {
     /* Re-check the pair we are about to write against the frame rate it must
      * produce; the 3.6 kHz accident (PATCHES 32) was a prescaler mistake that

@@ -7,13 +7,25 @@
 #include <stddef.h>
 
 #include "pm_motor.h"
+#include "pm_motor_dbg.h"
+#include "pm_pwm.h"
 
 #define MOTOR_REPLY_MAX 96u
+#define MOTOR_FREQ_HZ   20000u
 
 static char    s_reply[MOTOR_REPLY_MAX];
 static uint8_t s_ready;
 static const char *s_init_err;
 static motor_dev_dbg_fn s_dbg;
+
+/* Two PWM channels on one timer plus the DRV8833 state machine. */
+static pm_pwm_t   s_in1;
+static pm_pwm_t   s_in2;
+static pm_motor_t s_motor;
+
+/* The model reports coast for both "duty 0" and stop(); this flag keeps the
+ * old MOTOR stat wording (dir=stop only after STOP or before the first run). */
+static uint8_t s_stopped = 1u;
 
 static char *put_s(char *p, const char *s)
 {
@@ -50,36 +62,30 @@ static const char *reply_lit(const char *s)
 
 static const char *dir_name(pm_motor_dir_t d)
 {
-    if (d == PM_MOTOR_FWD) {
-        return "fwd";
-    }
-    if (d == PM_MOTOR_REV) {
-        return "rev";
-    }
-    return "stop";
+    return (d == PM_MOTOR_DIR_REVERSE) ? "rev" : "fwd";
 }
 
 /* hz/arr/ccr come from the timer registers, not from the request, so the
  * reply proves what the hardware actually holds. */
 static const char *reply_state(const char *head)
 {
-    pm_motor_stat_t st;
+    pm_motor_hw_t hw;
     char *p;
 
-    pm_motor_stat(&st);
+    pm_motor_hw_snapshot(&hw);
     p = put_s(s_reply, head);
     p = put_s(p, " dir=");
-    p = put_s(p, dir_name(st.dir));
+    p = put_s(p, (s_stopped != 0u) ? "stop" : dir_name(pm_motor_dir(&s_motor)));
     p = put_s(p, " duty=");
-    p = put_u32(p, st.duty_pct);
+    p = put_u32(p, (uint32_t)(pm_motor_duty_permille(&s_motor) / 10u));
     p = put_s(p, "% hz=");
-    p = put_u32(p, st.freq_hz);
+    p = put_u32(p, hw.freq_hz);
     p = put_s(p, " arr=");
-    p = put_u32(p, st.arr);
+    p = put_u32(p, hw.arr);
     p = put_s(p, " ccr1=");
-    p = put_u32(p, st.ccr1);
+    p = put_u32(p, hw.ccr1);
     p = put_s(p, " ccr2=");
-    p = put_u32(p, st.ccr2);
+    p = put_u32(p, hw.ccr2);
     p = put_s(p, "\r\n");
     *p = '\0';
     return s_reply;
@@ -169,20 +175,39 @@ static const char *do_dir(const char *p, pm_motor_dir_t dir, const char *head)
             return reply_range(duty);
         }
     }
-    (void)pm_motor_set(dir, (uint8_t)duty);
+    (void)pm_motor_set(&s_motor, (uint16_t)(duty * 10u), dir);
+    s_stopped = 0u;
     return reply_state(head);
 }
 
 void motor_dev_init(void)
 {
-    int rc = pm_motor_init();
+    pm_pwm_cfg_t   pcfg = {
+        .hw_id = 0u, .freq_hz = MOTOR_FREQ_HZ, .duty_permille = 0u
+    };
+    pm_motor_cfg_t mcfg = {
+        .in1 = &s_in1, .in2 = &s_in2, .invert = PM_MOTOR_INVERT_UNSET
+    };
+    pm_err_t rc;
 
-    if (rc == 0) {
+    rc = pm_pwm_init(&s_in1, &pcfg);
+    if (rc == PM_OK) {
+        pcfg.hw_id = 1u;
+        rc = pm_pwm_init(&s_in2, &pcfg);
+    }
+    if (rc == PM_OK) {
+        rc = pm_motor_init(&s_motor, &mcfg);
+    }
+
+    if (rc == PM_OK) {
         s_ready = 1u;
         s_init_err = 0;
+        s_stopped = 1u;
     } else {
         s_ready = 0u;
-        s_init_err = (rc == -1) ? "MOTOR err=timer" : "MOTOR err=remap";
+        /* PM_ERR_STATE is the port's remap fact; everything else means the
+         * timer could not be taken over, which is the old err=timer wording. */
+        s_init_err = (rc == PM_ERR_STATE) ? "MOTOR err=remap" : "MOTOR err=timer";
     }
 }
 
@@ -206,16 +231,17 @@ const char *motor_dev_cmd(const char *line)
     }
     p = skip_sp(p + 5);
     if (is_word(p, "FWD", 3u) != 0) {
-        return do_dir(p + 3, PM_MOTOR_FWD, "MOTOR fwd ok");
+        return do_dir(p + 3, PM_MOTOR_DIR_FORWARD, "MOTOR fwd ok");
     }
     if (is_word(p, "REV", 3u) != 0) {
-        return do_dir(p + 3, PM_MOTOR_REV, "MOTOR rev ok");
+        return do_dir(p + 3, PM_MOTOR_DIR_REVERSE, "MOTOR rev ok");
     }
     if (is_word(p, "STOP", 4u) != 0) {
         if (p[4] != '\0') {
             return reply_lit("MOTOR err=usage");
         }
-        pm_motor_stop();
+        (void)pm_motor_stop(&s_motor, PM_MOTOR_STOP_COAST);
+        s_stopped = 1u;
         return reply_state("MOTOR stop ok");
     }
     if (is_word(p, "DUTY", 4u) != 0) {
@@ -228,9 +254,11 @@ const char *motor_dev_cmd(const char *line)
         if (duty > 100u) {
             return reply_range(duty);
         }
-        if (pm_motor_duty((uint8_t)duty) != 0) {
+        if (s_stopped != 0u) {
             return reply_lit("MOTOR err=idle");
         }
+        (void)pm_motor_set(&s_motor, (uint16_t)(duty * 10u),
+                           pm_motor_dir(&s_motor));
         return reply_state("MOTOR duty ok");
     }
     if (is_word(p, "STAT", 4u) != 0) {

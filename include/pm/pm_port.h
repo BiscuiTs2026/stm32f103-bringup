@@ -103,6 +103,30 @@ typedef struct {
     void     (*disable_rx)(void *ctx, pm_uart_t *u);
 } pm_uart_ops_t;
 
+/* ------------------------------------------------------------------- PWM */
+
+typedef struct {
+    uint8_t  hw_id;          /* logical PWM channel, board-defined */
+    uint32_t freq_hz;        /* 1 .. 1000000 */
+    uint16_t duty_permille;  /* 0 .. 1000 */
+} pm_pwm_cfg_t;
+
+typedef struct pm_pwm pm_pwm_t;
+
+typedef struct {
+    /* Down-calls: model -> port. All are called with interrupts enabled.
+     * open() reports the effective frequency after the prescaler is applied.
+     * set_freq() returns PM_ERR_BUSY when another channel on the same timer
+     * is already open with a different period. */
+    pm_err_t (*open)(void *ctx, pm_pwm_t *p, const pm_pwm_cfg_t *cfg,
+                     uint32_t *actual_hz);
+    void     (*close)(void *ctx, pm_pwm_t *p);
+    pm_err_t (*set_freq)(void *ctx, pm_pwm_t *p, uint32_t freq_hz,
+                         uint32_t *actual_hz);
+    pm_err_t (*set_duty)(void *ctx, pm_pwm_t *p, uint16_t permille);
+    pm_err_t (*enable)(void *ctx, pm_pwm_t *p, bool on);
+} pm_pwm_ops_t;
+
 /* ----------------------------------------------------------- port registry */
 
 typedef struct {
@@ -113,6 +137,10 @@ typedef struct {
     const pm_uart_ops_t *uart;
     void                *uart_ctx;
     uint8_t              uart_count;       /* valid hw_id are [0, count) */
+
+    const pm_pwm_ops_t  *pwm;
+    void                *pwm_ctx;
+    uint8_t              pwm_count;        /* valid hw_id are [0, count) */
 } pm_port_t;
 
 const pm_port_t *pm_port_get(void);
