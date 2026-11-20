@@ -4,6 +4,12 @@
 结果：**0 ERROR / 3 WARN**（WARN 全部是 `src/port/stm32f1/pm_port_stm32f1.c` 的端口层 ISR 钩子），
 第 18–21 项零命中。`src/app/main.c` 检查器口径 **87 行**（物理 156）。
 
+> **2026-11-20 更新（闸门收一格）**：闸门已按实测收到 **86**，CI 与本地统一用
+> `--glue-max-lines 86`——**86 是实测值、无余量，再增一行即红**。本文件第 3 行的
+> `--glue-max-lines 87` 与第 5 行的"87 行"是 **S10 收尾时点值**，按证据纪律保留原样；
+> 当前实测 86 行（`76d2698` 停用 sonar 时删除 `pm_sonar_init()` 调用，检查器口径 87→86，
+> 注释与空行不计入），复测见 `INDEX.md` §127。
+
 `src/app/main.c` 硬事实（Python 精确计数，区分大小写）：
 `GPIO_PIN_`=0、`GPIOA`=0、`HAL_`=0、`while`=0；`pm_osal_delay_ms` 仅 1 处，位于
 `error_loop()` 的启动失败死循环（非外设时序）。

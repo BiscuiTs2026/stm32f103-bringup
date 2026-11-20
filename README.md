@@ -34,7 +34,7 @@
 | AHT20 温湿度 | 通过 | `AHT ok rh=40.8 t=20.4 raw=18 68 A7 F5 A3 11 rst=0`（§12） |
 | HC-SR04 测距 | **已停用** | 曾通过：`DIST cm=<n> us=<n>`，EXTI + TIM2 1 MHz 计宽（§14）；2026-11-19 起 TIM2 整颗让给电机 PWM，`DIST` 固定回 `DIST err=disabled`，引脚与边沿逻辑保留（§33、`docs/TIM2-CONFLICT.md`） |
 | CH1116 OLED | 通过 | 文字、`frame` 图案（col=2 下 9 条竖线、四边完整）、`live` 500 ms（§15–§19）；live 期间 1 Hz 自动测距已随 DIST 停用 |
-| 按键 | 通过 | 20 ms 消抖，6 组 pressed/released 无重复无漏（§7） |
+| 按键 | 通过（带限制） | 20 ms 消抖，6 组 pressed/released 无重复无漏（§7）。**限制：主循环每 500 ms 约 98 ms 被 OLED 整页 I2C 占住，短于约 100 ms 的点按可能整段丢失**（M1-e、`evidence/MANUAL-CHECKS.md`、`TECH_DEBT.md` D23） |
 | ADC1 | **部分通过** | PA5 电位器静态 2124–2126（30 次极差 2 LSB）；PA4 NTC 升温 raw 2293→1792、降温回升，判定 NTC 在分压低端（§28）。**电位器转动响应未验证：缺十字螺丝刀** |
 | PWM 舵机 / 蜂鸣器 | **部分通过** | PB8 五档脉宽 500/1000/1500/2000/2500 µs 与回包一致；`PWM dbg` 实测 `psc=71`、`fpwm=50.0Hz`、`CCR3` 0/180→500/2500（§32）。**舵机"有动作"已由用户目视确认；角度精度、到位抖动/回弹、带负载表现未验证；蜂鸣器听感未采集**（§30.3） |
 | 循迹 PB14 | **部分通过** | 盖黑物 2 轮：`TRACK raw=1` → `raw=0` → `raw=1`，同状态内无跳变（1.78 s 采样，§31.3）。**只有一路，单路遮挡与全黑不可区分** |
@@ -123,7 +123,7 @@ CI 是两步（见 [.github/workflows/layering.yml](.github/workflows/layering.y
 
 ```powershell
 python tools/check_layering.py --version --lock tools/CHECKER.lock   # 检查器身份/版本漂移
-python tools/check_layering.py . --glue-max-lines 87                 # 扫描
+python tools/check_layering.py . --glue-max-lines 86                 # 扫描
 ```
 
 **ERROR 必须为 0（否则 CI 红）；WARN 只打印、不判失败。**
@@ -132,7 +132,7 @@ python tools/check_layering.py . --glue-max-lines 87                 # 扫描
 
 扫描耗时（本机 Windows，同一棵树）：检查器 3.0 无 ignore **24.1 s**；3.2.0 无 ignore **22.8 s**；3.2.0 加 `ignore` 后 **0.19 s**。三者 ERROR/WARN 逐条相同。
 
-`--glue-max-lines` 是棘轮：经过 S3–S10 拆分，`src/app/main.c` 现在为 **86 行**（检查器口径；2026-11-20 复跑 `--glue-max-lines 86` 为 0 ERROR，压到 85 时提示 `入口胶水层 86 行代码（上限 85）`），CI 与本地闸门用 `--glue-max-lines 87`（= 86 行 + 1 行余量）。拆分前的历史（1277 → 1283 → 1500 → 1663/1668，上限一度抬到 1700）与取舍理由在 [PATCHES.md](PATCHES.md) §20、§27.5、§29.5；再往 `main.c` 加行前先评估是否该下沉到组件层，确认后再同步抬高闸门。
+`--glue-max-lines` 是棘轮：经过 S3–S10 拆分，`src/app/main.c` 现在为 **86 行**（检查器口径；2026-11-20 复跑 `--glue-max-lines 86` 为 0 ERROR，压到 85 时提示 `入口胶水层 86 行代码（上限 85）`），CI 与本地都用 `--glue-max-lines 86`——**86 是实测值、无余量，再增一行即红**。拆分前的历史（1277 → 1283 → 1500 → 1663/1668，上限一度抬到 1700）与取舍理由在 [PATCHES.md](PATCHES.md) §20、§27.5、§29.5；再往 `main.c` 加行前先评估是否该下沉到组件层，确认后再同步抬高闸门。
 
 检查器 3.2.0 新增的 `layers` 指令本仓没有启用：它改变的是“没有 components 层时 APP 可直调 BSP”这一条放行规则，而本仓有真实的 components 层，声明了也不会改变任何一条判定。
 
@@ -248,7 +248,7 @@ APP → components → OSAL → BSP(本仓库的 pm_* 契约) → 芯片后端 �
 - live 模式每 500 ms 推一页（130 B ≈ 12 ms @ 100 kHz I2C），整屏 8 页约 98 ms；live 期间静态命令（`clear`/`test`/`show`/`frame`）照常接管，3 s 后自动交回；
 - **测距已停用**：TIM2 的 1 µs 自由运行计时与电机 PWM 共用 `PSC/ARR` 无法共存，TIM2 已整颗划给电机；`DIST` 固定回 `DIST err=disabled`，TRIG/ECHO 引脚与 EXTI 逻辑保留，重新启用前必须先确定独立计时源（`docs/TIM2-CONFLICT.md`）；
 - 电机：TIM2 `PSC=0 / ARR=3599` → 20 kHz，只有一路通道出 PWM、另一路恒 0（DRV8833 单向驱动）；`duty 0` 与 `stop` 电气等价（两路 CCR=0、全低滑行），`dir` 字段只是状态记忆；`fwd/rev` 只表示选了哪路通道，**对应轴的哪个方向未验证**；电机未接时只能验证寄存器与回包；
-- 分层检查：本仓用 `tools/check_layering.py`（3.3.1，`tools/CHECKER.lock` 固定 `7facd2b`）扫描，当前 0 ERROR / 3 WARN（2026-11-20，`--glue-max-lines 87`）；从 3.3.0 升到 3.3.1 的差异只有第 27 项输出排序，细节与"是否继续跟随上游"的待定项记在 `TECH_DEBT.md` D25；
+- 分层检查：本仓用 `tools/check_layering.py`（3.3.1，`tools/CHECKER.lock` 固定 `7facd2b`）扫描，当前 0 ERROR / 3 WARN（2026-11-20，`--glue-max-lines 86`）；从 3.3.0 升到 3.3.1 的差异只有第 27 项输出排序，细节与"是否继续跟随上游"的待定项记在 `TECH_DEBT.md` D25；
 - 无行尾命令有 100 ms 判定窗口，碎片间隔小于它会被当成同一条命令的延续；
 - 测距停用期间 `DIST` 在启动前就返回 `err=disabled`，不会进入测量。停用前的现象保留在案：自动测距结束后 60 ms 内手动 `DIST` 可能回 `err=timeout`，是 HC-SR04 余振，不是故障；输入侧抓包里未发任何 PWM/BUZ 命令也出现过 3.9–45.8 cm 短读数与一次 `err=timeout`（与手/黑物靠近超声视场时间重合，归因未确认，§31.6）；
 - 没有 CMake presets；CI 只有静态分层检查一步（`.github/workflows/layering.yml`）；对象结构体布局不承诺 ABI 稳定。

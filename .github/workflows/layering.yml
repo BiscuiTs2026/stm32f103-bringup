@@ -18,7 +18,7 @@ jobs:
 
       # 第二步：扫描。ERROR 必须为 0；WARN 只打印，不判失败。
       # 闸门按 `src/app/main.c` 的实测行数设定，只降不升：
-      # 当前实测 87 行，闸门 87（S10 收口时写入；抬高闸门等于把行数债藏起来）。
+      # 当前实测 86 行，闸门 86——86 是实测值、无余量，再增一行即红（2026-11-20 收到 86）。
       # 存量与清账记录见 TECH_DEBT.md（PATCHES.md §37）。
       - name: Four-layer static check
-        run: python3 tools/check_layering.py . --glue-max-lines 87
+        run: python3 tools/check_layering.py . --glue-max-lines 86
