@@ -12,9 +12,14 @@
 
 #include "stm32f1xx.h"
 
+#include "pm_timebase.h"
+
 #define TIM4_CLK_HZ       72000000u  /* APB1 36 MHz x2 for timers */
 #define SERVO_TICK_HZ     1000000u
 #define SERVO_PSC         ((TIM4_CLK_HZ / SERVO_TICK_HZ) - 1u)
+#define SERVO_FRAME_HZ    50u
+#define SERVO_ARR         ((SERVO_TICK_HZ / SERVO_FRAME_HZ) - 1u)
+#define SERVO_TOL_PERMILLE 10u       /* decision 0018: 10 permille */
 #define SERVO_PULSE_MIN   500u      /* SG90: 0 deg */
 #define SERVO_PULSE_MAX   2500u     /* SG90: 180 deg */
 #define SERVO_PULSE_MID   1500u
@@ -39,6 +44,15 @@ static uint32_t servo_pulse_from_deg(uint32_t deg10)
 
 int pm_pwm_init(void)
 {
+    /* Re-check the pair we are about to write against the frame rate it must
+     * produce; the 3.6 kHz accident (PATCHES 32) was a prescaler mistake that
+     * constants alone cannot catch. Registers are only touched on success, and
+     * the PSC/ARR values themselves are not changed. */
+    if (pm_timebase_ok(TIM4_CLK_HZ, SERVO_PSC, SERVO_ARR,
+                       SERVO_FRAME_HZ, SERVO_TOL_PERMILLE) == 0) {
+        return -1;
+    }
+
     RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM4EN;
 
@@ -51,7 +65,7 @@ int pm_pwm_init(void)
     /* TIM4: 1 MHz tick, 20 ms frame, CH3 PWM mode 1 at 1.5 ms (90 deg). */
     TIM4->CR1   = 0u;
     TIM4->PSC   = SERVO_PSC;
-    TIM4->ARR   = (SERVO_TICK_HZ / 50u) - 1u;
+    TIM4->ARR   = SERVO_ARR;
     TIM4->CCR3  = SERVO_PULSE_MID;
     TIM4->CCMR2 = (TIM4->CCMR2 & ~(0x7u << 4)) | (0x6u << 4);  /* PWM mode 1 */
     TIM4->CCMR2 |= (0x1u << 3);                                /* OC3 preload */

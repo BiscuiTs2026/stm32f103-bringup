@@ -1,0 +1,18 @@
+#include "pm_timebase.h"
+#include "pm_timebase.h"
+int case_servo_ok(void)    { return pm_timebase_ok(72000000u, 71u, 19999u, 50u, 10u); }
+int case_accident_36k(void){ return pm_timebase_ok(72000000u, 0u,  19999u, 50u, 10u); }
+int case_model_21_65453(void){ return pm_timebase_ok(72000000u, 21u, 65453u, 50u, 10u); }
+int case_motor_20k(void)   { return pm_timebase_ok(72000000u, 0u,  3599u, 20000u, 10u); }
+int case_servo_20k_target(void){ return pm_timebase_ok(72000000u, 71u, 19999u, 20000u, 10u); }
+=== arm-none-eabi-gcc -O2 -S (constant folding of pm_timebase_ok) ===
+case_servo_ok:
+mov	r0, #1
+case_accident_36k:
+mov	r0, #0
+case_model_21_65453:
+mov	r0, #1
+case_motor_20k:
+mov	r0, #1
+case_servo_20k_target:
+mov	r0, #0

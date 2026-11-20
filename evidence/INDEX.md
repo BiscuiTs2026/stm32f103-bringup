@@ -1543,3 +1543,17 @@
 | 板端-串口 | `DIST`→`DIST err=disabled`、`PING`→`PONG`、`MOTOR stat`→`dir=stop duty=0% hz=20000 arr=3599 ccr1=0 ccr2=0`。`evidence/exti10-off-serial.log` |
 | 能证明什么 | `DIST` 回包文本未变；EXTI10 与 EXTI15_10 中断确实未布防；控制台与电机无回归 |
 | 不能证明什么 | 改动前的 `IMR`/`ISER` 没实测（烧录前未读），"改前 bit10=1"是从代码推的；"优先级 0 会带来多大抖动"没有量化，只能说 ISR 短、影响有界 |
+
+## 122. 舵机时基 10‰ 复核（契约对齐第 2 轮）
+
+| 项 | 内容 |
+| --- | --- |
+| 时间 | 2026-11-20 13:00–13:30 |
+| 依据 | 决策 0018 第二条：保留 `PSC=71 / ARR=19999`，写入前用 10‰ 容差复核，不改时基 |
+| 改动 | 新增 `src/port/stm32f1/pm_timebase.h`（`static inline pm_timebase_ok()`，纯整数交叉相乘，无 HAL）；`pm_pwm_stm32f1.c` 在 `pm_pwm_init()` 开头用它复核 72 MHz / 71 / 19999 / 50 Hz / 10‰，不通过直接返回 -1、不碰寄存器；`TIM4->ARR` 改用 `SERVO_ARR` 宏，值与原来相同 |
+| 编译 | FLASH 29076 B / RAM 5320 B，与改前完全一致（常量在 -O2 下折叠，复核无运行期成本） |
+| 静态检查 | `0 ERROR / 3 WARN`，与基线一致 |
+| 判据证据 | `evidence/servo-timebase-fold.log`：用 `arm-none-eabi-gcc -O2 -S` 编译同一份 `pm_timebase_ok()`，常量折叠结果 舵机(71/19999/50)→`1`、事故对(0/19999/50)→`0`、模型提案(21/65453/50)→`1`、把舵机对拿去比 20 kHz→`0` |
+| 板端证据 | 烧录 `Download verified successfully`；`evidence/servo-timebase-serial.log`：`PWM servo 0/90/180` 回 `pulse=500/1500/2500us`，`PWM dbg` 反算 `psc=0x47(71) arr=0x4E1F(19999) fpwm=50.0Hz`，`MOTOR stat` 仍 20 kHz |
+| 能证明什么 | 现行寄存器对在 10‰ 内确实是 50 Hz；判据能拦住 3.6 kHz 事故对；舵机回包与电机均无回归 |
+| 不能证明什么 | 判据是编译期折叠验证，**没有在主机上运行**（本机无 x86 编译器）；"复核失败返回 -1" 的运行路径未触发过，只能靠常量为真的现有配置证明不误判 |
